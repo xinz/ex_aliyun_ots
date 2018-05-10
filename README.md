@@ -54,7 +54,7 @@ config :ex_aliyun_ots,
 
 ### Sample
 
-*更多参考请见测试用例（在`test`目录）*
+*更多参考请见测试用例（在 [test](https://github.com/xinz/ex_aliyun_ots/tree/master/test) 目录）*
 
 <a name="CreateTable"></a>CreateTable
 
