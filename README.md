@@ -71,9 +71,9 @@ defmodule CRUDSample do
   # 
   # Optional settings
   #
-  # `reserved_throughput_write`，创建的表的初始预留写吞吐量设定，默认值为0，
-  # `reserved_throughput_read`，创建的表的初始预留读吞吐量设定，默认值为0，
-  # `time_to_live`，保存的数据的存活时间，单位秒，，默认值为永久（“-1”）
+  # `reserved_throughput_write`，创建的表的初始预留写吞吐量设定，默认值为0
+  # `reserved_throughput_read`，创建的表的初始预留读吞吐量设定，默认值为0
+  # `time_to_live`，保存的数据的存活时间，单位秒，默认值为"-1"（永久）
   # `max_versions`，表保留的最大版本，默认值为1，只设定一个版本
   # `deviation_cell_version_in_sec`，最大版本偏差，默认值为86400秒，即1天
   # `stream_spec`，是否打开stream相关的属性
@@ -152,7 +152,7 @@ defmodule CRUDSample do
   #
   # `reserved_throughput_write`，创建的表的初始预留写吞吐量设定，默认不设定
   # `reserved_throughput_read`，创建的表的初始预留读吞吐量设定，默认不设定
-  # `time_to_live`，保存的数据的存活时间，单位秒，默认值为永久（“-1”）
+  # `time_to_live`，保存的数据的存活时间，单位秒，默认值为"-1"（永久）
   # `max_versions`，表保留的最大版本，默认值为1，只设定一个版本
   # `deviation_cell_version_in_sec`，最大版本偏差，默认值为86400秒，即1天
   # `stream_spec`，是否打开stream相关的属性
@@ -265,7 +265,7 @@ defmodule CRUDSample do
   # `put`，如果设定该操作，此时value必须为有效的属性列值。语意为如果该列不存在，则新增一列；如果该列存在，则覆盖该字段列。
   # `delete`，如果设定该操作，值必须设定为nil，同时需要指定该列一值的timestamp
   # `delete_all`，如果设定该操作，只需要设定需要删除操作的列值列表
-  # `return_type`，支持`:pk`返回更新的主键，`:none`不返回任何信息
+  # `return_type`，支持`:pk`返回主键信息，`:none`不返回任何信息
   # `condition`，在数据更新前是否进行存在性检查
   #   `:expect_exist`，表示期望行存在
   #   `:ignore`，表示不做行存在性检查
