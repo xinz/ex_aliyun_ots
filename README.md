@@ -518,4 +518,6 @@ defmodule SequenceSample do
 end
 ```
 
+## License
 
+MIT
