@@ -550,7 +550,11 @@ defmodule ExAliyunOts.PlainBuffer do
             end
 
           _ ->
-            Map.put(acc, :to_be_merged, acc.to_be_merged <> row)
+            if acc.to_be_merged == <<>> do
+              Map.put(acc, :to_be_merged, acc.to_be_merged <> row)
+            else
+              Map.put(acc, :to_be_merged, acc.to_be_merged <> @pk_tag_marker <> row)
+            end
         end
       end)
 
@@ -600,8 +604,6 @@ defmodule ExAliyunOts.PlainBuffer do
       attribute_columns_binary =
         <<@tag_cell::integer, @tag_cell_name::integer>> <>
           (row_data_parts |> Enum.slice((matched_index + 1)..-1) |> Enum.join(joiner))
-
-      {primary_keys_binary, attribute_columns_binary}
 
       primary_keys_binary =
         case primary_keys_binary do

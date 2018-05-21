@@ -140,4 +140,37 @@ defmodule ExAliyunOtsTest.PlainBuffer do
     row = PlainBuffer.deserialize_row(result)
     assert row == {[{"partition_key", 3}], [{"name", "测试", nil}]}
   end
+
+  test "splice rows may make some item missed" do
+    rows = <<117, 0, 0, 0, 1, 3, 4, 9, 0, 0, 0, 116, 105, 109, 101, 115, 116, 97,
+     109, 112, 5, 9, 0, 0, 0, 0, 28, 146, 229, 90, 0, 0, 0, 0, 10, 243, 3, 4,
+     15, 0, 0, 0, 99, 111, 110, 102, 105, 114, 109, 97, 116, 105, 111, 110, 95,
+     105, 100, 5, 12, 0, 0, 0, 3, 7, 0, 0, 0, 72, 86, 55, 56, 50, 51, 52, 10,
+     232, 2, 3, 4, 16, 0, 0, 0, 110, 117, 109, 98, 101, 114, 95, 111, 102, 95,
+     103, 117, 101, 115, 116, 115, 5, 9, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 7,
+     40, 194, 194, 16, 99, 1, 0, 0, 10, 1, 3, 4, 15, 0, 0, 0, 110, 117, 109, 98,
+     101, 114, 95, 111, 102, 95, 114, 111, 111, 109, 115, 5, 9, 0, 0, 0, 0, 2,
+     0, 0, 0, 0, 0, 0, 0, 7, 40, 194, 194, 16, 99, 1, 0, 0, 10, 218, 3, 4, 10,
+     0, 0, 0, 115, 116, 97, 114, 116, 95, 100, 97, 116, 101, 5, 15, 0, 0, 0, 3,
+     10, 0, 0, 0, 50, 48, 49, 56, 45, 48, 53, 45, 48, 57, 7, 40, 194, 194, 16,
+     99, 1, 0, 0, 10, 1, 3, 4, 9, 0, 0, 0, 115, 117, 98, 109, 105, 116, 95, 105,
+     112, 5, 20, 0, 0, 0, 3, 15, 0, 0, 0, 49, 49, 54, 46, 50, 48, 55, 46, 50,
+     50, 55, 46, 49, 49, 55, 7, 40, 194, 194, 16, 99, 1, 0, 0, 10, 124, 9, 51>>
+
+    readabled_rows = PlainBuffer.deserialize_rows(rows)
+    for row <- readabled_rows do
+      {pks, attrs} = row
+      assert pks == [{"timestamp", 1524994588}, {"confirmation_id", "HV78234"}]
+      assert length(attrs) == 4
+      {attr1_name, attr1_val, _} = Enum.at(attrs, 0)
+      assert attr1_name == "number_of_guests" and attr1_val == 4
+      {attr2_name, attr2_val, _} = Enum.at(attrs, 1)
+      assert attr2_name == "number_of_rooms" and attr2_val == 2
+      {attr3_name, attr3_val, _} = Enum.at(attrs, 2)
+      assert attr3_name == "start_date" and attr3_val == "2018-05-09"
+      {attr4_name, attr4_val, _} = Enum.at(attrs, 3)
+      assert attr4_name == "submit_ip" and attr4_val == "116.207.227.117"
+    end
+
+  end
 end
