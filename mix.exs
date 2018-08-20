@@ -4,7 +4,7 @@ defmodule ExAliyunOts.Mixfile do
   def project do
     [
       app: :ex_aliyun_ots,
-      version: "0.1.2",
+      version: "0.1.3",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
       description: description(),
@@ -28,11 +28,11 @@ defmodule ExAliyunOts.Mixfile do
     [
       {:ex_doc, "~> 0.13", only: :dev},
       {:exprotobuf, "~> 1.2"},
-      {:timex, "~> 3.1"},
+      {:timex, "~> 3.3"},
       {:poolboy, "~> 1.5"},
       {:retry, "~> 0.8"},
       {:mock, "~> 0.2.0", only: :test},
-      {:tesla, "~> 1.0.0"}
+      {:tesla, "~> 1.1"}
     ]
   end
 
