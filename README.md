@@ -7,7 +7,7 @@ Aliyun TableStore SDK for Elixir/Erlang
 ```elixir
 def deps do
   [
-    {:ex_aliyun_ots, "~> 0.1.0"}
+    {:ex_aliyun_ots, "~> 0.1.4"}
   ]
 end
 ```
@@ -355,8 +355,19 @@ defmodule CRUDSample do
       time_range: {1525922253224, 1525923253224},
       direction: :forward
       
+    {:ok, get_range_response} =
+       get_range @instance_name, table_name1,
+         [{"key1", 1}, {"key2", PKType.inf_min}],
+         [{"key1", 4}, {"key2", PKType.inf_max}],
+         time_range: 1525942123224,
+         direction: :forward
+
+    #
+    # 如果查询范围结果仍有未完整查询的数据，可使用上一查询结果中的`next_start_primary_key`
+    # 直接作为`inclusive_start_primary_key`用于下一次的迭代查询
+    #
     get_range @instance_name, table_name1,
-      [{"key1", 1}, {"key2", PKType.inf_min}],
+      get_range_response.next_start_primary_key,
       [{"key1", 4}, {"key2", PKType.inf_max}],
       time_range: 1525942123224,
       direction: :forward
