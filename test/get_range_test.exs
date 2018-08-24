@@ -57,7 +57,18 @@ defmodule ExAliyunOtsTest.GetRange do
     {:ok, get_range_response} = Client.get_range(@instance_name, var_get_range)
     rows = get_range_response.rows
     assert length(rows) == 3
-    assert get_range_response.next_start_primary_key != nil
+    next_start_primary_key = get_range_response.next_start_primary_key
+    assert next_start_primary_key != nil
+
+    var_get_range = %Var.GetRange{
+      table_name: table_name,
+      exclusive_end_primary_keys: [{"partition_key", 10}, {"id", PKType.inf_max}],
+      limit: 3
+    }
+    {:ok, get_range_response2} = Client.get_range(@instance_name, var_get_range, next_start_primary_key)
+    assert length(get_range_response2.rows) == 3
+    assert get_range_response2.next_start_primary_key != nil
+
     rows
     |> Enum.with_index()
     |> Enum.map(fn({{primary_keys, attribute_columns}, index}) -> 

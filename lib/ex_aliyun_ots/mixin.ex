@@ -270,7 +270,7 @@ defmodule ExAliyunOts.Mixin do
     map_options(var_batch_delete_row, options)
   end
 
-  def execute_get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) do
+  def execute_get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_list(inclusive_start_primary_keys) do
     var_get_range = %Var.GetRange{
       table_name: table,
       inclusive_start_primary_keys: inclusive_start_primary_keys,
@@ -279,9 +279,22 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_options(var_get_range, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.get_range(instance, prepared_var, request_time)
+      Client.get_range(instance, prepared_var, nil, request_time)
     else
       Client.get_range(instance, prepared_var)
+    end
+  end
+  def execute_get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_binary(inclusive_start_primary_keys) do
+    var_get_range = %Var.GetRange{
+      table_name: table,
+      exclusive_end_primary_keys: exclusive_end_primary_keys
+    }
+    prepared_var = map_options(var_get_range, options)
+    request_time = Keyword.get(options, :request_time)
+    if request_time != nil do
+      Client.get_range(instance, prepared_var, inclusive_start_primary_keys, request_time)
+    else
+      Client.get_range(instance, prepared_var, inclusive_start_primary_keys)
     end
   end
 

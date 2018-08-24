@@ -67,8 +67,8 @@ defmodule ExAliyunOts.Client do
     call_transaction(instance_name, {:delete_row, encoded_request}, request_timeout)
   end
 
-  def get_range(instance_name, var_get_range, request_timeout \\ @request_timeout) do
-    encoded_request = Row.request_to_get_range(var_get_range)
+  def get_range(instance_name, var_get_range, next_start_primary_key \\ nil, request_timeout \\ @request_timeout) do
+    encoded_request = Row.request_to_get_range(var_get_range, next_start_primary_key)
     call_transaction(instance_name, {:get_range, encoded_request}, request_timeout)
   end
 
