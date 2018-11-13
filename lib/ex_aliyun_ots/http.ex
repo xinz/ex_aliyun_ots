@@ -113,22 +113,22 @@ defmodule ExAliyunOts.Http do
   plug Tesla.Middleware.Retry, delay: 500, max_retries: 10
 
   def client(instance, "/PutRow", request_body, decoder) do
-    Tesla.build_client([
+    Tesla.client([
       {ExAliyunOts.Http.Middleware, instance: instance, uri: "/PutRow", request_body: request_body, decoder: decoder, deserialize_row: true}
     ])
   end
   def client(instance, "/GetRow", request_body, decoder) do
-    Tesla.build_client([
+    Tesla.client([
       {ExAliyunOts.Http.Middleware, instance: instance, uri: "/GetRow", request_body: request_body, decoder: decoder, deserialize_row: true}
     ])
   end
   def client(instance, "/UpdateRow", request_body, decoder) do
-    Tesla.build_client([
+    Tesla.client([
       {ExAliyunOts.Http.Middleware, instance: instance, uri: "/UpdateRow", request_body: request_body, decoder: decoder, deserialize_row: true}
     ])
   end
   def client(instance, uri, request_body, decoder) do
-    Tesla.build_client([
+    Tesla.client([
       {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder}
     ])
   end

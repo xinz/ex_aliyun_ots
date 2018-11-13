@@ -528,6 +528,9 @@ defmodule SequenceSample do
 
 end
 ```
+## TODO
+
+1，实现新增的“原子计数器”，替换现有的Sequence
 
 ## License
 

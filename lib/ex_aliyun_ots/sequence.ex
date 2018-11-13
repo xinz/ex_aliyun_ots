@@ -29,7 +29,7 @@ defmodule ExAliyunOts.Sequence do
   end
 
   def next_value(instance_name, var_get_seq_next) do
-    result = retry_while with: exp_backoff() |> randomize() |> cap(@retry_delay_max) do
+    result = retry_while with: exponential_backoff() |> randomize() |> cap(@retry_delay_max) do
       case remote_next_value(instance_name, var_get_seq_next) do
         res = {:error, _error} ->
           {:cont, res}
