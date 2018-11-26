@@ -444,7 +444,10 @@ end
 defmodule CRUDSample do
   
   use ExAliyunOts.Mixin
-  
+
+  alias ExAliyunOts.Const.PKType
+  require PKType
+
   @instance "YOUR_INSTANCE_NAME"
   
   #
@@ -454,12 +457,10 @@ defmodule CRUDSample do
   #
   #
   def test() do
-    batch_get @instance_name, [
-      get(table_name1, [[{"key1", 1}, {"key2", "1"}]]),
-      get(table_name2, [{"key1", "tab2_id1"}],
-        columns_to_get: ["name", "age"],
-        filter: filter "age" >= 10),
-    ]
+    iterate_all_range @instance_name, table_name1,
+      [{"key1", 1}, {"key2", PKType.inf_min}],
+      [{"key1", 4}, {"key2", PKType.inf_max}],
+      direction: :forward
   end
 ```
 
