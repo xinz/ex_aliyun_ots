@@ -873,8 +873,8 @@ defmodule ExAliyunOts.PlainBuffer do
 
   def deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-          <<@vt_string::integer>>, <<value_size::little-integer-size(32)>>,
-          <<value::binary-size(value_size)>>, (<<timestamp_rest::binary>>)>>
+          <<@vt_string::integer>>, <<value_size::little-integer-size(32), value::binary-size(value_size)>>,
+          (<<timestamp_rest::binary>>)>>
       ) do
     timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
     {value, timestamp}
@@ -882,8 +882,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   def deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-          <<@vt_string::integer>>, <<value_size::little-integer-size(32)>>,
-          (<<value::binary-size(value_size)>>)>>
+          <<@vt_string::integer>>, (<<value_size::little-integer-size(32), value::binary-size(value_size)>>)>>
       ) do
     {value, nil}
   end
@@ -897,8 +896,8 @@ defmodule ExAliyunOts.PlainBuffer do
 
   def deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-          <<@vt_blob::integer>>, <<value_size::little-integer-size(32)>>,
-          <<value::binary-size(value_size)>>, (<<timestamp_rest::binary>>)>>
+          <<@vt_blob::integer>>, <<value_size::little-integer-size(32), value::binary-size(value_size)>>,
+          (<<timestamp_rest::binary>>)>>
       ) do
     timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
     {value, timestamp}
@@ -906,8 +905,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   def deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-          <<@vt_blob::integer>>, <<value_size::little-integer-size(32)>>,
-          (<<value::binary-size(value_size)>>)>>
+          <<@vt_blob::integer>>, (<<value_size::little-integer-size(32), value::binary-size(value_size)>>)>>
       ) do
     {value, nil}
   end
