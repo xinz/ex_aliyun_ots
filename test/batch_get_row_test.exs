@@ -62,7 +62,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
       {:ok, _result} = Client.put_row(@instance_name, var_put_row)
     end
     
-    requests = [
+    requests_with_not_existed_tables = [
       %Var.GetRow{
         table_name: table_name1,
         primary_keys: [[{"pkey1", 1}], [{"pkey1", 2}], [{"pkey1", 3}], [{"pkey1", 10}]]
@@ -76,10 +76,23 @@ defmodule ExAliyunOtsTest.BatchGetRow do
         primary_keys: [{"pk2", 10}]
       }
     ]
+
+    {:error, "OTSInternalServerErrorInternal server error."} = Client.batch_get_row(@instance_name, requests_with_not_existed_tables)
+
+    requests = [
+      %Var.GetRow{
+        table_name: table_name1,
+        primary_keys: [[{"pkey1", 1}], [{"pkey1", 2}], [{"pkey1", 3}], [{"pkey1", 10}]]
+      },
+      %Var.GetRow{
+        table_name: table_name2,
+        primary_keys: [[{"pk2", 10}, {"pk2_sec", 10}]]
+      },
+    ]
     
     {:ok, batch_get_row_response} = Client.batch_get_row(@instance_name, requests)
     tables = batch_get_row_response.tables
-    assert length(tables) == 3
+    assert length(tables) == 2
     Enum.with_index(tables)
     |> Enum.map(fn({table_in_reponse, index}) -> 
 
