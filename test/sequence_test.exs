@@ -17,7 +17,7 @@ defmodule ExAliyunOtsTest.Sequence do
     Process.sleep(3_000)
 
     # concurrency test
-    concurrency_size = 200
+    concurrency_size = 10
     stream = Task.async_stream(1..concurrency_size, fn(_index) -> 
       var_next_val = %Var.GetSequenceNextValue{
         name: sequence_name,
