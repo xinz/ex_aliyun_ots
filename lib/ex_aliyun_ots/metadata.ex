@@ -101,3 +101,78 @@ end
 defmodule ExAliyunOts.Var.GetSequenceNextValue do
   defstruct name: "", event: "default", starter: 0, increment_offset: 1
 end
+
+# SearchIndex
+
+defmodule ExAliyunOts.Var.Search do
+
+  defmodule IndexSetting do
+    defstruct number_of_shards: 1, routing_fields: [], routing_partition_size: nil
+  end
+
+  defmodule IndexSchema do
+    defstruct field_schemas: [], index_setting: %IndexSetting{}, index_sorts: [] 
+  end
+
+  defmodule CreateSearchIndexRequest do
+    defstruct table_name: "", index_name: "", index_schema: %IndexSchema{}
+  end
+
+  defmodule FieldSchema do
+    alias ExAliyunOts.Const.Search.FieldType
+    require FieldType
+    defstruct field_name: "", field_type: FieldType.keyword, index_options: nil, analyzer: "", index: true, enable_sort_and_agg: true, store: false, field_schemas: [], is_array: nil
+  end
+
+  defmodule FieldSort do
+    alias ExAliyunOts.Const.Search.SortOrder
+    require SortOrder
+    defstruct field_name: "", order: SortOrder.asc, mode: nil, nested_filter: nil
+  end
+  
+  defmodule GeoDistanceSort do
+    alias ExAliyunOts.Const.Search.{SortOrder, GeoDistanceType}
+    require SortOrder
+    require GeoDistanceType
+    defstruct field_name: "", points: [], order: SortOrder.asc, mode: nil, distance_type: GeoDistanceType.arc, nested_filter: nil
+  end
+  
+  defmodule ScoreSort do
+    alias ExAliyunOts.Const.Search.SortOrder
+    require SortOrder
+    defstruct order: SortOrder.asc
+  end
+  
+  defmodule PrimaryKeySort do
+    alias ExAliyunOts.Const.Search.SortOrder
+    require SortOrder
+    defstruct order: SortOrder.asc
+  end
+
+  defmodule ColumnsToGet do
+    alias ExAliyunOts.Const.Search.ColumnReturnType
+    require ColumnReturnType
+    defstruct return_type: ColumnReturnType.all, column_names: []
+  end
+
+  defmodule SearchQuery do
+    defstruct offset: 0, limit: 10, query: nil, collapse: nil, sort: nil, get_total_count: true, token: nil
+  end
+
+  defmodule SearchRequest do
+    defstruct table_name: "", index_name: "", columns_to_get: %ColumnsToGet{}, search_query: %SearchQuery{}, routing_values: nil
+  end
+
+  defmodule MatchQuery do
+    defstruct field_name: "", text: "", minimun_should_match: 1, operator: nil
+  end
+
+  defmodule MatchAllQuery do
+    defstruct []
+  end
+
+  defmodule MatchPhraseQuery do
+    defstruct field_name: "", text: ""
+  end
+
+end

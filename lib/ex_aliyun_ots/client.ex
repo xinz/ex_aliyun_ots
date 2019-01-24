@@ -8,7 +8,7 @@ defmodule ExAliyunOts.Client do
 
   @request_timeout 60_000
 
-  alias ExAliyunOts.Client.{Table, Row}
+  alias ExAliyunOts.Client.{Table, Row, Search}
 
   alias ExAliyunOts.PlainBuffer
 
@@ -87,6 +87,16 @@ defmodule ExAliyunOts.Client do
     call_transaction(instance_name, {:batch_write_row, encoded_request}, request_timeout)
   end
 
+  def create_search_index(instance_name, var_create_search_index, request_timeout \\ :infinity) do
+    encoded_request = Search.request_to_create_search_index(var_create_search_index)
+    call_transaction(instance_name, {:create_search_index, encoded_request}, request_timeout)
+  end
+
+  def search(instance_name, var_search_request, request_timeout \\ :infinity) do
+    encoded_request = Search.request_to_search(var_search_request)
+    call_transaction(instance_name, {:search, encoded_request}, request_timeout)
+  end
+
   def handle_call({:create_table, request_body}, _from, state) do
     result = Table.remote_create_table(state.instance, request_body)
     {:reply, result, state}
@@ -138,6 +148,21 @@ defmodule ExAliyunOts.Client do
   def handle_call({:batch_write_row, request_body}, _from, state) do
     result = Row.remote_batch_write_row(state.instance, request_body)
     {:reply, result, state}
+  end
+  def handle_call({:create_search_index, request_body}, _from, state) do
+    result = Search.remote_create_search_index(state.instance, request_body)
+    {:reply, result, state}
+  end
+  def handle_call({:search, request_body}, _from, state) do
+    result = Search.remote_search(state.instance, request_body)
+    prepared =
+      case result do
+        {:ok, search_result_response} ->
+          {:ok, %{search_result_response | rows: decode_rows(search_result_response.rows)}}
+        _ ->
+          result
+      end
+    {:reply, prepared, state}
   end
 
   defp splice_pool_name(instance_name) when is_bitstring(instance_name) do

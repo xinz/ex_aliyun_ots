@@ -79,3 +79,97 @@ defmodule ExAliyunOts.Const.ComparatorType do
   const :lt, :'CT_LESS_THAN'
   const :le, :'CT_LESS_EQUAL'
 end
+
+defmodule ExAliyunOts.Const.Search.FieldType do
+  import ExAliyunOts.Constants
+
+  const :long, :'LONG'
+  const :double, :'DOUBLE'
+  const :boolean, :'BOOLEAN'
+  const :keyword, :'KEYWORD'
+  const :text, :'TEXT'
+  const :nested, :'NESTED'
+  const :geo_point, :'GEO_POINT'
+end
+
+defmodule ExAliyunOts.Const.Search.QueryType do
+  import ExAliyunOts.Constants
+
+  const :match, :'MATCH_QUERY'
+  const :match_all, :'MATCH_ALL_QUERY'
+  const :match_phrase, :'MATCH_PHRASE_QUERY'
+  const :term, :'TERM_QUERY'
+  const :range, :'RANGE_QUERY'
+  const :prefix, :'PREFIX_QUERY'
+  const :bool, :'BOOL_QUERY'
+  const :const_score, :'CONST_SCORE_QUERY'
+  const :func_score, :'FUNCTION_SCORE_QUERY'
+  const :nested, :'NESTED_QUERY'
+  const :geo_bounding_box, :'GEO_BOUNDING_BOX_QUERY'
+  const :geo_distance, :'GEO_DISTANCE_QUERY'
+  const :geo_polygon, :'GEO_POLYGON_QUERY'
+  const :terms, :'TERMS_QUERY'
+end
+
+defmodule ExAliyunOts.Const.Search.QueryOperator do
+  import ExAliyunOts.Constants
+
+  const :or, :'OR'
+  const :and, :'AND'
+end
+
+defmodule ExAliyunOts.Const.Search.ScoreMode do
+  import ExAliyunOts.Constants
+
+  const :none, :'SCORE_MODE_NONE'
+  const :avg, :'SCORE_MODE_AVG'
+  const :max, :'SCORE_MODE_MAX'
+  const :total, :'SCORE_MODE_TOTAL'
+  const :min, :'SCORE_MODE_MIN'
+end
+
+defmodule ExAliyunOts.Const.Search.SortOrder do
+  import ExAliyunOts.Constants
+
+  const :asc, :'SORT_ORDER_ASC'
+  const :desc, :'SORT_ORDER_DESC'
+end
+
+defmodule ExAliyunOts.Const.Search.SortMode do
+  import ExAliyunOts.Constants
+
+  const :min, :'SORT_MODE_MIN'
+  const :max, :'SORT_MODE_MAX'
+  const :avg, :'SORT_MODE_AVG'
+end
+
+defmodule ExAliyunOts.Const.Search.GeoDistanceType do
+  import ExAliyunOts.Constants
+
+  const :arc, :'GEO_DISTANCE_ARC'
+  const :plane, :'GEO_DISTANCE_PLANE'
+end
+
+defmodule ExAliyunOts.Const.Search.ColumnReturnType do
+  import ExAliyunOts.Constants
+
+  const :all, :'RETURN_ALL'
+  const :specified, :'RETURN_SPECIFIED'
+  const :none, :'RETURN_NONE'
+end
+
+defmodule ExAliyunOts.Const.Search.IndexOptions do
+  import ExAliyunOts.Constants
+
+  const :docs, :'DOCS'
+  const :freqs, :'FREQS'
+  const :positions, :'POSITIONS'
+  const :offsets, :'OFFSETS'
+end
+
+defmodule ExAliyunOts.Const.Search.SyncPhase do
+  import ExAliyunOts.Constants
+
+  const :full, :'FULL'
+  const :incr, :'INCR'
+end
