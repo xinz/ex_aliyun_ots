@@ -87,7 +87,8 @@ defmodule ExAliyunOts.Client.Search do
           limit: search_query.limit,
           query: proto_query,
           sort: search_query.sort,
-          get_total_count: search_query.get_total_count
+          get_total_count: search_query.get_total_count,
+          token: search_query.token
         )
     proto_columns_to_get =
       ColumnsToGet.new(

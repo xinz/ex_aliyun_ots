@@ -55,7 +55,8 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
           query: %Search.MatchQuery{
             field_name: "age",
             text: "28"
-          }
+          },
+          limit: 1
         },
         columns_to_get: %Search.ColumnsToGet{
           return_type: ColumnReturnType.specified,
@@ -64,6 +65,24 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       }
     result = ExAliyunOts.Client.search(@instance_name, var_request)
     Logger.info "#{inspect result}"
+
+    {:ok, response} = result
+
+    var_request2 =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index",
+        search_query: %Search.SearchQuery{
+          query: %Search.MatchQuery{
+            field_name: "age",
+            text: "28"
+          },
+          limit: 1,
+          token: response.next_token
+        }
+      }
+    result2 = ExAliyunOts.Client.search(@instance_name, var_request2)
+    Logger.info "#{inspect result2}"
   end
 
 end
