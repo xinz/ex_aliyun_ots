@@ -1,10 +1,11 @@
 defmodule ExAliyunOts.Mixin do
 
   alias ExAliyunOts.Var
+  alias ExAliyunOts.Var.Search
   alias ExAliyunOts.Client
 
   #require Logger
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction}
+  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction, Search.QueryType, Search.ColumnReturnType}
 
   require PKType
   require OperationType
@@ -14,6 +15,8 @@ defmodule ExAliyunOts.Mixin do
   require ComparatorType
   require LogicOperator
   require Direction
+  require QueryType
+  require ColumnReturnType
 
   @regex_filter_options ~r/^(.+?)(\[.+?\])$/
 
@@ -93,6 +96,10 @@ defmodule ExAliyunOts.Mixin do
 
       def pagination(offset: offset, limit: limit) do
         execute_pagination(offset, limit)
+      end
+
+      def search(instance, table, index_name, options \\ Keyword.new()) do
+        execute_search(instance, table, index_name, options)
       end
 
     end
@@ -320,6 +327,20 @@ defmodule ExAliyunOts.Mixin do
     }
   end
 
+  def execute_search(instance, table, index_name, options) do
+    var_search_request = %Var.Search.SearchRequest{
+      table_name: table,
+      index_name: index_name
+    }
+    prepared_var = map_search_options(var_search_request, options)
+    request_time = Keyword.get(options, :request_time)
+    if request_time != nil do
+      Client.search(instance, prepared_var, request_time)
+    else
+      Client.search(instance, prepared_var)
+    end
+  end
+
   defp map_options(var, nil) do
     var
   end
@@ -338,6 +359,29 @@ defmodule ExAliyunOts.Mixin do
             Map.put(acc, key, map_stream_spec(value))
           :time_range ->
             Map.put(acc, key, map_time_range(value))
+          _ ->
+            Map.put(acc, key, value)
+        end
+      else
+        acc
+      end
+    end)
+  end
+
+  defp map_search_options(var, nil) do
+    var
+  end
+  defp map_search_options(var, options) do
+    options
+    |> Keyword.keys()
+    |> Enum.reduce(var, fn(key, acc) ->
+      value = Keyword.get(options, key)
+      if value != nil and Map.has_key?(var, key) do
+        case key do
+          :search_query ->
+            Map.put(acc, key, map_search_query(value))
+          :columns_to_get ->
+            Map.put(acc, key, map_columns_to_get(value))
           _ ->
             Map.put(acc, key, value)
         end
@@ -412,6 +456,54 @@ defmodule ExAliyunOts.Mixin do
   end
   defp map_direction(invalid_direction) do
     raise ExAliyunOts.Error, "invalid direction: #{inspect invalid_direction}"
+  end
+
+  defp map_search_query(search_query) when is_list(search_query) do
+    if not Keyword.keyword?(search_query), do: raise ExAliyunOts.Error, "input query: #{inspect search_query} required to be keyword"
+
+    {query, other_search_query_options} = Keyword.pop(search_query, :query, Keyword.new())
+
+    search_query = map_search_options(%Search.SearchQuery{}, other_search_query_options)
+
+    query_type = Keyword.get(query, :type)
+    var_query =
+      case query_type do
+        QueryType.match ->
+          map_search_options(%Search.MatchQuery{}, query)
+        QueryType.match_all ->
+          map_search_options(%Search.MatchAllQuery{}, query)
+        QueryType.match_phrase ->
+          map_search_options(%Search.MatchPhraseQuery{}, query)
+        _ ->
+          raise ExAliyunOts.Error, "not supported query: #{inspect query}"
+      end
+    Map.put(search_query, :query, var_query)
+  end
+
+  defp map_columns_to_get(value) when is_list(value) do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.specified,
+      column_names: value
+    }
+  end
+  defp map_columns_to_get({return_type, column_names} = value) when is_tuple(value) do
+    %Search.ColumnsToGet{
+      return_type: return_type,
+      column_names: column_names
+    }
+  end
+  defp map_columns_to_get(ColumnReturnType.all) do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.all
+    }
+  end
+  defp map_columns_to_get(ColumnReturnType.none) do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.none
+    }
+  end
+  defp map_columns_to_get(value) do
+    raise ExAliyunOts.Error, "invalid columns_to_get for search: #{inspect value}"
   end
 
   defp map_updates(options) do
