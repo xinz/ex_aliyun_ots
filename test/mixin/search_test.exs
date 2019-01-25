@@ -15,10 +15,10 @@ defmodule ExAliyunOts.MixinTest.Search do
     index_name = "test_search_index"
     result = 
       search @instance_name, table_name, index_name,
-      #columns_to_get: {ColumnReturnType.specified, ["class", "name"]},
+      columns_to_get: {ColumnReturnType.specified, ["class", "name"]},
       #columns_to_get: ColumnReturnType.none,
       #columns_to_get: ColumnReturnType.all,
-        columns_to_get: ["class"],
+      #columns_to_get: ["class"],
         search_query: [
           query: [
             type: QueryType.match,

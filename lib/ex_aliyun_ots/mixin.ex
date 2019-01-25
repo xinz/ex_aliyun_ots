@@ -486,7 +486,14 @@ defmodule ExAliyunOts.Mixin do
       column_names: value
     }
   end
-  defp map_columns_to_get({return_type, column_names} = value) when is_tuple(value) do
+  defp map_columns_to_get({return_type, column_names}) when is_list(column_names) do
+    if return_type not in [
+         ColumnReturnType.all(),
+         ColumnReturnType.none(),
+         ColumnReturnType.specified()
+       ],
+       do: raise(ExAliyunOts.Error, "invalid return_type: #{inspect return_type} in columns_to_get")
+
     %Search.ColumnsToGet{
       return_type: return_type,
       column_names: column_names
