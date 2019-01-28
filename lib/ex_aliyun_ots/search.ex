@@ -135,15 +135,17 @@ defmodule ExAliyunOts.Client.Search do
         store: var_field_schema.store
       )
 
-    if field_type == FieldType.nested() do
-      prepared_nested =
-        Enum.map(nested_field_schemas, fn nested_field_schema ->
-          iterate_all_field_schemas(nested_field_schema)
-        end)
-
-      Map.put(proto_field_schema, :field_schemas, prepared_nested)
-    else
-      Map.put(proto_field_schema, :is_array, var_field_schema.is_array)
+    cond do
+      field_type == FieldType.nested() ->
+        prepared_nested =
+          Enum.map(nested_field_schemas, fn nested_field_schema ->
+            iterate_all_field_schemas(nested_field_schema)
+          end)
+        Map.put(proto_field_schema, :field_schemas, prepared_nested)
+      field_type == FieldType.text() ->
+        Map.put(proto_field_schema, :doc_values, false)
+      true ->
+        Map.put(proto_field_schema, :is_array, var_field_schema.is_array)
     end
   end
 

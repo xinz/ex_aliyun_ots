@@ -46,6 +46,24 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     Logger.info "#{inspect result}"
   end
 
+  test "create search index - field type as text" do
+    var_request =
+      %Search.CreateSearchIndexRequest{
+        table_name: "test_table",
+        index_name: "test_search_index2",
+        index_schema: %Search.IndexSchema{
+          field_schemas: [
+            %Search.FieldSchema{
+              field_name: "name",
+              field_type: FieldType.text
+            },
+          ]
+        }
+      }
+    result = ExAliyunOts.Client.create_search_index(@instance_name, var_request)
+    Logger.info "#{inspect result}"
+  end
+
   test "search - match query" do
     var_request =
       %Search.SearchRequest{
