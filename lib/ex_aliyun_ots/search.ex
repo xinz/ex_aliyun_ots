@@ -20,15 +20,17 @@ defmodule ExAliyunOts.Client.Search do
     MatchQuery,
     MatchAllQuery,
     MatchPhraseQuery,
+    TermQuery,
   }
 
   alias ExAliyunOts.Http
   alias ExAliyunOts.Var.Search
-  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType}
+  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, VariantType}
 
   require FieldType
   require SortOrder
   require QueryType
+  require VariantType
 
   def request_to_create_search_index(%Search.CreateSearchIndexRequest{
         table_name: table_name,
@@ -111,6 +113,25 @@ defmodule ExAliyunOts.Client.Search do
       |> Http.client("/Search", request_body, &SearchResponse.decode/1)
       |> Http.post()
     result
+  end
+
+  defp term_to_bytes(VariantType.string, term) do
+    <<VariantType.string, byte_size(term)::little-integer-size(32), term::binary>>
+  end
+  defp term_to_bytes(VariantType.integer, term) do
+    <<VariantType.integer, term::little-integer-size(64)>>
+  end
+  defp term_to_bytes(VariantType.double, term) do
+    <<VariantType.double, term::float-little>>
+  end
+  defp term_to_bytes(VariantType.boolean, true) do
+    <<VariantType.boolean, 1>>
+  end
+  defp term_to_bytes(VariantType.boolean, false) do
+    <<VariantType.boolean, 0>>
+  end
+  defp term_to_bytes(invalid_type, _term) do
+    raise ExAliyunOts.Error, "invalid term type: #{inspect invalid_type}, please see `VariantType` for details."
   end
 
   defp iterate_all_field_schemas(var_field_schema) do
@@ -212,6 +233,18 @@ defmodule ExAliyunOts.Client.Search do
     Query.new(
       type: QueryType.match_phrase,
       query: MatchPhraseQuery.encode(proto_query)
+    )
+  end
+  defp prepare_query(%Search.TermQuery{
+           field_name: field_name,
+           term: term,
+           type: type
+         }) do
+    term_bytes = term_to_bytes(type, term)
+    proto_query = TermQuery.new(field_name: field_name, term: term_bytes)
+    Query.new(
+      type: QueryType.term,
+      query: TermQuery.encode(proto_query)
     )
   end
   defp prepare_query(query) do

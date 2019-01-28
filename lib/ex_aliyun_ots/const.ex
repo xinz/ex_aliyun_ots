@@ -99,6 +99,7 @@ defmodule ExAliyunOts.Const.Search.QueryType do
   const :match_all, :'MATCH_ALL_QUERY'
   const :match_phrase, :'MATCH_PHRASE_QUERY'
   const :term, :'TERM_QUERY'
+  const :terms, :'TERMS_QUERY'
   const :range, :'RANGE_QUERY'
   const :prefix, :'PREFIX_QUERY'
   const :bool, :'BOOL_QUERY'
@@ -108,7 +109,6 @@ defmodule ExAliyunOts.Const.Search.QueryType do
   const :geo_bounding_box, :'GEO_BOUNDING_BOX_QUERY'
   const :geo_distance, :'GEO_DISTANCE_QUERY'
   const :geo_polygon, :'GEO_POLYGON_QUERY'
-  const :terms, :'TERMS_QUERY'
 end
 
 defmodule ExAliyunOts.Const.Search.QueryOperator do
@@ -172,4 +172,13 @@ defmodule ExAliyunOts.Const.Search.SyncPhase do
 
   const :full, :'FULL'
   const :incr, :'INCR'
+end
+
+defmodule ExAliyunOts.Const.Search.VariantType do
+  import ExAliyunOts.Constants
+
+  const :integer, 0x0
+  const :double, 0x1
+  const :boolean, 0x2
+  const :string, 0x3
 end

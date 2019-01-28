@@ -8,9 +8,10 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   alias ExAliyunOts.Const.PKType
   require PKType
 
-  alias ExAliyunOts.Const.Search.{FieldType, ColumnReturnType}
+  alias ExAliyunOts.Const.Search.{FieldType, ColumnReturnType, VariantType}
   require FieldType
   require ColumnReturnType
+  require VariantType
 
   @instance_name "edc-ex-test"
 
@@ -101,6 +102,44 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       }
     result2 = ExAliyunOts.Client.search(@instance_name, var_request2)
     Logger.info "#{inspect result2}"
+  end
+
+  test "search - term query" do
+    var_request =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index2",
+        search_query: %Search.SearchQuery{
+        #          query: %Search.TermQuery{
+        #            field_name: "name",
+        #            term: "zouxin",
+        #            type: VariantType.string
+        #          },
+        #          query: %Search.TermQuery{
+        #            field_name: "score",
+        #            term: 99.71,
+        #            type: VariantType.double
+        #          },
+        #          query: %Search.TermQuery{
+        #            field_name: "is_actived",
+        #            term: true,
+        #            type: VariantType.boolean
+        #          },
+          query: %Search.TermQuery{
+            field_name: "age",
+            term: 31,
+            type: VariantType.integer
+          },
+          limit: 1
+        },
+        columns_to_get: %Search.ColumnsToGet{
+          return_type: ColumnReturnType.specified,
+          column_names: ["class", "name", "is_actived"]
+        }
+      }
+    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    Logger.info "#{inspect result}"
+
   end
 
 end
