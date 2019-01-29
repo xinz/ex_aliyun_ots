@@ -173,3 +173,12 @@ defmodule ExAliyunOts.Const.Search.SyncPhase do
   const :full, :'FULL'
   const :incr, :'INCR'
 end
+
+defmodule ExAliyunOts.Const.Search.SortType do
+  import ExAliyunOts.Constants
+
+  const :field, :field
+  const :geo_distance, :geo_distance
+  const :score, :score
+  const :pk, :pk
+end

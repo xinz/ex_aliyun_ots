@@ -5,7 +5,7 @@ defmodule ExAliyunOts.Mixin do
   alias ExAliyunOts.Client
 
   #require Logger
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction, Search.QueryType, Search.ColumnReturnType}
+  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction, Search.QueryType, Search.ColumnReturnType, Search.SortType}
 
   require PKType
   require OperationType
@@ -17,6 +17,7 @@ defmodule ExAliyunOts.Mixin do
   require Direction
   require QueryType
   require ColumnReturnType
+  require SortType
 
   @regex_filter_options ~r/^(.+?)(\[.+?\])$/
 
@@ -382,6 +383,8 @@ defmodule ExAliyunOts.Mixin do
             Map.put(acc, key, map_search_query(value))
           :columns_to_get ->
             Map.put(acc, key, map_columns_to_get(value))
+          :sort ->
+            Map.put(acc, key, map_search_sort(value))
           _ ->
             Map.put(acc, key, value)
         end
@@ -461,9 +464,9 @@ defmodule ExAliyunOts.Mixin do
   defp map_search_query(search_query) when is_list(search_query) do
     if not Keyword.keyword?(search_query), do: raise ExAliyunOts.Error, "input query: #{inspect search_query} required to be keyword"
 
-    {query, other_search_query_options} = Keyword.pop(search_query, :query, Keyword.new())
+    {query, rest_search_query_options} = Keyword.pop(search_query, :query, Keyword.new())
 
-    search_query = map_search_options(%Search.SearchQuery{}, other_search_query_options)
+    search_query = map_search_options(%Search.SearchQuery{}, rest_search_query_options)
 
     query_type = Keyword.get(query, :type)
     var_query =
@@ -474,6 +477,10 @@ defmodule ExAliyunOts.Mixin do
           map_search_options(%Search.MatchAllQuery{}, query)
         QueryType.match_phrase ->
           map_search_options(%Search.MatchPhraseQuery{}, query)
+        QueryType.term ->
+          map_search_options(%Search.TermQuery{}, query)
+        QueryType.terms ->
+          map_search_options(%Search.TermsQuery{}, query)
         _ ->
           raise ExAliyunOts.Error, "not supported query: #{inspect query}"
       end
@@ -511,6 +518,21 @@ defmodule ExAliyunOts.Mixin do
   end
   defp map_columns_to_get(value) do
     raise ExAliyunOts.Error, "invalid columns_to_get for search: #{inspect value}"
+  end
+
+  defp map_search_sort(nil) do
+    nil
+  end
+  defp map_search_sort(sorters) when is_list(sorters) do
+    Enum.map(sorters, fn(sorter) ->
+      {sorter_type, rest_sorter_options} = Keyword.pop(sorter, :type)
+      case sorter_type do
+        SortType.field ->
+          map_search_options(%Search.FieldSort{}, rest_sorter_options)
+        _ ->
+          raise ExAliyunOts.Error, "invalid sorter: #{inspect sorter}"
+      end
+    end)
   end
 
   defp map_updates(options) do
