@@ -40,10 +40,10 @@ defmodule ExAliyunOts.MixinTest.Search do
           query: [
             type: QueryType.term,
             field_name: "age",
-            term: 28
-          ]
-        ],
-        limit: 1
+            term: 25
+          ],
+          limit: 1
+        ]
     Logger.info "result: #{inspect result}"
   end
 
@@ -61,8 +61,7 @@ defmodule ExAliyunOts.MixinTest.Search do
             [type: SortType.field, field_name: "age", order: SortOrder.asc],
             [type: SortType.field, field_name: "name", order: SortOrder.asc]
           ]
-        ],
-        limit: 1
+        ]
     Logger.info "result: #{inspect result}"
   end
 
