@@ -102,6 +102,7 @@ defmodule ExAliyunOts.Const.Search.QueryType do
   const :terms, :'TERMS_QUERY'
   const :range, :'RANGE_QUERY'
   const :prefix, :'PREFIX_QUERY'
+  const :wildcard, :'WILDCARD_QUERY'
   const :bool, :'BOOL_QUERY'
   const :const_score, :'CONST_SCORE_QUERY'
   const :func_score, :'FUNCTION_SCORE_QUERY'

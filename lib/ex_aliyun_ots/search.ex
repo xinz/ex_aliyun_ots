@@ -22,6 +22,8 @@ defmodule ExAliyunOts.Client.Search do
     MatchPhraseQuery,
     TermQuery,
     TermsQuery,
+    PrefixQuery,
+    WildcardQuery
   }
 
   alias ExAliyunOts.Http
@@ -252,6 +254,26 @@ defmodule ExAliyunOts.Client.Search do
     Query.new(
       type: QueryType.terms,
       query: TermsQuery.encode(proto_query)
+    )
+  end
+  defp prepare_query(%Search.PrefixQuery{
+           field_name: field_name,
+           prefix: prefix
+         }) do
+    proto_query = PrefixQuery.new(field_name: field_name, prefix: prefix)
+    Query.new(
+      type: QueryType.prefix,
+      query: PrefixQuery.encode(proto_query)
+    )
+  end
+  defp prepare_query(%Search.WildcardQuery{
+           field_name: field_name,
+           value: value
+         }) do
+    proto_query = WildcardQuery.new(field_name: field_name, value: value)
+    Query.new(
+      type: QueryType.wildcard,
+      query: WildcardQuery.encode(proto_query)
     )
   end
   defp prepare_query(query) do

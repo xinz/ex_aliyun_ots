@@ -161,4 +161,52 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     Logger.info "#{inspect result}"
   end
 
+  test "search - prefix query" do
+    var_request =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index2",
+        search_query: %Search.SearchQuery{
+          query: %Search.PrefixQuery{
+            field_name: "name",
+            prefix: "z"
+          },
+          limit: 3,
+          sort: [
+            %Search.FieldSort{field_name: "age", order: SortOrder.desc}
+          ]
+        },
+        columns_to_get: %Search.ColumnsToGet{
+          return_type: ColumnReturnType.specified,
+          column_names: ["class", "name", "is_actived", "age"]
+        }
+      }
+    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    Logger.info "#{inspect result}"
+  end
+
+  test "search - wildcard query" do
+    var_request =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index2",
+        search_query: %Search.SearchQuery{
+          query: %Search.WildcardQuery{
+            field_name: "name",
+            value: "z*"
+          },
+          limit: 3,
+          sort: [
+            %Search.FieldSort{field_name: "age", order: SortOrder.desc}
+          ]
+        },
+        columns_to_get: %Search.ColumnsToGet{
+          return_type: ColumnReturnType.specified,
+          column_names: ["class", "name", "is_actived", "age"]
+        }
+      }
+    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    Logger.info "#{inspect result}"
+  end
+
 end

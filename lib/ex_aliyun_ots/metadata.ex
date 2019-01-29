@@ -183,4 +183,12 @@ defmodule ExAliyunOts.Var.Search do
     defstruct field_name: "", terms: []
   end
 
+  defmodule PrefixQuery do
+    defstruct field_name: "", prefix: nil
+  end
+
+  defmodule WildcardQuery do
+    defstruct field_name: "", value: nil
+  end
+
 end
