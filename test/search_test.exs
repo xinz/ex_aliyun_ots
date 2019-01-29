@@ -8,9 +8,10 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   alias ExAliyunOts.Const.PKType
   require PKType
 
-  alias ExAliyunOts.Const.Search.{FieldType, ColumnReturnType}
+  alias ExAliyunOts.Const.Search.{FieldType, ColumnReturnType, SortOrder}
   require FieldType
   require ColumnReturnType
+  require SortOrder
 
   @instance_name "edc-ex-test"
 
@@ -134,7 +135,30 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       }
     result = ExAliyunOts.Client.search(@instance_name, var_request)
     Logger.info "#{inspect result}"
+  end
 
+  test "search - terms query" do
+    var_request =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index2",
+        search_query: %Search.SearchQuery{
+          query: %Search.TermsQuery{
+            field_name: "age",
+            terms: [31, 28]
+          },
+          limit: 3,
+          sort: [
+            %Search.FieldSort{field_name: "age", order: SortOrder.desc}
+          ]
+        },
+        columns_to_get: %Search.ColumnsToGet{
+          return_type: ColumnReturnType.specified,
+          column_names: ["class", "name", "is_actived", "age"]
+        }
+      }
+    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    Logger.info "#{inspect result}"
   end
 
 end

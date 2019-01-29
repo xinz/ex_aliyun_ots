@@ -179,4 +179,8 @@ defmodule ExAliyunOts.Var.Search do
     defstruct field_name: "", term: nil
   end
 
+  defmodule TermsQuery do
+    defstruct field_name: "", terms: []
+  end
+
 end

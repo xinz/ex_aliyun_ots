@@ -21,6 +21,7 @@ defmodule ExAliyunOts.Client.Search do
     MatchAllQuery,
     MatchPhraseQuery,
     TermQuery,
+    TermsQuery,
   }
 
   alias ExAliyunOts.Http
@@ -85,14 +86,12 @@ defmodule ExAliyunOts.Client.Search do
         },
         search_query: search_query,
       }) do
-    proto_query = prepare_query(search_query.query)
-
     proto_search_query =
       SearchQuery.new(
           offset: search_query.offset,
           limit: search_query.limit,
-          query: proto_query,
-          sort: search_query.sort,
+          query: prepare_query(search_query.query),
+          sort: prepare_sort(search_query.sort),
           get_total_count: search_query.get_total_count,
           token: search_query.token
         )
@@ -174,18 +173,10 @@ defmodule ExAliyunOts.Client.Search do
     end
   end
 
-  defp prepare_sort([]) do
-    nil
-  end
-
-  defp prepare_sort(nil) do
-    nil
-  end
-
-  defp prepare_sort(index_sorts) when is_list(index_sorts) do
+  defp prepare_sort(sorters) when is_list(sorters) do
     prepared_sorters =
-      Enum.map(index_sorts, fn index_sort ->
-        case index_sort do
+      Enum.map(sorters, fn sorter ->
+        case sorter do
           %Search.FieldSort{field_name: field_name, order: order} ->
             if order not in [SortOrder.asc(), SortOrder.desc()] do
               raise ExAliyunOts.Error, "Invalid sort order: #{inspect(order)}"
@@ -194,13 +185,15 @@ defmodule ExAliyunOts.Client.Search do
             Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order))
 
           _not_implemented_yet ->
-            Logger.info("** index_sort as #{inspect(index_sort)} is not implemented yet.")
+            Logger.error("** #{inspect(sorter)} sorter is not implemented yet.")
             nil
         end
       end)
       |> Enum.filter(fn sorter -> sorter != nil end)
-
     Sort.new(sorter: prepared_sorters)
+  end
+  defp prepare_sort(nil) do
+    nil
   end
 
   defp prepare_index_setting(setting) do
@@ -248,6 +241,17 @@ defmodule ExAliyunOts.Client.Search do
     Query.new(
       type: QueryType.term,
       query: TermQuery.encode(proto_query)
+    )
+  end
+  defp prepare_query(%Search.TermsQuery{
+           field_name: field_name,
+           terms: terms
+         }) do
+    terms_bytes = Enum.map(terms, fn(term) -> term_to_bytes(term) end)
+    proto_query = TermsQuery.new(field_name: field_name, terms: terms_bytes)
+    Query.new(
+      type: QueryType.terms,
+      query: TermsQuery.encode(proto_query)
     )
   end
   defp prepare_query(query) do
