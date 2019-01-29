@@ -8,10 +8,9 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   alias ExAliyunOts.Const.PKType
   require PKType
 
-  alias ExAliyunOts.Const.Search.{FieldType, ColumnReturnType, VariantType}
+  alias ExAliyunOts.Const.Search.{FieldType, ColumnReturnType}
   require FieldType
   require ColumnReturnType
-  require VariantType
 
   @instance_name "edc-ex-test"
 
@@ -113,22 +112,18 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
         #          query: %Search.TermQuery{
         #            field_name: "name",
         #            term: "zouxin",
-        #            type: VariantType.string
         #          },
         #          query: %Search.TermQuery{
         #            field_name: "score",
         #            term: 99.71,
-        #            type: VariantType.double
         #          },
         #          query: %Search.TermQuery{
         #            field_name: "is_actived",
         #            term: true,
-        #            type: VariantType.boolean
         #          },
           query: %Search.TermQuery{
             field_name: "age",
-            term: 31,
-            type: VariantType.integer
+            term: 31
           },
           limit: 1
         },

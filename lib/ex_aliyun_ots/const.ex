@@ -173,12 +173,3 @@ defmodule ExAliyunOts.Const.Search.SyncPhase do
   const :full, :'FULL'
   const :incr, :'INCR'
 end
-
-defmodule ExAliyunOts.Const.Search.VariantType do
-  import ExAliyunOts.Constants
-
-  const :integer, 0x0
-  const :double, 0x1
-  const :boolean, 0x2
-  const :string, 0x3
-end

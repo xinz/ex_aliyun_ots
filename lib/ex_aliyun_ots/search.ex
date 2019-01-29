@@ -25,12 +25,16 @@ defmodule ExAliyunOts.Client.Search do
 
   alias ExAliyunOts.Http
   alias ExAliyunOts.Var.Search
-  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, VariantType}
+  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType}
 
   require FieldType
   require SortOrder
   require QueryType
-  require VariantType
+
+  @variant_type_integer 0x0
+  @variant_type_double 0x1
+  @variant_type_boolean 0x2
+  @variant_type_string 0x3
 
   def request_to_create_search_index(%Search.CreateSearchIndexRequest{
         table_name: table_name,
@@ -115,23 +119,23 @@ defmodule ExAliyunOts.Client.Search do
     result
   end
 
-  defp term_to_bytes(VariantType.string, term) do
-    <<VariantType.string, byte_size(term)::little-integer-size(32), term::binary>>
+  defp term_to_bytes(term) when is_bitstring(term) do
+    <<@variant_type_string, byte_size(term)::little-integer-size(32), term::binary>>
   end
-  defp term_to_bytes(VariantType.integer, term) do
-    <<VariantType.integer, term::little-integer-size(64)>>
+  defp term_to_bytes(term) when is_integer(term) do
+    <<@variant_type_integer, term::little-integer-size(64)>>
   end
-  defp term_to_bytes(VariantType.double, term) do
-    <<VariantType.double, term::float-little>>
+  defp term_to_bytes(term) when is_float(term) do
+    <<@variant_type_double, term::float-little>>
   end
-  defp term_to_bytes(VariantType.boolean, true) do
-    <<VariantType.boolean, 1>>
+  defp term_to_bytes(true) do
+    <<@variant_type_boolean, 1>>
   end
-  defp term_to_bytes(VariantType.boolean, false) do
-    <<VariantType.boolean, 0>>
+  defp term_to_bytes(false) do
+    <<@variant_type_boolean, 0>>
   end
-  defp term_to_bytes(invalid_type, _term) do
-    raise ExAliyunOts.Error, "invalid term type: #{inspect invalid_type}, please see `VariantType` for details."
+  defp term_to_bytes(term) do
+    raise ExAliyunOts.Error, "invalid type of term: #{inspect term}, please use string/integer/float/boolean."
   end
 
   defp iterate_all_field_schemas(var_field_schema) do
@@ -237,10 +241,9 @@ defmodule ExAliyunOts.Client.Search do
   end
   defp prepare_query(%Search.TermQuery{
            field_name: field_name,
-           term: term,
-           type: type
+           term: term
          }) do
-    term_bytes = term_to_bytes(type, term)
+    term_bytes = term_to_bytes(term)
     proto_query = TermQuery.new(field_name: field_name, term: term_bytes)
     Query.new(
       type: QueryType.term,

@@ -176,8 +176,7 @@ defmodule ExAliyunOts.Var.Search do
   end
 
   defmodule TermQuery do
-    alias ExAliyunOts.Const.Search.VariantType
-    require VariantType
-    defstruct field_name: "", term: nil, type: VariantType.string
+    defstruct field_name: "", term: nil
   end
+
 end
