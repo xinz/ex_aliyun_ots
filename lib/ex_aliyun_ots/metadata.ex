@@ -187,6 +187,10 @@ defmodule ExAliyunOts.Var.Search do
     defstruct field_name: "", prefix: nil
   end
 
+  defmodule RangeQuery do
+    defstruct field_name: "", from: nil, to: nil, include_lower: true, include_upper: true
+  end
+
   defmodule WildcardQuery do
     defstruct field_name: "", value: nil
   end

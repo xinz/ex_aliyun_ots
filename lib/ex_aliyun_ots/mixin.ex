@@ -485,6 +485,8 @@ defmodule ExAliyunOts.Mixin do
           map_search_options(%Search.PrefixQuery{}, query)
         QueryType.wildcard ->
           map_search_options(%Search.WildcardQuery{}, query)
+        QueryType.range ->
+          map_search_options(%Search.RangeQuery{}, query)
         _ ->
           raise ExAliyunOts.Error, "not supported query: #{inspect query}"
       end

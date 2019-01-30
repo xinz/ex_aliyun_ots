@@ -23,7 +23,8 @@ defmodule ExAliyunOts.Client.Search do
     TermQuery,
     TermsQuery,
     PrefixQuery,
-    WildcardQuery
+    WildcardQuery,
+    RangeQuery
   }
 
   alias ExAliyunOts.Http
@@ -274,6 +275,32 @@ defmodule ExAliyunOts.Client.Search do
     Query.new(
       type: QueryType.wildcard,
       query: WildcardQuery.encode(proto_query)
+    )
+  end
+  defp prepare_query(%Search.RangeQuery{
+           field_name: field_name,
+           from: from,
+           to: to,
+           include_lower: include_lower,
+           include_upper: include_upper
+         }) do
+    # `from` value is lower value, and `to` value is upper value.
+    # if both of them are not nil, we should set "`from` <= `to`" as expected.
+    cond do
+      from == nil and to == nil ->
+        raise ExAliyunOts.Error, "No `from` or `to` specified for range query"
+      from != nil and to != nil and from > to ->
+        raise ExAliyunOts.Error, "Require `from` value should be less than or equal to `to` value"
+      true ->
+        :ok
+    end
+
+    bytes_from = if from == nil, do: nil, else: term_to_bytes(from)
+    bytes_to = if to == nil, do: nil, else: term_to_bytes(to)
+    proto_query = RangeQuery.new(field_name: field_name, range_from: bytes_from, range_to: bytes_to, include_lower: include_lower, include_upper: include_upper)
+    Query.new(
+      type: QueryType.range,
+      query: RangeQuery.encode(proto_query)
     )
   end
   defp prepare_query(query) do

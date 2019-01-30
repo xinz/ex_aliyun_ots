@@ -209,4 +209,28 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     Logger.info "#{inspect result}"
   end
 
+  test "search - range query" do
+    var_request =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index2",
+        search_query: %Search.SearchQuery{
+          query: %Search.RangeQuery{
+            field_name: "age",
+            from: 25,
+            to: 28
+          },
+          sort: [
+            %Search.FieldSort{field_name: "age", order: SortOrder.desc}
+          ]
+        },
+        columns_to_get: %Search.ColumnsToGet{
+          return_type: ColumnReturnType.specified,
+          column_names: ["class", "name", "is_actived", "age"]
+        }
+      }
+    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    Logger.info "#{inspect result}"
+  end
+
 end

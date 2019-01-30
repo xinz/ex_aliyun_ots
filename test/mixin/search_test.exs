@@ -103,5 +103,26 @@ defmodule ExAliyunOts.MixinTest.Search do
     Logger.info "result: #{inspect result}"
   end
 
+  test "range query" do
+    index_name = "test_search_index2"
+    result =
+      search @instance_name, @table_name, index_name,
+        search_query: [
+          query: [
+            type: QueryType.range,
+            field_name: "bir",
+            from: "1986-01-01",
+            to: "1990-01-01",
+            include_upper: false, # `include_upper` as true and `include_lower` as true by default
+            include_lower: false 
+          ],
+          sort: [
+            [type: SortType.field, field_name: "age", order: SortOrder.desc],
+            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+          ]
+        ],
+        columns_to_get: ["age", "name", "bir"]
+    Logger.info "result: #{inspect result}"
+  end
 
 end
