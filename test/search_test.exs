@@ -233,4 +233,76 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     Logger.info "#{inspect result}"
   end
 
+
+  test "search - bool query with must/must_not" do
+    var_request =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index2",
+        search_query: %Search.SearchQuery{
+          query: %Search.BoolQuery{
+            must: [
+              %Search.RangeQuery{
+                field_name: "age",
+                from: 25,
+                to: 28
+              },
+            ],
+            must_not: [
+              %Search.TermQuery{
+                field_name: "bir",
+                term: "1990-02-03"
+              },
+              %Search.TermQuery{
+                field_name: "bir",
+                term: "1990-12-10"
+              },
+            ],
+          },
+          sort: [
+            %Search.FieldSort{field_name: "age", order: SortOrder.desc}
+          ]
+        },
+        columns_to_get: %Search.ColumnsToGet{
+          return_type: ColumnReturnType.specified,
+          column_names: ["class", "name", "is_actived", "age"]
+        }
+      }
+    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    Logger.info "#{inspect result}"
+  end
+
+  test "search - bool query with should" do
+    var_request =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index2",
+        search_query: %Search.SearchQuery{
+          query: %Search.BoolQuery{
+            should: [
+              %Search.TermQuery{
+                field_name: "bir",
+                term: "1990-02-03"
+              },
+              %Search.TermQuery{
+                field_name: "bir",
+                term: "1990-12-10"
+              },
+            ],
+            minimum_should_match: 1 # if not explicitly set this value and `should` list is not empty, will set this value as 1 by default
+          },
+          sort: [
+            %Search.FieldSort{field_name: "age", order: SortOrder.desc}
+          ]
+        },
+        columns_to_get: %Search.ColumnsToGet{
+          return_type: ColumnReturnType.specified,
+          column_names: ["class", "name", "is_actived", "age"]
+        }
+      }
+    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    Logger.info "#{inspect result}"
+
+  end
+
 end

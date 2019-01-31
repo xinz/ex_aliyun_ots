@@ -164,7 +164,7 @@ defmodule ExAliyunOts.Var.Search do
   end
 
   defmodule MatchQuery do
-    defstruct field_name: "", text: "", minimun_should_match: 1, operator: nil
+    defstruct field_name: "", text: "", minimum_should_match: 1, operator: nil
   end
 
   defmodule MatchAllQuery do
@@ -193,6 +193,10 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule WildcardQuery do
     defstruct field_name: "", value: nil
+  end
+
+  defmodule BoolQuery do
+    defstruct must: [], must_not: [], filter: [], should: [], minimum_should_match: nil
   end
 
 end

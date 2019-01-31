@@ -24,7 +24,8 @@ defmodule ExAliyunOts.Client.Search do
     TermsQuery,
     PrefixQuery,
     WildcardQuery,
-    RangeQuery
+    RangeQuery,
+    BoolQuery
   }
 
   alias ExAliyunOts.Http
@@ -301,6 +302,42 @@ defmodule ExAliyunOts.Client.Search do
     Query.new(
       type: QueryType.range,
       query: RangeQuery.encode(proto_query)
+    )
+  end
+  defp prepare_query(%Search.BoolQuery{
+           must: must,
+           must_not: must_not,
+           filter: filter,
+           should: should,
+           minimum_should_match: minimum_should_match
+         }) do
+    must_queries = Enum.map(must, fn(query) -> prepare_query(query) end)
+    must_not_queries = Enum.map(must_not, fn(query) -> prepare_query(query) end)
+    filter_queries = Enum.map(filter, fn(query) -> prepare_query(query) end)
+
+    should_queries = Enum.map(should, fn(query) -> prepare_query(query) end)
+    should_queries_size = length(should_queries)
+
+    minimum_should_match =
+      if should_queries_size > 0 do
+        cond do
+          minimum_should_match == nil ->
+            1
+          not is_integer(minimum_should_match) ->
+            raise ExAliyunOts.Error, "Invalid minimum_should_match: #{inspect minimum_should_match}, should be integer"
+          minimum_should_match > should_queries_size ->
+            raise ExAliyunOts.Error, "Invalid minimum_should_match: #{inspect minimum_should_match}, should be less than or equal to the size of should queries (size: #{inspect minimum_should_match})"
+          true ->
+            minimum_should_match
+        end
+      else
+        # if `should_queries` is empty list, should set `minimum_should_match` as nil
+        nil
+      end
+    proto_query = BoolQuery.new(must_queries: must_queries, must_not_queries: must_not_queries, filter_queries: filter_queries, should_queries: should_queries, minimum_should_match: minimum_should_match)
+    Query.new(
+      type: QueryType.bool,
+      query: BoolQuery.encode(proto_query)
     )
   end
   defp prepare_query(query) do

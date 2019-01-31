@@ -385,6 +385,22 @@ defmodule ExAliyunOts.Mixin do
             Map.put(acc, key, map_columns_to_get(value))
           :sort ->
             Map.put(acc, key, map_search_sort(value))
+          :must ->
+            # for BoolQuery
+            queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+            Map.put(acc, key, queries)
+          :must_not ->
+            # for BoolQuery
+            queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+            Map.put(acc, key, queries)
+          :filter ->
+            # for BoolQuery
+            queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+            Map.put(acc, key, queries)
+          :should ->
+            # for BoolQuery
+            queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+            Map.put(acc, key, queries)
           _ ->
             Map.put(acc, key, value)
         end
@@ -468,29 +484,37 @@ defmodule ExAliyunOts.Mixin do
 
     search_query = map_search_options(%Search.SearchQuery{}, rest_search_query_options)
 
-    query_type = Keyword.get(query, :type)
-    var_query =
-      case query_type do
-        QueryType.match ->
-          map_search_options(%Search.MatchQuery{}, query)
-        QueryType.match_all ->
-          map_search_options(%Search.MatchAllQuery{}, query)
-        QueryType.match_phrase ->
-          map_search_options(%Search.MatchPhraseQuery{}, query)
-        QueryType.term ->
-          map_search_options(%Search.TermQuery{}, query)
-        QueryType.terms ->
-          map_search_options(%Search.TermsQuery{}, query)
-        QueryType.prefix ->
-          map_search_options(%Search.PrefixQuery{}, query)
-        QueryType.wildcard ->
-          map_search_options(%Search.WildcardQuery{}, query)
-        QueryType.range ->
-          map_search_options(%Search.RangeQuery{}, query)
-        _ ->
-          raise ExAliyunOts.Error, "not supported query: #{inspect query}"
-      end
+    var_query = map_query_details(query)
+
     Map.put(search_query, :query, var_query)
+  end
+
+  defp map_query_details(query) when is_list(query) do
+    case Keyword.get(query, :type) do
+      QueryType.match ->
+        map_search_options(%Search.MatchQuery{}, query)
+      QueryType.match_all ->
+        map_search_options(%Search.MatchAllQuery{}, query)
+      QueryType.match_phrase ->
+        map_search_options(%Search.MatchPhraseQuery{}, query)
+      QueryType.term ->
+        map_search_options(%Search.TermQuery{}, query)
+      QueryType.terms ->
+        map_search_options(%Search.TermsQuery{}, query)
+      QueryType.prefix ->
+        map_search_options(%Search.PrefixQuery{}, query)
+      QueryType.wildcard ->
+        map_search_options(%Search.WildcardQuery{}, query)
+      QueryType.range ->
+        map_search_options(%Search.RangeQuery{}, query)
+      QueryType.bool ->
+        map_search_options(%Search.BoolQuery{}, query)
+      _ ->
+        raise ExAliyunOts.Error, "Not supported query when map query details: #{inspect query}"
+    end
+  end
+  defp map_query_details(query) do
+    raise ExAliyunOts.Error, "Input invalid query to map query details: #{inspect query}"
   end
 
   defp map_columns_to_get(value) when is_list(value) do
