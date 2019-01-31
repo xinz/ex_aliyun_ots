@@ -210,9 +210,9 @@ defmodule ExAliyunOts.Client.Search do
   defp prepare_query(%Search.MatchQuery{
          field_name: field_name,
          text: text,
-         minimun_should_match: minimun_should_match
+         minimum_should_match: minimum_should_match
        }) do
-    proto_query = MatchQuery.new(field_name: field_name, text: text, minimun_should_match: minimun_should_match) 
+    proto_query = MatchQuery.new(field_name: field_name, text: text, minimum_should_match: minimum_should_match)
     Query.new(
       type: QueryType.match,
       query: MatchQuery.encode(proto_query)
