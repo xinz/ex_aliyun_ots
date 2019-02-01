@@ -3,6 +3,7 @@ defmodule ExAliyunOts.Protocol do
 
   @api_version "2015-12-31"
   @printable_ascii_beginning_dec 32
+  @printable_ascii_end_dec 126
 
   def add_x_ots_to_headers(instance, uri, request_body) do
     request = %ExAliyunOts.HTTPRequest{
@@ -17,7 +18,7 @@ defmodule ExAliyunOts.Protocol do
     # see https://en.wikipedia.org/wiki/ASCII#ASCII_printable_characters
     binary
     |> :binary.bin_to_list()
-    |> Enum.filter(fn(x) -> x >= @printable_ascii_beginning_dec end)
+    |> Enum.filter(fn(x) -> x >= @printable_ascii_beginning_dec and x <= @printable_ascii_end_dec end)
     |> List.to_string
   end
 
