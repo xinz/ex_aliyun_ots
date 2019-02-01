@@ -338,13 +338,13 @@ defmodule ExAliyunOts.PlainBuffer do
         {updated_buffer, cell_checksum}
 
       is_float(value) ->
-        value_to_binary = <<value::float>>
-        <<long::unsigned-big-integer-64>> = value_to_binary
+        value_to_binary = <<value::float-little>>
+        <<long::unsigned-little-integer-64>> = value_to_binary
 
         updated_buffer =
           updated_buffer ++
             [<<1 + @little_endian_64_size::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_double)] ++ [reverse_bytes(value_to_binary)]
+            [byte_to_binary(@vt_double)] ++ [value_to_binary]
 
         cell_checksum = cell_checksum |> CRC.crc_int8(@vt_double) |> CRC.crc_int64(long)
         {updated_buffer, cell_checksum}
@@ -405,7 +405,7 @@ defmodule ExAliyunOts.PlainBuffer do
         [byte_to_binary(@vt_blob)] ++ [<<value_size::little-integer-size(32)>>] ++ [value]
 
       is_float(value) ->
-        value_to_binary = <<value::float>>
+        value_to_binary = <<value::float-little>>
         [byte_to_binary(@vt_double)] ++ [value_to_binary]
 
       true ->
@@ -502,15 +502,6 @@ defmodule ExAliyunOts.PlainBuffer do
   defp buffer_list_to_str(buffer_list) do
     Enum.reduce(buffer_list, fn buffer_item, acc ->
       <<acc::binary, buffer_item::binary>>
-    end)
-  end
-
-  defp reverse_bytes(bytes_binary) do
-    bytes_binary
-    |> :binary.bin_to_list()
-    |> Enum.reverse()
-    |> Enum.reduce(<<>>, fn byte, acc ->
-      acc <> <<byte>>
     end)
   end
 
@@ -849,18 +840,16 @@ defmodule ExAliyunOts.PlainBuffer do
 
   def deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-          <<@vt_double::integer>>, <<value::float>>, (<<timestamp_rest::binary>>)>>
+          <<@vt_double::integer>>, <<value::float-little>>, (<<timestamp_rest::binary>>)>>
       ) do
-    <<value::float>> = reverse_bytes(<<value::float>>)
     timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
     {value, timestamp}
   end
 
   def deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-          <<@vt_double::integer>>, (<<value::float>>)>>
+          <<@vt_double::integer>>, (<<value::float-little>>)>>
       ) do
-    <<value::float>> = reverse_bytes(<<value::float>>)
     {value, nil}
   end
 
