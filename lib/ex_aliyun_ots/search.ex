@@ -171,7 +171,7 @@ defmodule ExAliyunOts.Client.Search do
               iterate_all_field_schemas(sub_field_schema)
             end
           end)
-        # nested field schema not supports `:index` | `:store` | `:doc_values definition`
+        # nested field schema not supports `:index` | `:store` | `:doc_values` definition
         proto_field_schema
         |> Map.put(:field_schemas, prepared_sub_field_schemas)
         |> Map.put(:index, nil)
