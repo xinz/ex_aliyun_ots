@@ -25,16 +25,18 @@ defmodule ExAliyunOts.Client.Search do
     PrefixQuery,
     WildcardQuery,
     RangeQuery,
-    BoolQuery
+    BoolQuery,
+    NestedQuery
   }
 
   alias ExAliyunOts.Http
   alias ExAliyunOts.Var.Search
-  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType}
+  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, ScoreMode}
 
   require FieldType
   require SortOrder
   require QueryType
+  require ScoreMode
 
   @variant_type_integer 0x0
   @variant_type_double 0x1
@@ -143,16 +145,12 @@ defmodule ExAliyunOts.Client.Search do
 
   defp iterate_all_field_schemas(var_field_schema) do
     field_type = var_field_schema.field_type
-    nested_field_schemas = var_field_schema.field_schemas
+    sub_field_schemas = var_field_schema.field_schemas
+    size_sub_field_schemas = length(sub_field_schemas)
 
-    if field_type == FieldType.nested() and nested_field_schemas == [] do
-      raise ExAliyunOts.Error,
-            "Invalid nested type field_schema with an empty nested list: #{
-              inspect(var_field_schema)
-            }"
+    if field_type == FieldType.nested() and (size_sub_field_schemas == 0 and size_sub_field_schemas > 25) do
+      raise ExAliyunOts.Error, "Invalid nested type field schema with : #{size_sub_field_schemas} sub field schemas, the valid range size of sub field schemas is [1, 25]"
     end
-
-    Logger.info("var_field_schema: #{inspect(var_field_schema)}")
 
     proto_field_schema =
       FieldSchema.new(
@@ -165,11 +163,21 @@ defmodule ExAliyunOts.Client.Search do
 
     cond do
       field_type == FieldType.nested() ->
-        prepared_nested =
-          Enum.map(nested_field_schemas, fn nested_field_schema ->
-            iterate_all_field_schemas(nested_field_schema)
+        prepared_sub_field_schemas =
+          Enum.map(sub_field_schemas, fn sub_field_schema ->
+            if sub_field_schema.field_type == FieldType.nested() do
+              raise ExAliyunOts.Error, "Mapping depth in the nested attribute column only supports one level, cannot nest the nested type of field schema as the sub field schemas"
+            else
+              iterate_all_field_schemas(sub_field_schema)
+            end
           end)
-        Map.put(proto_field_schema, :field_schemas, prepared_nested)
+        # nested field schema not supports `:index` | `:store` | `:doc_values definition`
+        proto_field_schema
+        |> Map.put(:field_schemas, prepared_sub_field_schemas)
+        |> Map.put(:index, nil)
+        |> Map.put(:store, nil)
+        |> Map.put(:doc_values, nil)
+
       field_type == FieldType.text() ->
         Map.put(proto_field_schema, :doc_values, false)
       true ->
@@ -177,6 +185,12 @@ defmodule ExAliyunOts.Client.Search do
     end
   end
 
+  defp prepare_sort([]) do
+    nil
+  end
+  defp prepare_sort(nil) do
+    nil
+  end
   defp prepare_sort(sorters) when is_list(sorters) do
     prepared_sorters =
       Enum.map(sorters, fn sorter ->
@@ -195,9 +209,6 @@ defmodule ExAliyunOts.Client.Search do
       end)
       |> Enum.filter(fn sorter -> sorter != nil end)
     Sort.new(sorter: prepared_sorters)
-  end
-  defp prepare_sort(nil) do
-    nil
   end
 
   defp prepare_index_setting(setting) do
@@ -340,8 +351,24 @@ defmodule ExAliyunOts.Client.Search do
       query: BoolQuery.encode(proto_query)
     )
   end
+  defp prepare_query(%Search.NestedQuery{
+           path: path,
+           query: query,
+           score_mode: score_mode
+         }) do
+    if score_mode not in valid_score_modes(), do: raise ExAliyunOts.Error, "Invalid score_mode: #{inspect score_mode}"
+    proto_inner_query = prepare_query(query)
+    proto_query = NestedQuery.new(path: path, query: proto_inner_query, score_mode: score_mode)
+    Query.new(
+      type: QueryType.nested,
+      query: NestedQuery.encode(proto_query)
+    )
+  end
   defp prepare_query(query) do
     raise ExAliyunOts.Error, "Not supported query: #{inspect query}"
   end
 
+  defp valid_score_modes() do
+    [ScoreMode.none, ScoreMode.avg, ScoreMode.max, ScoreMode.total, ScoreMode.min]
+  end
 end

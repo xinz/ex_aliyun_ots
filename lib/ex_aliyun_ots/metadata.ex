@@ -121,7 +121,7 @@ defmodule ExAliyunOts.Var.Search do
   defmodule FieldSchema do
     alias ExAliyunOts.Const.Search.FieldType
     require FieldType
-    defstruct field_name: "", field_type: FieldType.keyword, index_options: nil, analyzer: "", index: true, enable_sort_and_agg: true, store: false, field_schemas: [], is_array: nil
+    defstruct field_name: "", field_type: FieldType.keyword, index_options: nil, analyzer: "", index: true, enable_sort_and_agg: true, store: true, field_schemas: [], is_array: nil
   end
 
   defmodule FieldSort do
@@ -199,4 +199,13 @@ defmodule ExAliyunOts.Var.Search do
     defstruct must: [], must_not: [], filter: [], should: [], minimum_should_match: nil
   end
 
+  defmodule NestedQuery do
+    alias ExAliyunOts.Const.Search.ScoreMode
+    require ScoreMode
+
+    # `score_mode`:
+    # 多值字段获取文档得分的模式，一个字段多个值的情况下，采用哪个值来进行排序
+    # 例如：有一个小学生学生状态监测系统，其中存了小学生的身高，但是小学生身高一直在长，所以“身高”这个字段，采用了array的方式。然后我们查询的时候，想根据身高进行排序，就可以设置`score_mode`为`max`，这样就能得到最近的一次身高。
+    defstruct path: "", query: nil, score_mode: ScoreMode.none
+  end
 end

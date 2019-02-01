@@ -47,6 +47,36 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     Logger.info "#{inspect result}"
   end
 
+  test "create search index - nested" do
+    sub_nested1 = %Search.FieldSchema{
+      field_name: "header",
+      field_type: FieldType.keyword,
+    }
+    sub_nested2 = %Search.FieldSchema{
+      field_name: "body",
+      field_type: FieldType.keyword,
+    }
+    var_request =
+      %Search.CreateSearchIndexRequest{
+        table_name: "test_table",
+        index_name: "test_search_index3",
+        index_schema: %Search.IndexSchema{
+          field_schemas: [
+            %Search.FieldSchema{
+              field_name: "content",
+              field_type: FieldType.nested,
+              field_schemas: [
+                sub_nested1,
+                sub_nested2
+              ],
+            }
+          ]
+        }
+      }
+    result = ExAliyunOts.Client.create_search_index(@instance_name, var_request)
+    Logger.info "#{inspect result}"
+  end
+
   test "create search index - field type as text" do
     var_request =
       %Search.CreateSearchIndexRequest{
@@ -302,7 +332,26 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       }
     result = ExAliyunOts.Client.search(@instance_name, var_request)
     Logger.info "#{inspect result}"
+  end
 
+  test "search - nested query" do
+    # Please ensure the column `content` store value as a json array in string format, for example: "[{}, {}]" (the square bracket "[]" is required)
+    var_request =
+      %Search.SearchRequest{
+        table_name: "test_table",
+        index_name: "test_search_index3",
+        search_query: %Search.SearchQuery{
+          query: %Search.NestedQuery{
+            path: "content",
+            query: %Search.TermQuery{
+              field_name: "content.header",
+              term: "header1"
+            }
+          }
+        }
+      }
+    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    Logger.info "#{inspect result}"
   end
 
 end

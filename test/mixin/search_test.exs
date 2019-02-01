@@ -171,5 +171,20 @@ defmodule ExAliyunOts.MixinTest.Search do
     Logger.info "result: #{inspect result}"
   end
 
+  test "nested query" do
+    index_name = "test_search_index3"
+    result =
+      search @instance_name, @table_name, index_name,
+        search_query: [
+          query: [
+            type: QueryType.nested,
+            path: "content",
+            query: [
+              type: QueryType.term, field_name: "content.header", term: "header1"
+            ]
+          ]
+        ]
+    Logger.info "result: #{inspect result}"
+  end
 
 end

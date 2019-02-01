@@ -401,6 +401,9 @@ defmodule ExAliyunOts.Mixin do
             # for BoolQuery
             queries = Enum.map(value, fn(query) -> map_query_details(query) end)
             Map.put(acc, key, queries)
+          :query ->
+            # for NestedQuery
+            Map.put(acc, key, map_query_details(value))
           _ ->
             Map.put(acc, key, value)
         end
@@ -509,6 +512,8 @@ defmodule ExAliyunOts.Mixin do
         map_search_options(%Search.RangeQuery{}, query)
       QueryType.bool ->
         map_search_options(%Search.BoolQuery{}, query)
+      QueryType.nested ->
+        map_search_options(%Search.NestedQuery{}, query)
       _ ->
         raise ExAliyunOts.Error, "Not supported query when map query details: #{inspect query}"
     end
