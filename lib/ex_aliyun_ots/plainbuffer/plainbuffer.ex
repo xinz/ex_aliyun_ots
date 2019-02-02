@@ -590,11 +590,9 @@ defmodule ExAliyunOts.PlainBuffer do
       primary_keys_binary =
         row_data_parts |> Enum.slice(0..matched_index) |> Enum.join(@row_data_marker)
 
-      joiner = if matched_index != 0, do: <<>>, else: @row_data_marker
-
       attribute_columns_binary =
         <<@tag_cell::integer, @tag_cell_name::integer>> <>
-          (row_data_parts |> Enum.slice((matched_index + 1)..-1) |> Enum.join(joiner))
+          (row_data_parts |> Enum.slice((matched_index + 1)..-1) |> Enum.join(@row_data_marker))
 
       primary_keys_binary =
         case primary_keys_binary do
@@ -742,7 +740,7 @@ defmodule ExAliyunOts.PlainBuffer do
           next_cell_index when is_integer(next_cell_index) ->
             Logger.debug(fn -> ">>> find next_cell_index: #{next_cell_index}" end)
             value_binary = binary_part(rest_value_and_other_columns, 0, next_cell_index)
-            Logger.debug(fn -> ">>> value_binary: #{inspect(value_binary)}" end)
+            Logger.debug(fn -> ">>> value_binary: #{inspect(value_binary, limit: :infinity)}" end)
 
             {column_value, timestamp} =
               deserialize_process_column_value_with_checksum(value_binary)
