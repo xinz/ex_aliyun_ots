@@ -193,22 +193,21 @@ defmodule ExAliyunOts.Client.Search do
   end
   defp prepare_sort(sorters) when is_list(sorters) do
     prepared_sorters =
-      Enum.map(sorters, fn sorter ->
-        case sorter do
-          %Search.FieldSort{field_name: field_name, order: order} ->
-            if order not in [SortOrder.asc(), SortOrder.desc()] do
-              raise ExAliyunOts.Error, "Invalid sort order: #{inspect(order)}"
-            end
-
-            Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order))
-
-          _not_implemented_yet ->
-            Logger.error("** #{inspect(sorter)} sorter is not implemented yet.")
-            nil
-        end
-      end)
+      sorters
+      |> Enum.map(&prepare_sorter/1)
       |> Enum.filter(fn sorter -> sorter != nil end)
     Sort.new(sorter: prepared_sorters)
+  end
+
+  defp prepare_sorter(%Search.FieldSort{field_name: field_name, order: order}) do
+    if order not in [SortOrder.asc(), SortOrder.desc()] do
+      raise ExAliyunOts.Error, "Invalid sort order: #{inspect(order)}"
+    end
+    Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order))
+  end
+  defp prepare_sorter(sorter) do
+    Logger.error("** #{inspect(sorter)} sorter is not implemented yet.")
+    nil
   end
 
   defp prepare_index_setting(setting) do
