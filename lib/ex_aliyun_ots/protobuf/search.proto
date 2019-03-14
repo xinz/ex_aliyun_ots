@@ -1,3 +1,5 @@
+syntax = "proto2";
+
 package com.alicloud.openservices.tablestore.core.protocol;
 
 enum QueryType {
@@ -308,7 +310,14 @@ enum SyncPhase {
 
 message SyncStat {
     optional SyncPhase sync_phase = 1;
-    optional int64 current_sync_timestamp = 2; 
+    optional int64 current_sync_timestamp = 2; // 同步进度，参考TunnelService
+}
+
+message MeteringInfo {
+    optional int64 storage_size = 1;
+    optional int64 doc_count = 2;
+    optional int64 reserved_read_cu = 3;
+    optional int64 timestamp = 4;
 }
 
 message DescribeSearchIndexRequest {
@@ -319,4 +328,6 @@ message DescribeSearchIndexRequest {
 message DescribeSearchIndexResponse {
     optional IndexSchema schema = 1;
     optional SyncStat sync_stat = 2;
+    optional MeteringInfo metering_info = 3;
 }
+
