@@ -27,6 +27,7 @@ defmodule ExAliyunOts.Mixfile do
   defp deps do
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:credo, "~> 1.0", only: :dev, runtime: false},
       {:exprotobuf, "~> 1.2"},
       {:timex, "~> 3.3"},
       {:poolboy, "~> 1.5"},
