@@ -18,6 +18,7 @@ defmodule ExAliyunOts.PlainBuffer do
   # cell op type
   @op_delete_all_version 0x1
   @op_delete_one_version 0x3
+  @op_increment 0x4
 
   # variant type
   @vt_integer 0x0
@@ -442,6 +443,10 @@ defmodule ExAliyunOts.PlainBuffer do
           updated_buffer ++
             [byte_to_binary(@tag_cell_type)] ++ [byte_to_binary(@op_delete_all_version)]
 
+        update_type == OperationType.increment() ->
+          updated_buffer ++
+            [byte_to_binary(@tag_cell_type)] ++ [byte_to_binary(@op_increment)]
+
         true ->
           updated_buffer
       end
@@ -465,6 +470,9 @@ defmodule ExAliyunOts.PlainBuffer do
 
         update_type == OperationType.delete_all() ->
           CRC.crc_int8(cell_checksum, @op_delete_all_version)
+
+        update_type == OperationType.increment() ->
+          CRC.crc_int8(cell_checksum, @op_increment)
 
         true ->
           cell_checksum
@@ -516,8 +524,12 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp deserialize_process_row(row_values) do
-    {primary_keys, attribute_columns} = deserialize_row_data(row_values)
-    {primary_keys, attribute_columns}
+    case deserialize_row_data(row_values) do
+      {primary_keys, attribute_columns} ->
+        {primary_keys, attribute_columns}
+      nil ->
+        nil
+    end
   end
 
   defp slice_rows(rows) do
@@ -580,7 +592,11 @@ defmodule ExAliyunOts.PlainBuffer do
 
     matched_index =
       Enum.find_index(row_data_parts, fn part_value ->
-        :binary.at(part_value, byte_size(part_value) - 2) == @tag_cell_checksum
+        if part_value != "" do
+          :binary.at(part_value, byte_size(part_value) - 2) == @tag_cell_checksum
+        else
+          false
+        end
       end)
 
     Logger.debug(fn -> "matched_index: #{matched_index}" end)
@@ -618,19 +634,17 @@ defmodule ExAliyunOts.PlainBuffer do
 
       {Task.await(pk_task, :infinity), Task.await(attr_task, :infinity)}
     else
-      primary_keys_binary =
-        case values do
-          <<(<<@tag_row_pk::integer>>), primary_keys_binary_rest::binary>> ->
-            primary_keys_binary_rest
-
-          _ ->
-            raise ExAliyunOts.Error,
-                  "Unexcepted row data when processing primary_keys: #{
-                    inspect(values, limit: :infinity)
-                  }"
-        end
-
-      {deserialize_process_primary_keys(primary_keys_binary, []), nil}
+      case values do
+        <<(<<@tag_row_pk::integer>>), primary_keys_binary_rest::binary>> ->
+          {deserialize_process_primary_keys(primary_keys_binary_rest, []), nil}
+        <<(<<@tag_row_data::integer>>), attribute_columns_binary_rest::binary>> ->
+          {nil, deserialize_process_columns(attribute_columns_binary_rest, [])}
+        _ ->
+          Logger.debug(fn -> "Unexcepted row data when deserialize_row_data: #{
+            inspect(values, limit: :infinity)
+          }" end)
+          nil
+      end
     end
   end
 

@@ -15,7 +15,8 @@ defmodule ExAliyunOts.Const.OperationType do
   const :put, :'PUT'
   const :delete, :'DELETE'
   const :delete_all, :'DELETE_ALL'
-  const :updates_supported, [:'PUT', :'DELETE', :'DELETE_ALL']
+  const :increment, :'INCREMENT'
+  const :updates_supported, [:'PUT', :'DELETE', :'DELETE_ALL', :'INCREMENT']
 end
 
 defmodule ExAliyunOts.Const.PKType do
@@ -35,6 +36,7 @@ defmodule ExAliyunOts.Const.ReturnType do
 
   const :pk, :'RT_PK'
   const :none, :'RT_NONE'
+  const :after_modify, :'RT_AFTER_MODIFY'
 end
 
 defmodule ExAliyunOts.Const.Direction do

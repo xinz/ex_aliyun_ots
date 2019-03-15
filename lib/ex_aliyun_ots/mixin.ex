@@ -438,6 +438,12 @@ defmodule ExAliyunOts.Mixin do
   defp map_return_type(:pk) do
     ReturnType.pk
   end
+  defp map_return_type(:'RT_AFTER_MODIFY') do
+    ReturnType.after_modify
+  end
+  defp map_return_type(:after_modify) do
+    ReturnType.after_modify
+  end
   defp map_return_type(invalid_return_type) do
     raise ExAliyunOts.Error, "invalid return_type: #{inspect invalid_return_type}"
   end
@@ -459,6 +465,12 @@ defmodule ExAliyunOts.Mixin do
   end
   defp map_operation_type(:put) do
     OperationType.put
+  end
+  defp map_operation_type(:'INCREMENT') do
+    OperationType.increment
+  end
+  defp map_operation_type(:increment) do
+    OperationType.increment
   end
   defp map_operation_type(invalid_operation_type) do
     raise ExAliyunOts.Error, "invalid operation_type: #{inspect invalid_operation_type}"
@@ -571,7 +583,7 @@ defmodule ExAliyunOts.Mixin do
   end
 
   defp map_updates(options) do
-    Enum.reduce([:delete, :delete_all, :put], %{}, fn(update_operation, acc) ->
+    Enum.reduce([:delete, :delete_all, :put, :increment], %{}, fn(update_operation, acc) ->
       {matched_update, _rest_opts} = Keyword.pop(options, update_operation)
       if matched_update != nil do
         Map.put(acc, map_operation_type(update_operation), matched_update)

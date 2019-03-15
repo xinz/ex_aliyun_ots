@@ -26,15 +26,11 @@ defmodule ExAliyunOts.Client.Row do
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
     serialized_row = PlainBuffer.serialize_for_put_row(var_put_row.primary_keys, var_put_row.attribute_columns)
-    put_row_request = PutRowRequest.new(table_name: var_put_row.table_name, row: serialized_row, condition: proto_condition)
-    put_row_request = 
-      if var_put_row.return_type != ReturnType.none do
-        return_content = ReturnContent.new(return_type: var_put_row.return_type)
-        Map.put(put_row_request, :return_content, return_content)
-      else
-        put_row_request
-      end
-    PutRowRequest.encode(put_row_request)
+
+    [table_name: var_put_row.table_name, row: serialized_row, condition: proto_condition]
+    |> PutRowRequest.new()
+    |> map_return_content(var_put_row.return_type, nil)
+    |> PutRowRequest.encode()
   end
 
   def remote_put_row(instance, request_body) do
@@ -88,15 +84,11 @@ defmodule ExAliyunOts.Client.Row do
     end
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
-    update_row_request = UpdateRowRequest.new(table_name: var_update_row.table_name, row_change: serialized_row, condition: proto_condition)
-    update_row_request =
-      if var_update_row.return_type != ReturnType.none do
-        return_content = ReturnContent.new(return_type: var_update_row.return_type)
-        Map.put(update_row_request, :return_content, return_content)
-      else
-        update_row_request
-      end
-    UpdateRowRequest.encode(update_row_request)
+
+    [table_name: var_update_row.table_name, row_change: serialized_row, condition: proto_condition]
+    |> UpdateRowRequest.new()
+    |> map_return_content(var_update_row.return_type, var_update_row.return_columns)
+    |> UpdateRowRequest.encode()
   end
 
   def remote_update_row(instance, request_body) do
@@ -116,15 +108,11 @@ defmodule ExAliyunOts.Client.Row do
     end
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
-    delete_row_request = DeleteRowRequest.new(table_name: var_delete_row.table_name, primary_key: serialized_primary_keys, condition: proto_condition)
-    delete_row_request =
-      if var_delete_row.return_type != ReturnType.none do
-        return_content = ReturnContent.new(return_type: var_delete_row.return_type)
-        Map.put(delete_row_request, :return_content, return_content)
-      else
-        delete_row_request
-      end
-    DeleteRowRequest.encode(delete_row_request)
+
+    [table_name: var_delete_row.table_name, primary_key: serialized_primary_keys, condition: proto_condition]
+    |> DeleteRowRequest.new()
+    |> map_return_content(var_delete_row.return_type, nil)
+    |> DeleteRowRequest.encode()
   end
 
   def remote_delete_row(instance, request_body) do
@@ -294,18 +282,9 @@ defmodule ExAliyunOts.Client.Row do
           raise ExAliyunOts.Error, "Invalid OperationType: #{inspect type}, please ensure the operation type of BatchWriteRow as [UPDATE, PUT, DELETE]"
       end
 
-    row_in_batch_write_row_request = RowInBatchWriteRowRequest.new(
-      type: var_row_in_request.type,
-      row_change: serialized_row,
-      condition: proto_condition
-    )
-    var_return_type = var_row_in_request.return_type
-    if var_return_type != ReturnType.none do
-      return_content = ReturnContent.new(return_type: var_return_type)
-      Map.put(row_in_batch_write_row_request, :return_content, return_content)
-    else
-      row_in_batch_write_row_request
-    end
+    [type: var_row_in_request.type, row_change: serialized_row, condition: proto_condition]
+    |> RowInBatchWriteRowRequest.new()
+    |> map_return_content(var_row_in_request.return_type, var_row_in_request.return_columns)
   end
 
   def remote_batch_write_row(instance, request_body) do
@@ -409,6 +388,16 @@ defmodule ExAliyunOts.Client.Row do
     else
       row_in_batch_response
     end
+  end
+
+  defp map_return_content(request, return_type = ReturnType.pk, _return_columns) do
+    Map.put(request, :return_content, ReturnContent.new(return_type: return_type))
+  end
+  defp map_return_content(request, return_type = ReturnType.after_modify, return_columns) when length(return_columns) > 0 do
+    Map.put(request, :return_content, ReturnContent.new(return_type: return_type, return_column_names: return_columns))
+  end
+  defp map_return_content(request, _return_type, _return_columns) do
+    request
   end
 
 end

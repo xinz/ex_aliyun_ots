@@ -47,7 +47,7 @@ end
 defmodule ExAliyunOts.Var.UpdateRow do
   alias ExAliyunOts.Const.ReturnType
   require ReturnType
-  defstruct table_name: "", primary_keys: [], updates: %{}, condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none
+  defstruct table_name: "", primary_keys: [], updates: %{}, condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none, return_columns: []
 end
 
 defmodule ExAliyunOts.Var.PutRow do
@@ -87,7 +87,7 @@ end
 defmodule ExAliyunOts.Var.RowInBatchWriteRequest do
   alias ExAliyunOts.Const.ReturnType
   require ReturnType
-  defstruct type: nil, primary_keys: [], updates: nil, condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none
+  defstruct type: nil, primary_keys: [], updates: nil, condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none, return_columns: []
 end
 
 defmodule ExAliyunOts.Var.BatchWriteRequest do
