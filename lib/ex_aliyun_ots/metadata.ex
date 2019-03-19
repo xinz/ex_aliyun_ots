@@ -118,6 +118,14 @@ defmodule ExAliyunOts.Var.Search do
     defstruct table_name: "", index_name: "", index_schema: %IndexSchema{}
   end
 
+  defmodule DeleteSearchIndexRequest do
+    defstruct table_name: "", index_name: ""
+  end
+
+  defmodule DescribeSearchIndexRequest do
+    defstruct table_name: "", index_name: ""
+  end
+
   defmodule FieldSchema do
     alias ExAliyunOts.Const.Search.FieldType
     require FieldType

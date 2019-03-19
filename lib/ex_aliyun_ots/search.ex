@@ -11,6 +11,12 @@ defmodule ExAliyunOts.Client.Search do
     Sort,
     CreateSearchIndexRequest,
     CreateSearchIndexResponse,
+    DeleteSearchIndexRequest,
+    DeleteSearchIndexResponse,
+    ListSearchIndexRequest,
+    ListSearchIndexResponse,
+    DescribeSearchIndexRequest,
+    DescribeSearchIndexResponse,
     ColumnsToGet,
     IndexSetting,
     SearchQuery,
@@ -74,13 +80,9 @@ defmodule ExAliyunOts.Client.Search do
   end
 
   def remote_create_search_index(instance, request_body) do
-    result =
-      instance
-      |> Http.client("/CreateSearchIndex", request_body, &CreateSearchIndexResponse.decode/1)
-      |> Http.post()
-
-    Logger.info(fn -> "create_search_index result: #{inspect(result)}" end)
-    result
+    instance
+    |> Http.client("/CreateSearchIndex", request_body, &CreateSearchIndexResponse.decode/1)
+    |> Http.post()
   end
 
   def request_to_search(%Search.SearchRequest{
@@ -122,6 +124,46 @@ defmodule ExAliyunOts.Client.Search do
       |> Http.client("/Search", request_body, &SearchResponse.decode/1)
       |> Http.post()
     result
+  end
+
+  def request_to_delete_search_index(%Search.DeleteSearchIndexRequest{
+        table_name: table_name,
+        index_name: index_name
+      }) do
+    [table_name: table_name, index_name: index_name]
+    |> DeleteSearchIndexRequest.new()
+    |> DeleteSearchIndexRequest.encode()
+  end
+
+  def remote_delete_search_index(instance, request_body) do
+    instance
+    |> Http.client("/DeleteSearchIndex", request_body, &DeleteSearchIndexResponse.decode/1)
+    |> Http.post()
+  end
+
+  def request_to_list_search_index(table_name) do
+    ListSearchIndexRequest.new(table_name: table_name) |> ListSearchIndexRequest.encode()
+  end
+
+ def remote_list_search_index(instance, request_body) do
+    instance
+    |> Http.client("/ListSearchIndex", request_body, &ListSearchIndexResponse.decode/1)
+    |> Http.post()
+  end
+
+  def request_to_describe_search_index(%Search.DescribeSearchIndexRequest{
+        table_name: table_name,
+        index_name: index_name
+      }) do
+    [table_name: table_name, index_name: index_name]
+    |> DescribeSearchIndexRequest.new()
+    |> DescribeSearchIndexRequest.encode()
+  end
+
+  def remote_describe_search_index(instance, request_body) do
+    instance
+    |> Http.client("/DescribeSearchIndex", request_body, &DescribeSearchIndexResponse.decode/1)
+    |> Http.post()
   end
 
   defp term_to_bytes(term) when is_bitstring(term) do

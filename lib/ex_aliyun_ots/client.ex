@@ -97,6 +97,21 @@ defmodule ExAliyunOts.Client do
     call_transaction(instance_name, {:search, encoded_request}, request_timeout)
   end
 
+  def delete_search_index(instance_name, var_delete_search_index, request_timeout \\ :infinity) do
+    encoded_request = Search.request_to_delete_search_index(var_delete_search_index)
+    call_transaction(instance_name, {:delete_search_index, encoded_request}, request_timeout)
+  end
+
+  def list_search_index(instance_name, table_name, request_timeout \\ :infinity) do
+    encoded_request = Search.request_to_list_search_index(table_name)
+    call_transaction(instance_name, {:list_search_index, encoded_request}, request_timeout)
+  end
+
+  def describe_search_index(instance_name, var_describe_search_index, request_timeout \\ :infinity) do
+    encoded_request = Search.request_to_describe_search_index(var_describe_search_index)
+    call_transaction(instance_name, {:describe_search_index, encoded_request}, request_timeout)
+  end
+
   def handle_call({:create_table, request_body}, _from, state) do
     result = Table.remote_create_table(state.instance, request_body)
     {:reply, result, state}
@@ -163,6 +178,18 @@ defmodule ExAliyunOts.Client do
           result
       end
     {:reply, prepared, state}
+  end
+  def handle_call({:delete_search_index, request_body}, _from, state) do
+    result = Search.remote_delete_search_index(state.instance, request_body)
+    {:reply, result, state}
+  end
+  def handle_call({:list_search_index, request_body}, _from, state) do
+    result = Search.remote_list_search_index(state.instance, request_body)
+    {:reply, result, state}
+  end
+  def handle_call({:describe_search_index, request_body}, _from, state) do
+    result = Search.remote_describe_search_index(state.instance, request_body)
+    {:reply, result, state}
   end
 
   defp splice_pool_name(instance_name) when is_bitstring(instance_name) do

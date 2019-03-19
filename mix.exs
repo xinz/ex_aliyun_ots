@@ -6,6 +6,7 @@ defmodule ExAliyunOts.Mixfile do
       app: :ex_aliyun_ots,
       version: "0.1.8",
       elixir: "~> 1.5",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env == :prod,
       description: description(),
       package: package(),
@@ -57,5 +58,8 @@ defmodule ExAliyunOts.Mixfile do
        "README.md"
      ]]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
 end

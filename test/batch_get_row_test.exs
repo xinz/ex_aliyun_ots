@@ -77,7 +77,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
       }
     ]
 
-    {:error, "OTSInternalServerErrorInternal server error."} = Client.batch_get_row(@instance_name, requests_with_not_existed_tables)
+    {:error, "OTSParameterInvalidRequest table not exist"} = Client.batch_get_row(@instance_name, requests_with_not_existed_tables)
 
     requests = [
       %Var.GetRow{

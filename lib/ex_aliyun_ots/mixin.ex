@@ -103,6 +103,18 @@ defmodule ExAliyunOts.Mixin do
         execute_search(instance, table, index_name, options)
       end
 
+      def list_search_index(instance, table, options \\ Keyword.new()) do
+        execute_list_search_index(instance, table, options)
+      end
+
+      def delete_search_index(instance, table, index_name, options \\ Keyword.new()) do
+        execute_delete_search_index(instance, table, index_name, options)
+      end
+
+      def describe_search_index(instance, table, index_name, options \\ Keyword.new()) do
+        execute_describe_search_index(instance, table, index_name, options)
+      end
+
     end
   end
 
@@ -339,6 +351,41 @@ defmodule ExAliyunOts.Mixin do
       Client.search(instance, prepared_var, request_time)
     else
       Client.search(instance, prepared_var)
+    end
+  end
+
+  def execute_list_search_index(instance, table, options) do
+    request_time = Keyword.get(options, :request_time)
+    if request_time != nil do
+      Client.list_search_index(instance, table, request_time)
+    else
+      Client.list_search_index(instance, table)
+    end
+  end
+
+  def execute_delete_search_index(instance, table, index_name, options) do
+    var_delete_request = %Var.Search.DeleteSearchIndexRequest{
+      table_name: table,
+      index_name: index_name
+    }
+    request_time = Keyword.get(options, :request_time)
+    if request_time != nil do
+      Client.delete_search_index(instance, var_delete_request, request_time)
+    else
+      Client.delete_search_index(instance, var_delete_request)
+    end
+  end
+
+  def execute_describe_search_index(instance, table, index_name, options) do
+    var_describe_request = %Var.Search.DescribeSearchIndexRequest{
+      table_name: table,
+      index_name: index_name
+    }
+    request_time = Keyword.get(options, :request_time)
+    if request_time != nil do
+      Client.describe_search_index(instance, var_describe_request, request_time)
+    else
+      Client.describe_search_index(instance, var_describe_request)
     end
   end
 
