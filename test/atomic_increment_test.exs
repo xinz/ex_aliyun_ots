@@ -10,7 +10,7 @@ defmodule ExAliyunOtsTest.AtomicIncrement do
   require RowExistence
   require OperationType
 
-  @instance_name "edc-ex-test"
+  @instance_key EDCEXTestInstance
 
   test "atomic increment" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -19,7 +19,7 @@ defmodule ExAliyunOtsTest.AtomicIncrement do
       table_name: table_name,
       primary_keys: [{"partition_key", PKType.integer}]
     }
-    result = ExAliyunOts.Client.create_table(@instance_name, var_create_table)
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
     Process.sleep(6_000)
 
@@ -39,7 +39,7 @@ defmodule ExAliyunOtsTest.AtomicIncrement do
         return_type: ReturnType.after_modify,
         return_columns: ["count"]
       }
-      {:ok, response} = ExAliyunOts.Client.update_row(@instance_name, var_update_row)
+      {:ok, response} = ExAliyunOts.Client.update_row(@instance_key, var_update_row)
       {_pks, [{return_key, return_value, _timestamp}]} = response.row
       assert return_key == "count"
       assert return_value == i
@@ -69,7 +69,7 @@ defmodule ExAliyunOtsTest.AtomicIncrement do
       ]
     }]
 
-    {:ok, response} = ExAliyunOts.Client.batch_write_row(@instance_name, batch_write_request)
+    {:ok, response} = ExAliyunOts.Client.batch_write_row(@instance_key, batch_write_request)
 
     tables = response.tables
     assert length(tables) == 1
@@ -86,7 +86,7 @@ defmodule ExAliyunOtsTest.AtomicIncrement do
       end)
     end)
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
 

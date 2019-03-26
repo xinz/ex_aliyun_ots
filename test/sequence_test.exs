@@ -2,7 +2,8 @@ defmodule ExAliyunOtsTest.Sequence do
   use ExUnit.Case
   require Logger
 
-  @instance_name "edc-ex-test"
+  @instance_key EDCEXTestInstance
+
   alias ExAliyunOts.Var
   alias ExAliyunOts.Sequence
 
@@ -11,7 +12,7 @@ defmodule ExAliyunOtsTest.Sequence do
     var_new = %Var.NewSequence{
       name: sequence_name
     }
-    result = Sequence.create(@instance_name, var_new)
+    result = Sequence.create(@instance_key, var_new)
     assert result == :ok
     Process.sleep(3_000)
 
@@ -20,17 +21,17 @@ defmodule ExAliyunOtsTest.Sequence do
       var_next = %Var.GetSequenceNextValue{
         name: sequence_name,
       }
-      Sequence.next_value(@instance_name, var_next)
+      Sequence.next_value(@instance_key, var_next)
     end, timeout: :infinity, max_concurrency: concurrency_size)
 
     result = Enum.map(stream, fn({:ok, item}) -> item end) |> MapSet.new()
     assert MapSet.size(result) == concurrency_size
     assert Enum.sort(result) == Enum.map(1..concurrency_size, fn(item) -> item end)
 
-    del_result = Sequence.delete_event(@instance_name, sequence_name, "default")
+    del_result = Sequence.delete_event(@instance_key, sequence_name, "default")
     assert {:ok, _delete_response} = del_result
 
-    result = Sequence.delete(@instance_name, sequence_name)
+    result = Sequence.delete(@instance_key, sequence_name)
     assert result == :ok
   end
 

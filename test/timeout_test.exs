@@ -2,7 +2,7 @@ defmodule ExAliyunOtsTest.TimeoutTest do
   use ExUnit.Case
   require Logger
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   alias ExAliyunOts.{Var, Client}
   alias ExAliyunOts.Const.PKType
@@ -30,7 +30,7 @@ defmodule ExAliyunOtsTest.TimeoutTest do
             {:reply, error_timeout, state}
         end
     end] do
-      result = Client.create_table(@instance_name, var_create_table) 
+      result = Client.create_table(@instance_key, var_create_table) 
       assert result == "final_success"
     end
   end

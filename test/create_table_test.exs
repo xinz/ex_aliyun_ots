@@ -10,7 +10,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   require ReturnType
   require RowExistence
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   test "create table and then delete it" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -20,12 +20,12 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       primary_keys: [{"partition_key", PKType.string}, {"default_id", PKType.integer, PKType.auto_increment}, {"order_id", PKType.string}],
       time_to_live: 86_400
     }
-    result = ExAliyunOts.Client.create_table(@instance_name, var_create_table)
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
-    {:error, error_msg} = ExAliyunOts.Client.create_table(@instance_name, var_create_table)
+    {:error, error_msg} = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert String.contains?(error_msg, "Requested table already exists") == true
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
 
@@ -36,7 +36,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       table_name: table_name,
       primary_keys: [{"partition_key", PKType.string}, {"default_id", PKType.integer, PKType.auto_increment}, {"order_id", PKType.string}],
     }
-    result = ExAliyunOts.Client.create_table(@instance_name, var_create_table)
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
     Logger.info "waiting for table created..."
@@ -55,7 +55,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       condition: condition,
       return_type: ReturnType.pk
     }
-    {:ok, result} = ExAliyunOts.Client.put_row(@instance_name, var_put_row)
+    {:ok, result} = ExAliyunOts.Client.put_row(@instance_key, var_put_row)
     {primary_keys_result, _attribute_cols_result} = result.row
     {"partition_key", return_partition_key} = Enum.at(primary_keys_result, 0)
     assert return_partition_key == partition_key
@@ -76,7 +76,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       },
       condition: condition
     }
-    update_row_result = ExAliyunOts.Client.update_row(@instance_name, var_update_row)
+    update_row_result = ExAliyunOts.Client.update_row(@instance_key, var_update_row)
     Logger.debug(fn -> "update_row_result >> #{inspect update_row_result}" end)
     assert {:ok, _} = update_row_result
 
@@ -85,7 +85,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
       primary_keys: [{"partition_key", partition_key}, {"default_id", new_default_id}, {"order_id", order_id}],
       columns_to_get: ["name", "level"]
     }
-    get_row_result = ExAliyunOts.Client.get_row(@instance_name, var_get_row)
+    get_row_result = ExAliyunOts.Client.get_row(@instance_key, var_get_row)
     Logger.debug(fn -> "get_row_result >> #{inspect get_row_result}" end)
     {:ok, get_row_response} = get_row_result
     {primary_keys, get_columns} = get_row_response.row
@@ -100,7 +100,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     assert {"name", "updated_name_v2", update_timestamp} = Enum.at(get_columns, 0)
     assert is_integer(update_timestamp)
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
 

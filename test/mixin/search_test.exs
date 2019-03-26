@@ -1,46 +1,42 @@
 defmodule ExAliyunOts.MixinTest.Search do
   
   use ExUnit.Case
-  use ExAliyunOts.Mixin
+
+  @instance_key EDCEXTestInstance
+
+  use ExAliyunOts,
+    instance: @instance_key
 
   require Logger
   alias ExAliyunOts.Client
   alias ExAliyunOts.Var.Search
 
-  alias ExAliyunOts.Const.Search.{ColumnReturnType, QueryType, SortOrder, SortType, FieldType}
-
   alias ExAliyunOtsTest.Support.Search, as: TestSupportSearch
 
-  require ColumnReturnType
-  require QueryType
-  require SortOrder
-  require SortType
-  require FieldType
-
-  @instance_name "edc-ex-test"
   @table "test_search"
+
   @indexes ["test_search_index", "test_search_index2"]
 
   setup_all do
     Application.ensure_all_started(:ex_aliyun_ots)
 
-    TestSupportSearch.initialize(@instance_name, @table, @indexes)
+    TestSupportSearch.initialize(@instance_key, @table, @indexes)
 
     on_exit(fn ->
-      TestSupportSearch.clean(@instance_name, @table, @indexes)
+      TestSupportSearch.clean(@instance_key, @table, @indexes)
     end)
 
     :ok
   end
 
   test "list search index" do
-    {:ok, response} = list_search_index(@instance_name, @table)
+    {:ok, response} = list_search_index(@table)
     assert length(response.indices) == 2
   end
 
   test "describe search index" do
     index_name = "test_search_index2"
-    {:ok, response} = describe_search_index(@instance_name, @table, index_name)
+    {:ok, response} = describe_search_index(@table, index_name)
     schema = response.schema
     field_schemas = schema.field_schemas
     Enum.map(field_schemas, fn(field_schema) ->
@@ -62,7 +58,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "match query" do
     index_name = "test_search_index"
     {:ok, response} = 
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         columns_to_get: {ColumnReturnType.specified, ["class", "name"]},
         #columns_to_get: ColumnReturnType.none,
         #columns_to_get: ColumnReturnType.all,
@@ -84,7 +80,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "term query" do
     index_name = "test_search_index"
     {:ok, response} =
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         search_query: [
           query: [
             type: QueryType.term,
@@ -99,7 +95,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "terms query with sort" do
     index_name = "test_search_index"
     {:ok, response} =
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         search_query: [
           query: [
             type: QueryType.terms,
@@ -118,7 +114,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "prefix query" do
     index_name = "test_search_index"
     {:ok, response} =
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         search_query: [
           query: [
             type: QueryType.prefix,
@@ -138,7 +134,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "wildcard query" do
     index_name = "test_search_index"
     {:ok, response} =
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         search_query: [
           query: [
             type: QueryType.wildcard,
@@ -158,7 +154,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "range query" do
     index_name = "test_search_index"
     {:ok, response} =
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         search_query: [
           query: [
             type: QueryType.range,
@@ -185,7 +181,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "bool query with must/must_not" do
     index_name = "test_search_index"
     {:ok, response} =
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         search_query: [
           query: [
             type: QueryType.bool,
@@ -217,7 +213,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "bool query with should" do
     index_name = "test_search_index"
     {:ok, response} =
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         search_query: [
           query: [
             type: QueryType.bool,
@@ -241,7 +237,7 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "nested query" do
     index_name = "test_search_index2"
     {:ok, response} =
-      search @instance_name, @table, index_name,
+      search @table, index_name,
         search_query: [
           query: [
             type: QueryType.nested,
@@ -274,11 +270,11 @@ defmodule ExAliyunOts.MixinTest.Search do
           ]
         }
       }
-    {result, _response} = Client.create_search_index(@instance_name, var_request)
+    {result, _response} = Client.create_search_index(@instance_key, var_request)
     assert result == :ok
 
     Process.sleep(3_000)
-    {result, _response} = delete_search_index(@instance_name, @table, index_name)
+    {result, _response} = delete_search_index(@table, index_name)
     assert result == :ok
   end
 end

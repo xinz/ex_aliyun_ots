@@ -9,7 +9,7 @@ defmodule ExAliyunOtsTest.DeleteRow do
   require ReturnType
   require RowExistence
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   test "put row" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -18,7 +18,7 @@ defmodule ExAliyunOtsTest.DeleteRow do
       table_name: table_name,
       primary_keys: [{"partition_key", PKType.integer}]
     }
-    result = ExAliyunOts.Client.create_table(@instance_name, var_create_table)
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
     Process.sleep(5_000)
   
@@ -33,7 +33,7 @@ defmodule ExAliyunOtsTest.DeleteRow do
         condition: condition,
         return_type: ReturnType.pk
       }
-      {:ok, _result} = ExAliyunOts.Client.put_row(@instance_name, var_put_row)
+      {:ok, _result} = ExAliyunOts.Client.put_row(@instance_key, var_put_row)
     end
 
     condition_exist = %Var.Condition{
@@ -49,7 +49,7 @@ defmodule ExAliyunOtsTest.DeleteRow do
       primary_keys: [{"partition_key", 1}],
       condition: condition_exist
     }
-    delete_row_result = ExAliyunOts.Client.delete_row(@instance_name, var_delete_row)
+    delete_row_result = ExAliyunOts.Client.delete_row(@instance_key, var_delete_row)
     assert {:ok, _response} = delete_row_result
 
     # populate error condition when delete a not existed case but expect it existed
@@ -58,7 +58,7 @@ defmodule ExAliyunOtsTest.DeleteRow do
       primary_keys: [{"partition_key", 10}],
       condition: condition_exist
     }
-    delete_row_result = ExAliyunOts.Client.delete_row(@instance_name, var_delete_row_not_exist)
+    delete_row_result = ExAliyunOts.Client.delete_row(@instance_key, var_delete_row_not_exist)
     assert {:error, err_message} = delete_row_result
     assert String.contains?(err_message, "Condition check failed") == true
 
@@ -68,10 +68,10 @@ defmodule ExAliyunOtsTest.DeleteRow do
       primary_keys: [{"partition_key", 10}],
       condition: condition_ignore
     }
-    delete_row_result = ExAliyunOts.Client.delete_row(@instance_name, var_delete_row_not_exist)
+    delete_row_result = ExAliyunOts.Client.delete_row(@instance_key, var_delete_row_not_exist)
     assert {:ok, _response} = delete_row_result
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
 

@@ -1,26 +1,24 @@
 defmodule ExAliyunOts.MixinTest.AtomicIncrement do
   use ExUnit.Case
-  use ExAliyunOts.Mixin
-  alias ExAliyunOts.Const.{ReturnType, PKType}
-  require Logger
-  require ReturnType
-  require PKType
 
-  @instance_name "edc-ex-test"
+  use ExAliyunOts,
+    instance: EDCEXTestInstance
+
+  require Logger
 
   test "atomic increment in mixin" do
     cur_timestamp = Timex.to_unix(Timex.now())
     table_name = "test_mixin_atomic_inc_#{cur_timestamp}"
 
     create_table_result = 
-      create_table @instance_name, table_name, [{"key1", PKType.integer}]
+      create_table table_name, [{"key1", PKType.integer}]
 
     assert create_table_result == :ok
 
     Process.sleep(3_000)
 
     {:ok, response} = 
-      update_row @instance_name, table_name, [{"key1", 1}],
+      update_row table_name, [{"key1", 1}],
         put: [{"attr1", "put_attr1"}],
         increment: [{"count", 1}],
         return_type: ReturnType.after_modify,
@@ -30,7 +28,7 @@ defmodule ExAliyunOts.MixinTest.AtomicIncrement do
     assert value1 == 1
     
     {:ok, response2} =
-      update_row @instance_name, table_name, [{"key1", 1}],
+      update_row table_name, [{"key1", 1}],
         increment: [{"count", 2}],
         return_type: ReturnType.after_modify,
         return_columns: ["count"],
@@ -39,7 +37,7 @@ defmodule ExAliyunOts.MixinTest.AtomicIncrement do
     assert value2 == 3
 
     {:ok, response3} =
-      batch_write @instance_name, [{table_name, [
+      batch_write [{table_name, [
         write_update([{"key1", 1}],
           put: [{"attr1", "updated_in_batch"}],
           increment: [{"count", -1}, {"count2", 2}],
@@ -66,6 +64,6 @@ defmodule ExAliyunOts.MixinTest.AtomicIncrement do
       end)
     end)
 
-    delete_table @instance_name, table_name
+    delete_table table_name
   end
 end

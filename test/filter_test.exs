@@ -13,7 +13,7 @@ defmodule ExAliyunOtsTest.Filter do
   require ComparatorType
   require LogicOperator
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   test "filter" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -23,7 +23,7 @@ defmodule ExAliyunOtsTest.Filter do
       table_name: table_name,
       primary_keys: [{"id", PKType.string}],
     }
-    result = ExAliyunOts.Client.create_table(@instance_name, var_create_table)
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
     Logger.info "waiting for table created..."
@@ -56,14 +56,14 @@ defmodule ExAliyunOtsTest.Filter do
       condition: condition,
       return_type: ReturnType.pk
     }
-    result = ExAliyunOts.Client.update_row(@instance_name, var_update_row)
+    result = ExAliyunOts.Client.update_row(@instance_key, var_update_row)
     assert result == {:error, "OTSConditionCheckFailCondition check failed."}
 
     id = "2"
     filter = %{filter | filter: %{filter.filter | ignore_if_missing: true}}
     condition = %{condition | column_condition: filter}
     var_update_row = %{var_update_row | updates: %{OperationType.put => [{"counter", 2}]}, condition: condition, primary_keys: [{"id", id}]}
-    {:ok, response} = ExAliyunOts.Client.update_row(@instance_name, var_update_row)
+    {:ok, response} = ExAliyunOts.Client.update_row(@instance_key, var_update_row)
     assert response.row == {[{"id", "2"}], nil}
 
     # test CompositeColumnValueFilter
@@ -76,7 +76,7 @@ defmodule ExAliyunOtsTest.Filter do
         row_existence: RowExistence.ignore
       }
     }
-    {:ok, _result} = ExAliyunOts.Client.put_row(@instance_name, var_put_row)
+    {:ok, _result} = ExAliyunOts.Client.put_row(@instance_key, var_put_row)
     filter = %Var.Filter{
       filter_type: FilterType.composite_column,
       filter: %Var.CompositeColumnValueFilter{
@@ -114,10 +114,10 @@ defmodule ExAliyunOtsTest.Filter do
       condition: condition,
       return_type: ReturnType.pk
     }
-    {:ok, response} = ExAliyunOts.Client.update_row(@instance_name, var_update_row)
+    {:ok, response} = ExAliyunOts.Client.update_row(@instance_key, var_update_row)
     assert response.row == {[{"id", "3"}], nil}
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
 

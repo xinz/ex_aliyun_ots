@@ -1,5 +1,38 @@
 defmodule ExAliyunOts.Constants do
 
+  defmacro __using__(_opts \\ []) do
+    quote do
+
+      alias ExAliyunOts.Const.{
+        OperationType, PKType, ReturnType, Direction, RowExistence, FilterType, LogicOperator, ComparatorType,
+        Search.FieldType, Search.QueryType, Search.QueryOperator, Search.SortOrder, Search.ScoreMode, Search.GeoDistanceType, Search.ColumnReturnType, Search.IndexOptions, Search.SyncPhase, Search.SortType
+      }
+
+      # Common
+      require OperationType
+      require PKType
+      require ReturnType
+      require Direction
+      require RowExistence
+      require FilterType
+      require LogicOperator
+      require ComparatorType
+
+      # SearchIndex
+      require FieldType
+      require QueryType
+      require QueryOperator
+      require SortOrder
+      require ScoreMode
+      require GeoDistanceType
+      require ColumnReturnType
+      require IndexOptions
+      require SyncPhase
+      require SortType
+
+    end
+  end
+
   defmacro const(name, value) do
     quote do
       defmacro unquote(name)(), do: unquote(value)

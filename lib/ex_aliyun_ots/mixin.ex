@@ -4,7 +4,6 @@ defmodule ExAliyunOts.Mixin do
   alias ExAliyunOts.Var.Search
   alias ExAliyunOts.Client
 
-  #require Logger
   alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction, Search.QueryType, Search.ColumnReturnType, Search.SortType}
 
   require PKType
@@ -27,52 +26,52 @@ defmodule ExAliyunOts.Mixin do
 
       import unquote(__MODULE__)
 
-      def create_table(instance, table, pk_keys, options \\ Keyword.new()) do
-        execute_create_table(instance, table, pk_keys, options)
+      def create_table(instance_key, table, pk_keys, options \\ Keyword.new()) do
+        execute_create_table(instance_key, table, pk_keys, options)
       end
 
-      def delete_table(instance, table, options \\ Keyword.new()) do
-        execute_delete_table(instance, table, options)
+      def delete_table(instance_key, table, options \\ Keyword.new()) do
+        execute_delete_table(instance_key, table, options)
       end
 
-      def list_table(instance, options \\ Keyword.new()) do
-        execute_list_table(instance, options)
+      def list_table(instance_key, options \\ Keyword.new()) do
+        execute_list_table(instance_key, options)
       end
 
-      def update_table(instance, table, options \\ Keyword.new()) do
-        execute_update_table(instance, table, options)
+      def update_table(instance_key, table, options \\ Keyword.new()) do
+        execute_update_table(instance_key, table, options)
       end
 
-      def describe_table(instance, table, options \\ Keyword.new()) do
-        execute_describe_table(instance, table, options)
+      def describe_table(instance_key, table, options \\ Keyword.new()) do
+        execute_describe_table(instance_key, table, options)
       end
 
-      def batch_get(instance, get_requests, options \\ Keyword.new()) do
-        execute_batch_get(instance, get_requests, options)
+      def batch_get(instance_key, get_requests, options \\ Keyword.new()) do
+        execute_batch_get(instance_key, get_requests, options)
       end
 
-      def batch_write(instance, write_requests, options \\ Keyword.new()) do
-        execute_batch_write(instance, write_requests, options)
+      def batch_write(instance_key, write_requests, options \\ Keyword.new()) do
+        execute_batch_write(instance_key, write_requests, options)
       end
 
-      def get_row(instance, table, pk_keys, options \\ Keyword.new()) do
-        execute_get_row(instance, table, pk_keys, options)
+      def get_row(instance_key, table, pk_keys, options \\ Keyword.new()) do
+        execute_get_row(instance_key, table, pk_keys, options)
       end
 
       def get(table, pk_keys, options \\ Keyword.new()) do
         execute_get(table, pk_keys, options)
       end
 
-      def put_row(instance, table, pk_keys, attrs, options \\ Keyword.new()) do
-        execute_put_row(instance, table, pk_keys, attrs, options)
+      def put_row(instance_key, table, pk_keys, attrs, options \\ Keyword.new()) do
+        execute_put_row(instance_key, table, pk_keys, attrs, options)
       end
 
-      def update_row(instance, table, pk_keys, options \\ Keyword.new()) do
-        execute_update_row(instance, table, pk_keys, options)
+      def update_row(instance_key, table, pk_keys, options \\ Keyword.new()) do
+        execute_update_row(instance_key, table, pk_keys, options)
       end
 
-      def delete_row(instance, table, pk_keys, options \\ Keyword.new()) do
-        execute_delete_row(instance, table, pk_keys, options)
+      def delete_row(instance_key, table, pk_keys, options \\ Keyword.new()) do
+        execute_delete_row(instance_key, table, pk_keys, options)
       end
 
       def write_put(pk_keys, attrs, options \\ Keyword.new()) do
@@ -87,38 +86,38 @@ defmodule ExAliyunOts.Mixin do
         execute_write_delete(pk_keys, options)
       end
 
-      def get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ Keyword.new()) do
-        execute_get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options)
+      def get_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ Keyword.new()) do
+        execute_get_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options)
       end
 
-      def iterate_all_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ Keyword.new()) do
-        execute_iterate_all_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options)
+      def iterate_all_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ Keyword.new()) do
+        execute_iterate_all_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options)
       end
 
       def pagination(offset: offset, limit: limit) do
         execute_pagination(offset, limit)
       end
 
-      def search(instance, table, index_name, options \\ Keyword.new()) do
-        execute_search(instance, table, index_name, options)
+      def search(instance_key, table, index_name, options \\ Keyword.new()) do
+        execute_search(instance_key, table, index_name, options)
       end
 
-      def list_search_index(instance, table, options \\ Keyword.new()) do
-        execute_list_search_index(instance, table, options)
+      def list_search_index(instance_key, table, options \\ Keyword.new()) do
+        execute_list_search_index(instance_key, table, options)
       end
 
-      def delete_search_index(instance, table, index_name, options \\ Keyword.new()) do
-        execute_delete_search_index(instance, table, index_name, options)
+      def delete_search_index(instance_key, table, index_name, options \\ Keyword.new()) do
+        execute_delete_search_index(instance_key, table, index_name, options)
       end
 
-      def describe_search_index(instance, table, index_name, options \\ Keyword.new()) do
-        execute_describe_search_index(instance, table, index_name, options)
+      def describe_search_index(instance_key, table, index_name, options \\ Keyword.new()) do
+        execute_describe_search_index(instance_key, table, index_name, options)
       end
 
     end
   end
 
-  def execute_create_table(instance, table, pk_keys, options) do
+  def execute_create_table(instance_key, table, pk_keys, options) do
     var_create_table = %Var.CreateTable{
         table_name: table,
         primary_keys: pk_keys
@@ -126,62 +125,62 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_options(var_create_table, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.create_table(instance, prepared_var, request_time)
+      Client.create_table(instance_key, prepared_var, request_time)
     else
-      Client.create_table(instance, prepared_var)
+      Client.create_table(instance_key, prepared_var)
     end
   end
 
-  def execute_delete_table(instance, table, options) do
+  def execute_delete_table(instance_key, table, options) do
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.delete_table(instance, table, request_time)
+      Client.delete_table(instance_key, table, request_time)
     else
-      Client.delete_table(instance, table)
+      Client.delete_table(instance_key, table)
     end
   end
 
-  def execute_list_table(instance, options) do
+  def execute_list_table(instance_key, options) do
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.list_table(instance, request_time)
+      Client.list_table(instance_key, request_time)
     else
-      Client.list_table(instance)
+      Client.list_table(instance_key)
     end
   end
 
-  def execute_update_table(instance, table, options) do
+  def execute_update_table(instance_key, table, options) do
     var_update_table = %Var.UpdateTable{
       table_name: table
     }
     prepared_var = map_options(var_update_table, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.update_table(instance, prepared_var, request_time)
+      Client.update_table(instance_key, prepared_var, request_time)
     else
-      Client.update_table(instance, prepared_var)
+      Client.update_table(instance_key, prepared_var)
     end
   end
 
-  def execute_describe_table(instance, table, options) do
+  def execute_describe_table(instance_key, table, options) do
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.describe_table(instance, table, request_time)
+      Client.describe_table(instance_key, table, request_time)
     else
-      Client.describe_table(instance, table)
+      Client.describe_table(instance_key, table)
     end
   end
 
-  def execute_batch_get(instance, get_requests, options) do
+  def execute_batch_get(instance_key, get_requests, options) do
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.batch_get_row(instance, get_requests, request_time)
+      Client.batch_get_row(instance_key, get_requests, request_time)
     else
-      Client.batch_get_row(instance, get_requests)
+      Client.batch_get_row(instance_key, get_requests)
     end
   end
 
-  def execute_batch_write(instance, write_requests, options) do
+  def execute_batch_write(instance_key, write_requests, options) do
     batch_write_requests = Enum.map(write_requests, fn({table, write_rows}) ->
       %Var.BatchWriteRequest{
         table_name: table,
@@ -190,13 +189,13 @@ defmodule ExAliyunOts.Mixin do
     end)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.batch_write_row(instance, batch_write_requests, request_time)
+      Client.batch_write_row(instance_key, batch_write_requests, request_time)
     else
-      Client.batch_write_row(instance, batch_write_requests)
+      Client.batch_write_row(instance_key, batch_write_requests)
     end
   end
 
-  def execute_get_row(instance, table, pk_keys, options) do
+  def execute_get_row(instance_key, table, pk_keys, options) do
     var_get_row = %Var.GetRow{
       table_name: table,
       primary_keys: pk_keys
@@ -204,9 +203,9 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_options(var_get_row, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.get_row(instance, prepared_var, request_time)
+      Client.get_row(instance_key, prepared_var, request_time)
     else
-      Client.get_row(instance, prepared_var)
+      Client.get_row(instance_key, prepared_var)
     end
   end
 
@@ -218,7 +217,7 @@ defmodule ExAliyunOts.Mixin do
     map_options(var_get_row, options)
   end
 
-  def execute_put_row(instance, table, pk_keys, attrs, options) do
+  def execute_put_row(instance_key, table, pk_keys, attrs, options) do
     var_put_row = %Var.PutRow{
       table_name: table,
       primary_keys: pk_keys,
@@ -227,13 +226,13 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_options(var_put_row, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.put_row(instance, prepared_var, request_time)
+      Client.put_row(instance_key, prepared_var, request_time)
     else
-      Client.put_row(instance, prepared_var)
+      Client.put_row(instance_key, prepared_var)
     end
   end
 
-  def execute_update_row(instance, table, pk_keys, options) do
+  def execute_update_row(instance_key, table, pk_keys, options) do
     var_update_row = %Var.UpdateRow{
       table_name: table,
       primary_keys: pk_keys,
@@ -244,13 +243,13 @@ defmodule ExAliyunOts.Mixin do
       |> Map.put(:updates, map_updates(options))
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.update_row(instance, prepared_var, request_time)
+      Client.update_row(instance_key, prepared_var, request_time)
     else
-      Client.update_row(instance, prepared_var)
+      Client.update_row(instance_key, prepared_var)
     end
   end
 
-  def execute_delete_row(instance, table, pk_keys, options) do
+  def execute_delete_row(instance_key, table, pk_keys, options) do
     var_delete_row = %Var.DeleteRow{
       table_name: table,
       primary_keys: pk_keys
@@ -258,9 +257,9 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_options(var_delete_row, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.delete_row(instance, prepared_var, request_time)
+      Client.delete_row(instance_key, prepared_var, request_time)
     else
-      Client.delete_row(instance, prepared_var)
+      Client.delete_row(instance_key, prepared_var)
     end
   end
 
@@ -290,7 +289,7 @@ defmodule ExAliyunOts.Mixin do
     map_options(var_batch_delete_row, options)
   end
 
-  def execute_get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_list(inclusive_start_primary_keys) do
+  def execute_get_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_list(inclusive_start_primary_keys) do
     var_get_range = %Var.GetRange{
       table_name: table,
       inclusive_start_primary_keys: inclusive_start_primary_keys,
@@ -299,12 +298,12 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_options(var_get_range, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.get_range(instance, prepared_var, nil, request_time)
+      Client.get_range(instance_key, prepared_var, nil, request_time)
     else
-      Client.get_range(instance, prepared_var)
+      Client.get_range(instance_key, prepared_var)
     end
   end
-  def execute_get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_binary(inclusive_start_primary_keys) do
+  def execute_get_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_binary(inclusive_start_primary_keys) do
     var_get_range = %Var.GetRange{
       table_name: table,
       exclusive_end_primary_keys: exclusive_end_primary_keys
@@ -312,13 +311,13 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_options(var_get_range, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.get_range(instance, prepared_var, inclusive_start_primary_keys, request_time)
+      Client.get_range(instance_key, prepared_var, inclusive_start_primary_keys, request_time)
     else
-      Client.get_range(instance, prepared_var, inclusive_start_primary_keys)
+      Client.get_range(instance_key, prepared_var, inclusive_start_primary_keys)
     end
   end
 
-  def execute_iterate_all_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) do
+  def execute_iterate_all_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) do
     var_iterate_all_range = %Var.GetRange{
       table_name: table,
       inclusive_start_primary_keys: inclusive_start_primary_keys,
@@ -327,9 +326,9 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_options(var_iterate_all_range, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.iterate_get_all_range(instance, prepared_var, request_time)
+      Client.iterate_get_all_range(instance_key, prepared_var, request_time)
     else
-      Client.iterate_get_all_range(instance, prepared_var)
+      Client.iterate_get_all_range(instance_key, prepared_var)
     end
   end
 
@@ -340,7 +339,7 @@ defmodule ExAliyunOts.Mixin do
     }
   end
 
-  def execute_search(instance, table, index_name, options) do
+  def execute_search(instance_key, table, index_name, options) do
     var_search_request = %Var.Search.SearchRequest{
       table_name: table,
       index_name: index_name
@@ -348,44 +347,44 @@ defmodule ExAliyunOts.Mixin do
     prepared_var = map_search_options(var_search_request, options)
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.search(instance, prepared_var, request_time)
+      Client.search(instance_key, prepared_var, request_time)
     else
-      Client.search(instance, prepared_var)
+      Client.search(instance_key, prepared_var)
     end
   end
 
-  def execute_list_search_index(instance, table, options) do
+  def execute_list_search_index(instance_key, table, options) do
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.list_search_index(instance, table, request_time)
+      Client.list_search_index(instance_key, table, request_time)
     else
-      Client.list_search_index(instance, table)
+      Client.list_search_index(instance_key, table)
     end
   end
 
-  def execute_delete_search_index(instance, table, index_name, options) do
+  def execute_delete_search_index(instance_key, table, index_name, options) do
     var_delete_request = %Var.Search.DeleteSearchIndexRequest{
       table_name: table,
       index_name: index_name
     }
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.delete_search_index(instance, var_delete_request, request_time)
+      Client.delete_search_index(instance_key, var_delete_request, request_time)
     else
-      Client.delete_search_index(instance, var_delete_request)
+      Client.delete_search_index(instance_key, var_delete_request)
     end
   end
 
-  def execute_describe_search_index(instance, table, index_name, options) do
+  def execute_describe_search_index(instance_key, table, index_name, options) do
     var_describe_request = %Var.Search.DescribeSearchIndexRequest{
       table_name: table,
       index_name: index_name
     }
     request_time = Keyword.get(options, :request_time)
     if request_time != nil do
-      Client.describe_search_index(instance, var_describe_request, request_time)
+      Client.describe_search_index(instance_key, var_describe_request, request_time)
     else
-      Client.describe_search_index(instance, var_describe_request)
+      Client.describe_search_index(instance_key, var_describe_request)
     end
   end
 
