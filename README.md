@@ -1,6 +1,7 @@
 # ExAliyunOts
 
-[![hex.pm version](https://img.shields.io/hexpm/v/ex_aliyun_ots.svg)](https://hex.pm/packages/ex_aliyun_ots) [![Coverage Status](https://coveralls.io/repos/github/xinz/ex_aliyun_ots/badge.svg?branch=0.2)](https://coveralls.io/github/xinz/ex_aliyun_ots?branch=0.2)
+[![hex.pm version](https://img.shields.io/hexpm/v/ex_aliyun_ots.svg)](https://hex.pm/packages/ex_aliyun_ots)
+[![Coverage Status](https://coveralls.io/repos/github/xinz/ex_aliyun_ots/badge.svg?branch=0.2)](https://coveralls.io/github/xinz/ex_aliyun_ots?branch=0.2)
 
 Aliyun TableStore SDK for Elixir/Erlang
 
@@ -30,8 +31,8 @@ config :ex_aliyun_ots, MyInstance
 config :ex_aliyun_ots, instances: [MyInstance]
 ```
 
-`pool_size`，配置对应表格存储实例http请求连接池的最大可用数，默认值是100
-`pool_max_overflow`，配置对应表格存储实例，允许当连接池满负荷用尽时，允许临时创建可用的请求进程数，默认值是20
+* `pool_size`，配置对应表格存储实例http请求连接池的最大可用数，默认值是100
+* `pool_max_overflow`，配置对应表格存储实例，允许当连接池满负荷用尽时，允许临时创建可用的请求进程数，默认值是20
 
 ## Supported API
 
