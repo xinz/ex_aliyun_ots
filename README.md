@@ -2,31 +2,37 @@
 
 Aliyun TableStore SDK for Elixir/Erlang
 
+[![hex.pm version](https://img.shields.io/hexpm/v/ex_aliyun_ots.svg)](https://hex.pm/packages/ex_aliyun_ots)
+[![Coverage Status](https://coveralls.io/repos/github/xinz/ex_aliyun_ots/badge.svg?branch=0.2)](https://coveralls.io/github/xinz/ex_aliyun_ots?branch=0.2)
+
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:ex_aliyun_ots, "~> 0.1.4"}
+    {:ex_aliyun_ots, "~> 0.1"}
   ]
 end
 ```
 
 ## Configuration
 
-Add `YOUR` tablestore instance(s) configuration into `config/config.exs`.
+配置表格存储的实例信息，支持配置多个实例在应用中使用
 
 ```elixir
-config :ex_aliyun_ots,
-  instances: %{
-    "YOUR_INSTANCE_NAME" => %{
-      endpoint: "YOUR_INSTANCE_ENDPOINT",
-      access_key_id: "YOUR_ACCESS_KEY_ID",
-      access_key_secret: "YOUR_ACCESS_KEY_SECRET",
-    },
-  },
-  clients_pool: [size: 100, max_overflow: 20]
+config :ex_aliyun_ots, MyInstance
+  name: "MyInstanceName",
+  endpoint: "MyInstanceEndpoint",
+  access_key_id: "MyAliyunRAMKeyID",
+  access_key_secret: "MyAliyunRAMKeySecret",
+  pool_size: 100, # Optional
+  pool_max_overflow: 20 # Optional
+
+config :ex_aliyun_ots, instances: [MyInstance]
 ```
+
+`pool_size`，配置对应表格存储实例http请求连接池的最大可用数，默认值是100
+`pool_max_overflow`，配置对应表格存储实例，允许当连接池满负荷用尽时，允许临时创建可用的请求进程数，默认值是20
 
 ## Supported API
 
@@ -529,9 +535,6 @@ defmodule SequenceSample do
 
 end
 ```
-## TODO
-
-1，实现新增的“原子计数器”，替换现有的Sequence
 
 ## License
 
