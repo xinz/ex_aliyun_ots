@@ -1,7 +1,7 @@
 # ExAliyunOts
 
 [![hex.pm version](https://img.shields.io/hexpm/v/ex_aliyun_ots.svg)](https://hex.pm/packages/ex_aliyun_ots)
-[![Coverage Status](https://coveralls.io/repos/github/xinz/ex_aliyun_ots/badge.svg?branch=0.2)](https://coveralls.io/github/xinz/ex_aliyun_ots?branch=0.2)
+[![Coverage Status](https://coveralls.io/repos/github/xinz/ex_aliyun_ots/badge.svg?branch=master)](https://coveralls.io/github/xinz/ex_aliyun_ots?branch=master)
 
 Aliyun TableStore SDK for Elixir/Erlang
 
