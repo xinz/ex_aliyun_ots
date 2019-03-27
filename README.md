@@ -91,12 +91,12 @@ defmodule Sample do
   # 
   # Optional settings
   #
-  # `reserved_throughput_write`，创建的表的初始预留写吞吐量设定，默认值为0
-  # `reserved_throughput_read`，创建的表的初始预留读吞吐量设定，默认值为0
-  # `time_to_live`，保存的数据的存活时间，单位秒，默认值为"-1"（永久）
-  # `max_versions`，表保留的最大版本，默认值为1，只设定一个版本
-  # `deviation_cell_version_in_sec`，最大版本偏差，默认值为86400秒，即1天
-  # `stream_spec`，是否打开stream相关的属性
+  # `reserved_throughput_write`，创建的表的初始预留写吞吐量设定，默认值为0。
+  # `reserved_throughput_read`，创建的表的初始预留读吞吐量设定，默认值为0。
+  # `time_to_live`，保存的数据的存活时间，单位秒，默认值为"-1"（永久）。
+  # `max_versions`，表保留的最大版本，默认值为1，只设定一个版本。
+  # `deviation_cell_version_in_sec`，最大版本偏差，默认值为86400秒，即1天。
+  # `stream_spec`，是否打开stream相关的属性。
   #   [
   #     `is_enabled`, 是否打开stream
   #     `expiration_time`, 表的stream过期时间 
@@ -163,12 +163,12 @@ defmodule Sample do
   # 
   # 可选项设定
   #
-  # `reserved_throughput_write`，创建的表的初始预留写吞吐量设定，默认不设定
-  # `reserved_throughput_read`，创建的表的初始预留读吞吐量设定，默认不设定
-  # `time_to_live`，保存的数据的存活时间，单位秒，默认值为"-1"（永久）
-  # `max_versions`，表保留的最大版本，默认值为1，只设定一个版本
-  # `deviation_cell_version_in_sec`，最大版本偏差，默认值为86400秒，即1天
-  # `stream_spec`，是否打开stream相关的属性
+  # `reserved_throughput_write`，创建的表的初始预留写吞吐量设定，默认不设定。
+  # `reserved_throughput_read`，创建的表的初始预留读吞吐量设定，默认不设定。
+  # `time_to_live`，保存的数据的存活时间，单位秒，默认值为"-1"（永久）。
+  # `max_versions`，表保留的最大版本，默认值为1，只设定一个版本。
+  # `deviation_cell_version_in_sec`，最大版本偏差，默认值为86400秒，即1天。
+  # `stream_spec`，是否打开stream相关的属性。
   #   [
   #     `is_enabled`，是否打开stream
   #     `expiration_time`，表的stream过期时间 
@@ -233,17 +233,17 @@ defmodule Sample do
   #
   # 支持按条件过滤查询（通过使用`filter`操作）
   # 更便于理解的表达式, ">"、"<"、"=="、"and"、"or"、"()"
-  # 通过[ignore_if_missing: true]的语法，设定为true时，表示当匹配条件不满足时进行忽略该匹配逻辑；设定为false时，表示该匹配条件必须满足，否则查询结果将返回没有可匹配的结果
+  # 通过[ignore_if_missing: true]的语法，设定为true时，表示当匹配条件不满足时进行忽略该匹配逻辑；设定为false时，表示该匹配条件必须满足，否则查询结果将返回没有可匹配的结果，
   # 通过[latest_version_only: true]的语法，如果为true，则表示只检测最新版本的值是否满足条件；如果是false，则会检测所有版本的值是否满足条件
   #
   # 可通过`filter`支持属性列上的分页读取操作（通过使用`pagination`操作），主要用于宽行读取
   #
   # 可选设定项
-  # `columns_to_get`，指定获取的属性列
-  # `start_column`，指定读取时的起始列，主要用于宽行读，返回的结果中包含当前起始列
-  # `end_column`，指定读取时的结束列，主要用于宽行读，返回的结果中不包含当前结束列
-  # `filter`，支持按条件过滤查询（通过使用`filter`操作）
-  # `max_versions`，和time_range只能存在一个，读取数据时，返回的最多版本个数，默认值为1
+  # `columns_to_get`，指定获取的属性列。
+  # `start_column`，指定读取时的起始列，主要用于宽行读，返回的结果中包含当前起始列。
+  # `end_column`，指定读取时的结束列，主要用于宽行读，返回的结果中不包含当前结束列。
+  # `filter`，支持按条件过滤查询（通过使用`filter`操作）。
+  # `max_versions`，和time_range只能存在一个，读取数据时，返回的最多版本个数，默认值为1。
   # `time_range`，和max_versions只能存在一个，读取数据的版本时间戳范围，支持2种定义方式，如：
   #   time_range: {start_timestamp, end_timestamp}
   #   time_range: specail_timestamp
@@ -275,19 +275,19 @@ defmodule Sample do
   # Operations:
   #
   #   `put`，如果设定该操作，此时value必须为有效的属性列值。语意为如果该列不存在，则新增一列；如果该列存在，则覆盖该字段列。
-  #   `delete`，如果设定该操作，值必须设定为nil，同时需要指定该列一值的timestamp
-  #   `delete_all`，如果设定该操作，只需要设定需要删除操作的列值列表
-  #   `increment`，使用原子计数自增/自减对应的属性列，只允许整型操作
+  #   `delete`，如果设定该操作，值必须设定为nil，同时需要指定该列一值的timestamp。
+  #   `delete_all`，如果设定该操作，只需要设定需要删除操作的列值列表。
+  #   `increment`，使用原子计数自增/自减对应的属性列，只允许整型操作。
   #
   # `return_type`
-  #   支持`:pk`返回主键信息，`:none`不返回任何信息
+  #   支持`:pk`返回主键信息，`:none`不返回任何信息。
   #   当针对原子计数操作时，可通过设定`return_type`为`ReturnType.after_modify`，同时指定返回进行原子计数操作的属性列名（`return_columns`），
-  #   可通过这种方式获取原子计数操作之后的属性列的值。 注意：`return_type` 设定为 after_modify，以及设定`return_columns`仅适用于原子计数操作
+  #   可通过这种方式获取原子计数操作之后的属性列的值。 注意：`return_type` 设定为 after_modify，以及设定`return_columns`仅适用于原子计数操作。
   #
   # `condition`，在数据更新前是否进行存在性检查
-  #   `:expect_exist`，表示期望行存在
-  #   `:ignore`，表示不做行存在性检查
-  #   同时支持在condition()进行条件查询，见`filter`操作
+  #   `:expect_exist`，表示期望行存在；
+  #   `:ignore`，表示不做行存在性检查；
+  #   同时支持在condition()进行条件查询，见`filter`操作。
   #
   def test() do
     value = "value1"
@@ -300,7 +300,7 @@ defmodule Sample do
       condition: condition(:expect_exist, "attr2" == value)
   end
   
-  def atomic_inc() do  
+  def test_atomic_inc() do  
     {:ok, response} = 
       update_row table_name, [{"key1", 1}],
         put: [{"attr1", "put_attr1"}],
@@ -322,7 +322,7 @@ defmodule Sample do
     instance: MyInstance
   
   #
-  # 删除行操作支持按条件筛选，通过condition()
+  # 删除行操作支持按条件筛选，通过condition()。
   #
   def test() do
     delete_row table_name1,
@@ -383,7 +383,7 @@ defmodule Sample do
 
     #
     # 如果查询范围结果仍有未完整查询的数据，可使用上一查询结果中的`next_start_primary_key`
-    # 直接作为`inclusive_start_primary_key`用于下一次的迭代查询
+    # 直接作为`inclusive_start_primary_key`用于下一次的迭代查询。
     #
     get_range table_name1,
       get_range_response.next_start_primary_key,
@@ -405,7 +405,7 @@ defmodule Sample do
   
   #
   # 批量读取一个或多个表中的若干行数据
-  # 通过多个get()查询多个表中的记录，get()中的支持的选项与`GetRow`一致
+  # 通过多个get()查询多个表中的记录，get()中的支持的选项与`GetRow`一致。
   #
   def test() do
     batch_get [
@@ -428,7 +428,7 @@ defmodule Sample do
   
   #
   # 批量插入、修改或删除一个或多个表中的若干行数据，为多个 PutRow、UpdateRow、DeleteRow 操作的集合
-  # 通过write_delete()、write_put()、write_update()进行更新操作，支持的选项可参考`UpdateRow`
+  # 通过write_delete()、write_put()、write_update()进行更新操作，支持的选项可参考`UpdateRow`。
   #
   def test() do
     batch_write [
@@ -605,7 +605,7 @@ defmodule Sample do
 
   #
   # 读取指定主键范围内的数据，当如果有大量数据时，可通过该方法读取完整的数据
-  # 该方法是对`GetRange`的包装处理后的接口，相关配置项与`GetRange`一致
+  # 该方法是对`GetRange`的包装处理后的接口，相关配置项与`GetRange`一致。
   #
   def test() do
     iterate_all_range table_name1,
@@ -632,7 +632,7 @@ defmodule SequenceSample do
   #
   # 基于原子计数器，在表操作层面上提供一种方式可以获取到（理论上）唯一自增步长序列
   # Sequence依旧是对表的Update操作，但它会提供更可靠安全的原子操作粒度(原子计数器)
-  # 创建一张Sequence表允许有多个event，event表示所使用序列表的场景，它也将用于表的分区键
+  # 创建一张Sequence表允许有多个event，event表示所使用序列表的场景，它也将用于表的分区键。
   #
   # `GetSequenceNextValue`可选参数
   #   `starter`，首次调用next_value()初始创建的值，默认值为0
@@ -642,7 +642,8 @@ defmodule SequenceSample do
   # 在不考虑表格存储系统故障、网络等问题，理论上可以获取到唯一的自增步长的数值，在`Sequence`
   # 有处理遇到异常情况时的重试，但这种情况，并不能保证，获取到新的值是按预期步长自增。
   # 
-  # 如需要非常准确的自增步长的序列操作，请自行使用原子计数操作，并通过条件更新来实现，这一操作预期需要 Read-Increment with condition
+  # 如需要非常准确的自增步长的序列操作，请自行使用原子计数操作，并通过条件更新来实现，
+  # 这一操作预期需要 Read-Increment with condition
   #
   test "next value" do
     sequence_name = "test_sequence"
