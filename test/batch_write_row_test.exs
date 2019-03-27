@@ -2,7 +2,7 @@ defmodule ExAliyunOtsTest.BatchWriteRow do
   use ExUnit.Case
   require Logger
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   alias ExAliyunOts.{Var, Client}
   alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence}
@@ -22,7 +22,7 @@ defmodule ExAliyunOtsTest.BatchWriteRow do
         {"pkey2", PKType.integer}
       ],
     }
-    result = Client.create_table(@instance_name, var_create_table)
+    result = Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
     Process.sleep(3_000)
@@ -39,7 +39,7 @@ defmodule ExAliyunOtsTest.BatchWriteRow do
         condition: condition,
         return_type: ReturnType.pk
       }
-      {:ok, _result} = Client.put_row(@instance_name, var_put_row)
+      {:ok, _result} = Client.put_row(@instance_key, var_put_row)
     end
 
     condition_exist = %Var.Condition{
@@ -82,7 +82,7 @@ defmodule ExAliyunOtsTest.BatchWriteRow do
       ]
     }]
 
-    {:ok, response} = Client.batch_write_row(@instance_name, batch_write_request)
+    {:ok, response} = Client.batch_write_row(@instance_key, batch_write_request)
     tables = response.tables
     assert length(tables) == 1
 
@@ -111,11 +111,11 @@ defmodule ExAliyunOtsTest.BatchWriteRow do
       table_name: table_name,
       primary_keys: [{"pkey1", 3}, {"pkey2", 3}],
     }
-    get_row_result = ExAliyunOts.Client.get_row(@instance_name, var_get_row)
+    get_row_result = ExAliyunOts.Client.get_row(@instance_key, var_get_row)
     assert {:ok, get_row_response} = get_row_result
     assert get_row_response.row == nil
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
 

@@ -2,7 +2,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
   use ExUnit.Case
   require Logger
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   alias ExAliyunOts.{Var, Client}
   alias ExAliyunOts.Const.{PKType, ReturnType, RowExistence}
@@ -19,7 +19,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
         {"pkey1", PKType.integer}
       ],
     }
-    result = Client.create_table(@instance_name, var_create_table)
+    result = Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
     table_name2 = "test_table_batch_get_row_2_#{cur_timestamp}"
@@ -30,7 +30,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
         {"pk2_sec", PKType.integer}
       ],
     }
-    result = Client.create_table(@instance_name, var_create_table)
+    result = Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
     table_not_existed = "test_table_batch_get_row_ne_#{cur_timestamp}"
@@ -48,7 +48,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
         condition: condition,
         return_type: ReturnType.pk
       }
-      {:ok, _result} = Client.put_row(@instance_name, var_put_row)
+      {:ok, _result} = Client.put_row(@instance_key, var_put_row)
     end
 
     for partition_key <- 10..13 do
@@ -59,7 +59,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
         condition: condition,
         return_type: ReturnType.pk
       }
-      {:ok, _result} = Client.put_row(@instance_name, var_put_row)
+      {:ok, _result} = Client.put_row(@instance_key, var_put_row)
     end
     
     requests_with_not_existed_tables = [
@@ -77,7 +77,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
       }
     ]
 
-    {:error, "OTSParameterInvalidRequest table not exist"} = Client.batch_get_row(@instance_name, requests_with_not_existed_tables)
+    {:error, "OTSParameterInvalidRequest table not exist"} = Client.batch_get_row(@instance_key, requests_with_not_existed_tables)
 
     requests = [
       %Var.GetRow{
@@ -90,7 +90,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
       },
     ]
     
-    {:ok, batch_get_row_response} = Client.batch_get_row(@instance_name, requests)
+    {:ok, batch_get_row_response} = Client.batch_get_row(@instance_key, requests)
     tables = batch_get_row_response.tables
     assert length(tables) == 2
     Enum.with_index(tables)
@@ -141,9 +141,9 @@ defmodule ExAliyunOtsTest.BatchGetRow do
       end)
     end)
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name1)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name1)
     assert result == :ok
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name2)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name2)
     assert result == :ok
   end
 

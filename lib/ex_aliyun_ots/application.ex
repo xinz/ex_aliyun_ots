@@ -5,40 +5,61 @@ defmodule ExAliyunOts.Application do
   require Logger
   alias ExAliyunOts.{Client, Instance}
 
-  @clients_pool Application.get_env(:ex_aliyun_ots, :clients_pool, size: 100, max_overflow: 100)
+  @app Mix.Project.config[:app]
 
   def start(_type, _args) do
-    children = load_ots_clients()
     opts = [strategy: :one_for_one]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link(instances_child_spec(), opts)
   end
 
-  defp load_ots_clients do
-    instances = Application.fetch_env!(:ex_aliyun_ots, :instances)
+  defp instances_child_spec do
+    instances = Application.get_env(@app, :instances)
 
-    Enum.map(Map.keys(instances), fn instance_name ->
-      instance_conf = Map.get(instances, instance_name)
+    Enum.map(instances, fn instance_key ->
 
-      instance = %Instance{
-        endpoint: instance_conf.endpoint,
-        name: instance_name,
-        access_key_id: instance_conf.access_key_id,
-        access_key_secret: instance_conf.access_key_secret
-      }
+      instance =
+        instance_key
+        |> init_instance()
+        |> config_instance(Application.get_env(@app, instance_key))
 
-      :poolboy.child_spec(Client.pool_name(instance_name), pool_config_to_client(instance_name), [
-        instance
-      ])
+      :poolboy.child_spec(
+        instance_key,
+        config_pool(instance),
+        [
+          instance
+        ]
+      )
     end)
   end
 
-  defp pool_config_to_client(instance_name) do
+  defp config_pool(instance) do
     [
-      {:name, {:local, Client.pool_name(instance_name)}},
+      {:name, {:local, instance.pool_name}},
       {:worker_module, Client},
-      {:size, Keyword.get(@clients_pool, :size)},
-      {:max_overflow, Keyword.get(@clients_pool, :max_overflow)},
+      {:size, instance.pool_size},
+      {:max_overflow, instance.pool_max_overflow},
       {:strategy, :fifo}
     ]
+  end
+
+  defp init_instance(instance_key) do
+    %Instance{
+      pool_name: instance_key,
+      pool_size: 100,
+      pool_max_overflow: 20
+    }
+  end
+
+  defp config_instance(instance, config) do
+    instance
+    |> Map.keys()
+    |> Enum.reduce(instance, fn(key, acc) ->
+      case Keyword.get(config, key) do
+        nil ->
+          acc
+        value ->
+          Map.put(acc, key, value)
+        end
+    end)
   end
 end

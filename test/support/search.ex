@@ -10,43 +10,43 @@ defmodule ExAliyunOtsTest.Support.Search do
   require RowExistence
   require FieldType
 
-  def initialize(instance_name, table, index_names) do
-    create_table(instance_name, table)
+  def initialize(instance_key, table, index_names) do
+    create_table(instance_key, table)
 
-    create_index(instance_name, table, index_names)
+    create_index(instance_key, table, index_names)
 
-    inseart_test_data(instance_name, table)
+    inseart_test_data(instance_key, table)
   end
 
-  def clean(instance_name, table, useless_index_names) do
+  def clean(instance_key, table, useless_index_names) do
     Enum.map(useless_index_names, fn(index_name) ->
       var_request = %Search.DeleteSearchIndexRequest{
         table_name: table,
         index_name: index_name
       }
-      {:ok, _response} = Client.delete_search_index(instance_name, var_request)
+      {:ok, _response} = Client.delete_search_index(instance_key, var_request)
     end)
-    ExAliyunOts.Client.delete_table(instance_name, table)
+    ExAliyunOts.Client.delete_table(instance_key, table)
     Logger.info "clean search_indexes and delete table"
   end
 
-  defp create_table(instance_name, table) do
+  defp create_table(instance_key, table) do
     var_create_table = %Var.CreateTable{
       table_name: table,
       primary_keys: [{"partition_key", PKType.string}],
     }
-    :ok = Client.create_table(instance_name, var_create_table)
+    :ok = Client.create_table(instance_key, var_create_table)
     Logger.info "initialized table"
     Process.sleep(5_000)
   end
 
-  defp create_index(instance_name, table, [index1, index2]) do
-    create_search_index(instance_name, table, index1)
-    create_search_index2(instance_name, table, index2)
+  defp create_index(instance_key, table, [index1, index2]) do
+    create_search_index(instance_key, table, index1)
+    create_search_index2(instance_key, table, index2)
     Process.sleep(5_000)
   end
 
-  defp inseart_test_data(instance_name, table) do
+  defp inseart_test_data(instance_key, table) do
 
     data = [
       %{id: "a1", class: "class1", name: "name_a1", age: 20, score: 99.71, is_actived: true},
@@ -68,7 +68,7 @@ defmodule ExAliyunOtsTest.Support.Search do
           row_existence: RowExistence.expect_not_exist
         }
       }
-      {:ok, _result} = Client.put_row(instance_name, var_put_row)
+      {:ok, _result} = Client.put_row(instance_key, var_put_row)
     end)
 
     data = [
@@ -84,14 +84,14 @@ defmodule ExAliyunOtsTest.Support.Search do
           row_existence: RowExistence.expect_not_exist
         }
       }
-      {:ok, _result} = Client.put_row(instance_name, var_put_row)
+      {:ok, _result} = Client.put_row(instance_key, var_put_row)
     end)
 
     Logger.info "waiting for indexing..."
-    Process.sleep(15_000)
+    Process.sleep(25_000)
   end
 
-  defp create_search_index(instance_name, table, index_name) do
+  defp create_search_index(instance_key, table, index_name) do
     var_request =
       %Search.CreateSearchIndexRequest{
         table_name: table,
@@ -117,11 +117,11 @@ defmodule ExAliyunOtsTest.Support.Search do
           ]
         }
       }
-    result = Client.create_search_index(instance_name, var_request)
+    result = Client.create_search_index(instance_key, var_request)
     Logger.info "create_search_index: #{inspect result}"
   end
 
-  defp create_search_index2(instance_name, table, index_name) do
+  defp create_search_index2(instance_key, table, index_name) do
     sub_nested1 = %Search.FieldSchema{
       field_name: "header",
       field_type: FieldType.keyword,
@@ -147,7 +147,7 @@ defmodule ExAliyunOtsTest.Support.Search do
           ]
         }
       }
-    result = Client.create_search_index(instance_name, var_request)
+    result = Client.create_search_index(instance_key, var_request)
     Logger.info "create_search_index2: #{inspect result}"
   end
 

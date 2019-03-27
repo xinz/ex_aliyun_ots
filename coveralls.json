@@ -1,0 +1,10 @@
+{
+  "skip_files": [
+    "lib/ex_aliyun_ots/protobuf/protobuf.ex",
+    "lib/ex_aliyun_ots/metadata.ex",
+    "lib/ex_aliyun_ots/const.ex"
+  ],
+  "coverage_options": {
+    "treat_no_relevant_lines_as_covered": true
+  }
+}

@@ -10,7 +10,7 @@ defmodule ExAliyunOtsTest.UpdateAndDescribeTable do
   require ReturnType
   require RowExistence
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   test "create table and then update it, meanwhile describe this table" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -19,7 +19,7 @@ defmodule ExAliyunOtsTest.UpdateAndDescribeTable do
       table_name: table_name,
       primary_keys: [{"partition_key", PKType.string}, {"order_id", PKType.string}],
     }
-    result = ExAliyunOts.Client.create_table(@instance_name, var_create_table)
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
     Process.sleep(30_000)
@@ -33,11 +33,11 @@ defmodule ExAliyunOtsTest.UpdateAndDescribeTable do
       time_to_live: 86_500,
       stream_spec: stream
     }
-    update_table_result = ExAliyunOts.Client.update_table(@instance_name, var_update_table)
+    update_table_result = ExAliyunOts.Client.update_table(@instance_key, var_update_table)
     Logger.info "#{inspect update_table_result}"
     # if the error message is `Your instance is forbidden to update capacity unit`, please ensure your server instance is a high-performance instance
 
-    describe_table_result = ExAliyunOts.Client.describe_table(@instance_name, table_name)
+    describe_table_result = ExAliyunOts.Client.describe_table(@instance_key, table_name)
     Logger.info "describe_table_result: #{inspect describe_table_result}"
     {:ok, table_info} = describe_table_result
     assert table_info.table_meta.table_name == table_name
@@ -58,7 +58,7 @@ defmodule ExAliyunOtsTest.UpdateAndDescribeTable do
     assert "order_id" == pk2.name
     assert :'STRING' == pk2.type
 
-    del_table_result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    del_table_result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert del_table_result == :ok
   end
 

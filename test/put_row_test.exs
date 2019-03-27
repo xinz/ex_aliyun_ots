@@ -9,7 +9,7 @@ defmodule ExAliyunOtsTest.PutRow do
   require ReturnType
   require RowExistence
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   test "put row" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -18,7 +18,7 @@ defmodule ExAliyunOtsTest.PutRow do
       table_name: table_name,
       primary_keys: [{"partition_key", PKType.integer}]
     }
-    result = ExAliyunOts.Client.create_table(@instance_name, var_create_table)
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
     Process.sleep(10_000)
   
@@ -33,14 +33,14 @@ defmodule ExAliyunOtsTest.PutRow do
       condition: condition,
       return_type: ReturnType.pk
     }
-    {:ok, _result} = ExAliyunOts.Client.put_row(@instance_name, var_put_row)
+    {:ok, _result} = ExAliyunOts.Client.put_row(@instance_key, var_put_row)
 
     var_get_row = %ExAliyunOts.Var.GetRow{
       table_name: table_name,
       primary_keys: [{"partition_key", partition_key}],
       columns_to_get: ["name", "age", "size", "level", "content"]
     }
-    get_row_result = ExAliyunOts.Client.get_row(@instance_name, var_get_row)
+    get_row_result = ExAliyunOts.Client.get_row(@instance_key, var_get_row)
     Logger.info ">>> #{inspect get_row_result}"
     {:ok, get_row_response} = get_row_result
     {_primary_keys, columns} = get_row_response.row
@@ -51,7 +51,7 @@ defmodule ExAliyunOtsTest.PutRow do
     assert {"name", "t3_name", _update_timestamp} = Enum.at(columns, 3)
     assert {"size", 1.1, _update_timestamp} = Enum.at(columns, 4)
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
 

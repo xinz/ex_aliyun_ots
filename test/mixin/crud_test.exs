@@ -1,12 +1,11 @@
 defmodule ExAliyunOts.MixinTest.CRUD do
 
   use ExUnit.Case
-  use ExAliyunOts.Mixin
+
+  use ExAliyunOts,
+    instance: EDCEXTestInstance
 
   require Logger
-  alias ExAliyunOts.Const.PKType
-  require PKType
-  @instance_name "super-test"
 
   test "CRUD" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -14,10 +13,10 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     table_name2 = "test_mixin_table_tmp2_#{cur_timestamp}"
 
     create_table1_result = 
-      create_table @instance_name, table_name1, [{"key1", PKType.integer}, {"key2", PKType.string}]
+      create_table table_name1, [{"key1", PKType.integer}, {"key2", PKType.string}]
 
     create_table2_result =
-      create_table @instance_name, table_name2, [{"key1", PKType.string}]
+      create_table table_name2, [{"key1", PKType.string}]
 
     assert create_table1_result == :ok
     assert create_table2_result == :ok
@@ -26,14 +25,14 @@ defmodule ExAliyunOts.MixinTest.CRUD do
 
     var_name = "1"
     {:ok, response} =
-      get_row @instance_name, table_name1, [{"key1", cur_timestamp}, {"key2", "#{cur_timestamp}"}],
+      get_row table_name1, [{"key1", cur_timestamp}, {"key2", "#{cur_timestamp}"}],
         columns_to_get: ["name", "level"],
         filter: filter(("name[ignore_if_missing: true, latest_version_only: true]" == var_name and "age" > 1) or ("class" == "1"))
     assert response.row == nil 
 
     for id <- 1..5 do
       {:ok, put_row_response} =
-        put_row @instance_name, table_name1, [{"key1", id}, {"key2", "#{id}"}],
+        put_row table_name1, [{"key1", id}, {"key2", "#{id}"}],
           [{"attr1", id * 2}, {"attr2", "attrname_#{id}"}],
           condition: condition(:expect_not_exist),
           return_type: :pk
@@ -41,14 +40,14 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     end
 
     {:ok, put_row_response} =
-      put_row @instance_name, table_name2, [{"key1", "tab2_id1"}],
+      put_row table_name2, [{"key1", "tab2_id1"}],
         [{"name", "name1"}, {"age", 20}],
         condition: condition(:expect_not_exist),
         return_type: :pk
     assert put_row_response.row == {[{"key1", "tab2_id1"}], nil}
 
     {:ok, response} =
-      get_row @instance_name, table_name1, [{"key1", 2}, {"key2", "2"}],
+      get_row table_name1, [{"key1", 2}, {"key2", "2"}],
         columns_to_get: ["attr2"]
     {pk_keys, attrs} = response.row
     assert pk_keys == [{"key1", 2}, {"key2", "2"}]
@@ -56,23 +55,23 @@ defmodule ExAliyunOts.MixinTest.CRUD do
 
     value = "attrname_2"
     {:ok, _response} =
-      update_row @instance_name, table_name1, [{"key1", 2}, {"key2", "2"}],
+      update_row table_name1, [{"key1", 2}, {"key2", "2"}],
         delete: [{"attr2", nil, key2_attr2_ts}],
         delete_all: ["attr1"],
         put: [{"attr3", "put_attr3"}],
         return_type: :pk,
         condition: condition(:expect_exist, "attr2" == value)
     {:ok, response} =
-      get_row @instance_name, table_name1, [{"key1", 2}, {"key2", "2"}]
+      get_row table_name1, [{"key1", 2}, {"key2", "2"}]
     {_pk_keys, attrs} = response.row
     {"attr3", "put_attr3", _ts} = Enum.at(attrs, 0)
 
     {:ok, _delete_row_response} =
-      delete_row @instance_name, table_name1, [{"key1", 3}, {"key2", "3"}],
+      delete_row table_name1, [{"key1", 3}, {"key2", "3"}],
       condition: condition(:expect_exist, "attr2" == "attrname_3")
 
     {:ok, batch_get_row_response} =
-      batch_get @instance_name, [
+      batch_get [
         get(table_name1, [[{"key1", 1}, {"key2", "1"}]]),
         get(table_name2, [{"key1", "tab2_id1"}],
           columns_to_get: ["name", "age"],
@@ -88,7 +87,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     {[{"key1", "tab2_id1"}], [{"age", 20, _}, {"name", "name1", _}]} = row2_table1.row
 
     {:ok, _batch_write_row_response} =
-      batch_write @instance_name, [{table_name1, [
+      batch_write [{table_name1, [
         write_delete([{"key1", 5}, {"key2", "5"}],
           return_type: :pk,
           condition: condition(:expect_exist, "attr1" == 5)),
@@ -106,7 +105,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
       ]}]
 
     {:ok, get_range_response} =
-      get_range @instance_name, table_name1,
+      get_range table_name1,
         [{"key1", 1}, {"key2", PKType.inf_min}],
         [{"key1", 4}, {"key2", PKType.inf_max}],
         limit: 2,
@@ -120,7 +119,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     assert next_primary_key != nil
 
     {:ok, get_range_response2} =
-      get_range @instance_name, table_name1,
+      get_range table_name1,
         next_primary_key,
         [{"key1", 4}, {"key2", PKType.inf_max}],
         direction: :forward
@@ -129,7 +128,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     {[{"key1", 4}, {"key2", _}], attrs_key_4} = Enum.at(get_range_rows2, 0)
 
     {:ok, _iterate_all_range_response} =
-      iterate_all_range @instance_name, table_name1,
+      iterate_all_range table_name1,
         [{"key1", 1}, {"key2", PKType.inf_min}],
         [{"key1", 4}, {"key2", PKType.inf_max}],
         direction: :forward
@@ -138,7 +137,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     {_key, _value, end_timestamp} = List.first(attrs_key_2)
 
     {:ok, get_range_response} =
-      get_range @instance_name, table_name1,
+      get_range table_name1,
         [{"key1", 1}, {"key2", PKType.inf_min}],
         [{"key1", 4}, {"key2", PKType.inf_max}],
         time_range: {start_timestamp, end_timestamp},
@@ -153,7 +152,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     assert attrs_key_4 == q2_attrs_key_4
 
     {:ok, get_range_response} =
-      get_range @instance_name, table_name1,
+      get_range table_name1,
         [{"key1", 1}, {"key2", PKType.inf_min}],
         [{"key1", 4}, {"key2", PKType.inf_max}],
         time_range: start_timestamp,
@@ -166,9 +165,9 @@ defmodule ExAliyunOts.MixinTest.CRUD do
 
     assert attrs_key_1 == q3_attrs_key_1
 
-    del_table1_reslt = delete_table @instance_name, table_name1
+    del_table1_reslt = delete_table table_name1
     assert del_table1_reslt == :ok
-    del_table2_reslt = delete_table @instance_name, table_name2
+    del_table2_reslt = delete_table table_name2
     assert del_table2_reslt == :ok
   end
 end

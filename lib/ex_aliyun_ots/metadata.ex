@@ -12,7 +12,10 @@ defmodule ExAliyunOts.Instance do
     :access_key_id,
     :access_key_secret,
     :name,
-    :endpoint
+    :endpoint,
+    :pool_name,
+    :pool_size,
+    :pool_max_overflow
   ]
 end
 

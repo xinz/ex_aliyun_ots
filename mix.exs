@@ -12,7 +12,9 @@ defmodule ExAliyunOts.Mixfile do
       package: package(),
       deps: deps(),
       docs: docs(),
-      source_url: "https://github.com/xinz/ex_aliyun_ots"
+      source_url: "https://github.com/xinz/ex_aliyun_ots",
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [coveralls: :test]
     ]
   end
 
@@ -34,7 +36,8 @@ defmodule ExAliyunOts.Mixfile do
       {:poolboy, "~> 1.5"},
       {:retry, "~> 0.11.2"},
       {:mock, "~> 0.3.2", only: :test},
-      {:tesla, "~> 1.2"}
+      {:tesla, "~> 1.2"},
+      {:excoveralls, "~> 0.10", only: :test}
     ]
   end
 

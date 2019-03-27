@@ -13,7 +13,7 @@ defmodule ExAliyunOtsTest.Search do
   require ColumnReturnType
   require SortOrder
 
-  @instance_name "edc-ex-test"
+  @instance_key EDCEXTestInstance
 
   @table "test_search"
 
@@ -22,17 +22,17 @@ defmodule ExAliyunOtsTest.Search do
   setup_all do
     Application.ensure_all_started(:ex_aliyun_ots)
 
-    TestSupportSearch.initialize(@instance_name, @table, @indexes)
+    TestSupportSearch.initialize(@instance_key, @table, @indexes)
 
     on_exit(fn ->
-      TestSupportSearch.clean(@instance_name, @table, @indexes)
+      TestSupportSearch.clean(@instance_key, @table, @indexes)
     end)
 
     :ok
   end
 
   test "list search index" do
-    result = Client.list_search_index(@instance_name, @table)
+    result = Client.list_search_index(@instance_key, @table)
     case result do
       {:ok, response} ->
         assert length(response.indices) == 2
@@ -46,7 +46,7 @@ defmodule ExAliyunOtsTest.Search do
       table_name: @table,
       index_name: "test_search_index2"
     }
-    result = Client.describe_search_index(@instance_name, var_request)
+    result = Client.describe_search_index(@instance_key, var_request)
     case result do
       {:ok, response} ->
         schema = response.schema
@@ -87,7 +87,7 @@ defmodule ExAliyunOtsTest.Search do
           column_names: ["class", "name", "age"]
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
 
     {:ok, response} = result
 
@@ -118,7 +118,7 @@ defmodule ExAliyunOtsTest.Search do
           token: response.next_token
         }
       }
-    result2 = ExAliyunOts.Client.search(@instance_name, var_request2)
+    result2 = ExAliyunOts.Client.search(@instance_key, var_request2)
     {:ok, response2} = result2
 
     {_pk, attrs2} = List.first(response2.rows)
@@ -165,7 +165,7 @@ defmodule ExAliyunOtsTest.Search do
           return_type: ColumnReturnType.all
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
         assert length(response.rows) == 1
@@ -194,7 +194,7 @@ defmodule ExAliyunOtsTest.Search do
           column_names: ["class", "name", "is_actived", "age"]
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
         rows = response.rows
@@ -235,7 +235,7 @@ defmodule ExAliyunOtsTest.Search do
           column_names: ["class", "name", "is_actived", "age"]
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
         assert length(response.rows) == 8
@@ -263,7 +263,7 @@ defmodule ExAliyunOtsTest.Search do
           column_names: ["class", "name", "is_actived", "age"]
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
         assert length(response.rows) == 8
@@ -292,7 +292,7 @@ defmodule ExAliyunOtsTest.Search do
           column_names: ["class", "name", "is_actived", "age"]
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
         assert length(response.rows) == 4
@@ -331,7 +331,7 @@ defmodule ExAliyunOtsTest.Search do
           return_type: ColumnReturnType.all
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
         assert length(response.rows) == 3
@@ -368,7 +368,7 @@ defmodule ExAliyunOtsTest.Search do
           column_names: ["class", "name", "is_actived", "age"]
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
         assert length(response.rows) == 3
@@ -393,7 +393,7 @@ defmodule ExAliyunOtsTest.Search do
           }
         }
       }
-    result = ExAliyunOts.Client.search(@instance_name, var_request)
+    result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
         assert length(response.rows) == 1

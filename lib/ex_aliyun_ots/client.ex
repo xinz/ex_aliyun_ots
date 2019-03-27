@@ -4,8 +4,6 @@ defmodule ExAliyunOts.Client do
 
   require Logger
 
-  @pool_name_prefix :ex_aliyun_ots_client
-
   @request_timeout 60_000
 
   alias ExAliyunOts.Client.{Table, Row, Search}
@@ -14,102 +12,100 @@ defmodule ExAliyunOts.Client do
 
   defstruct [instance: nil]
 
-  def pool_name(instance_name), do: splice_pool_name(instance_name)
-
   def start_link([instance]), do: GenServer.start_link(__MODULE__, instance)
 
   def init(instance) do
     {:ok, %__MODULE__{instance: instance}}
   end
 
-  def create_table(instance_name, var_create_table, request_timeout \\ @request_timeout) do
+  def create_table(instance_key, var_create_table, request_timeout \\ @request_timeout) do
     encoded_request = Table.request_to_create_table(var_create_table)
-    call_transaction(instance_name, {:create_table, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:create_table, encoded_request}, request_timeout)
   end
 
-  def list_table(instance_name, request_timeout \\ @request_timeout) do
+  def list_table(instance_key, request_timeout \\ @request_timeout) do
     encoded_request = Table.request_to_list_table()
-    call_transaction(instance_name, {:list_table, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:list_table, encoded_request}, request_timeout)
   end
 
-  def delete_table(instance_name, table_name, request_timeout \\ @request_timeout) do
+  def delete_table(instance_key, table_name, request_timeout \\ @request_timeout) do
     encoded_request = Table.request_to_delete_table(table_name)
-    call_transaction(instance_name, {:delete_table, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:delete_table, encoded_request}, request_timeout)
   end
 
-  def update_table(instance_name, var_update_table, request_timeout \\ @request_timeout) do
+  def update_table(instance_key, var_update_table, request_timeout \\ @request_timeout) do
     encoded_request = Table.request_to_update_table(var_update_table)
-    call_transaction(instance_name, {:update_table, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:update_table, encoded_request}, request_timeout)
   end
 
-  def describe_table(instance_name, var_describe_table, request_timeout \\ @request_timeout) do
+  def describe_table(instance_key, var_describe_table, request_timeout \\ @request_timeout) do
     encoded_request = Table.request_to_describe_table(var_describe_table)
-    call_transaction(instance_name, {:describe_table, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:describe_table, encoded_request}, request_timeout)
   end
 
-  def put_row(instance_name, var_put_row, request_timeout \\ @request_timeout) do
+  def put_row(instance_key, var_put_row, request_timeout \\ @request_timeout) do
     encoded_request = Row.request_to_put_row(var_put_row)
-    call_transaction(instance_name, {:put_row, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:put_row, encoded_request}, request_timeout)
   end
 
-  def get_row(instance_name, var_get_row, request_timeout \\ @request_timeout) do
+  def get_row(instance_key, var_get_row, request_timeout \\ @request_timeout) do
     encoded_request = Row.request_to_get_row(var_get_row)
-    call_transaction(instance_name, {:get_row, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:get_row, encoded_request}, request_timeout)
   end
 
-  def update_row(instance_name, var_update_row, request_timeout \\ @request_timeout) do
+  def update_row(instance_key, var_update_row, request_timeout \\ @request_timeout) do
     encoded_request = Row.request_to_update_row(var_update_row)
-    call_transaction(instance_name, {:update_row, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:update_row, encoded_request}, request_timeout)
   end
 
-  def delete_row(instance_name, var_delete_row, request_timeout \\ @request_timeout) do
+  def delete_row(instance_key, var_delete_row, request_timeout \\ @request_timeout) do
     encoded_request = Row.request_to_delete_row(var_delete_row)
-    call_transaction(instance_name, {:delete_row, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:delete_row, encoded_request}, request_timeout)
   end
 
-  def get_range(instance_name, var_get_range, next_start_primary_key \\ nil, request_timeout \\ @request_timeout) do
+  def get_range(instance_key, var_get_range, next_start_primary_key \\ nil, request_timeout \\ @request_timeout) do
     encoded_request = Row.request_to_get_range(var_get_range, next_start_primary_key)
-    call_transaction(instance_name, {:get_range, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:get_range, encoded_request}, request_timeout)
   end
 
-  def iterate_get_all_range(instance_name, var_get_range, request_timeout \\ :infinity) do
+  def iterate_get_all_range(instance_key, var_get_range, request_timeout \\ :infinity) do
     encoded_request = Row.request_to_get_range(var_get_range)
-    call_transaction(instance_name, {:iterate_get_all_range, encoded_request, var_get_range}, request_timeout)
+    call_transaction(instance_key, {:iterate_get_all_range, encoded_request, var_get_range}, request_timeout)
   end
 
-  def batch_get_row(instance_name, vars_batch_get_row, request_timeout \\ :infinity) when is_list(vars_batch_get_row) do
+  def batch_get_row(instance_key, vars_batch_get_row, request_timeout \\ :infinity) when is_list(vars_batch_get_row) do
     encoded_request = Row.request_to_batch_get_row(vars_batch_get_row)
-    call_transaction(instance_name, {:batch_get_row, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:batch_get_row, encoded_request}, request_timeout)
   end
 
-  def batch_write_row(instance_name, vars_batch_write_row, request_timeout \\ :infinity) when is_list(vars_batch_write_row) do
+  def batch_write_row(instance_key, vars_batch_write_row, request_timeout \\ :infinity) when is_list(vars_batch_write_row) do
     encoded_request = Row.request_to_batch_write_row(vars_batch_write_row)
-    call_transaction(instance_name, {:batch_write_row, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:batch_write_row, encoded_request}, request_timeout)
   end
 
-  def create_search_index(instance_name, var_create_search_index, request_timeout \\ :infinity) do
+  def create_search_index(instance_key, var_create_search_index, request_timeout \\ :infinity) do
     encoded_request = Search.request_to_create_search_index(var_create_search_index)
-    call_transaction(instance_name, {:create_search_index, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:create_search_index, encoded_request}, request_timeout)
   end
 
-  def search(instance_name, var_search_request, request_timeout \\ :infinity) do
+  def search(instance_key, var_search_request, request_timeout \\ :infinity) do
     encoded_request = Search.request_to_search(var_search_request)
-    call_transaction(instance_name, {:search, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:search, encoded_request}, request_timeout)
   end
 
-  def delete_search_index(instance_name, var_delete_search_index, request_timeout \\ :infinity) do
+  def delete_search_index(instance_key, var_delete_search_index, request_timeout \\ :infinity) do
     encoded_request = Search.request_to_delete_search_index(var_delete_search_index)
-    call_transaction(instance_name, {:delete_search_index, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:delete_search_index, encoded_request}, request_timeout)
   end
 
-  def list_search_index(instance_name, table_name, request_timeout \\ :infinity) do
+  def list_search_index(instance_key, table_name, request_timeout \\ :infinity) do
     encoded_request = Search.request_to_list_search_index(table_name)
-    call_transaction(instance_name, {:list_search_index, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:list_search_index, encoded_request}, request_timeout)
   end
 
-  def describe_search_index(instance_name, var_describe_search_index, request_timeout \\ :infinity) do
+  def describe_search_index(instance_key, var_describe_search_index, request_timeout \\ :infinity) do
     encoded_request = Search.request_to_describe_search_index(var_describe_search_index)
-    call_transaction(instance_name, {:describe_search_index, encoded_request}, request_timeout)
+    call_transaction(instance_key, {:describe_search_index, encoded_request}, request_timeout)
   end
 
   def handle_call({:create_table, request_body}, _from, state) do
@@ -192,18 +188,14 @@ defmodule ExAliyunOts.Client do
     {:reply, result, state}
   end
 
-  defp splice_pool_name(instance_name) when is_bitstring(instance_name) do
-    String.to_atom("#{@pool_name_prefix}_#{instance_name}")
-  end
-
-  defp call_transaction(instance_name, request, request_timeout) do
+  defp call_transaction(instance_key, request, request_timeout) do
     :poolboy.transaction(
-      splice_pool_name(instance_name),
+      instance_key,
       (fn(worker) -> 
         try do
           case GenServer.call(worker, request, request_timeout) do
             {:error, :timeout} ->
-              call_transaction(instance_name, request, request_timeout)
+              call_transaction(instance_key, request, request_timeout)
             result ->
               result
           end
@@ -211,7 +203,7 @@ defmodule ExAliyunOts.Client do
           :exit, {:timeout, _} ->
             {request_operation, _request_body} = request
             Logger.error(fn -> "** ExAliyunOts occur timeout error when call #{inspect request_operation}, will retry it" end)
-            call_transaction(instance_name, request, request_timeout)
+            call_transaction(instance_key, request, request_timeout)
           error ->
             Logger.error(fn -> "** ExAliyunOts occur an unexpected error: #{inspect error}" end)
             error

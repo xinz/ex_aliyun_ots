@@ -2,7 +2,7 @@ defmodule ExAliyunOtsTest.GetRange do
   use ExUnit.Case
   require Logger
 
-  @instance_name "super-test"
+  @instance_key EDCEXTestInstance
 
   alias ExAliyunOts.{Var, Client}
   alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence}
@@ -19,7 +19,7 @@ defmodule ExAliyunOtsTest.GetRange do
       table_name: table_name,
       primary_keys: [{"partition_key", PKType.integer}, {"id", PKType.integer, PKType.auto_increment}],
     }
-    result = Client.create_table(@instance_name, var_create_table)
+    result = Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
     Process.sleep(3_000)
@@ -45,7 +45,7 @@ defmodule ExAliyunOtsTest.GetRange do
         rows: batch_write_rows
       }
     ]
-    {:ok, _result} = Client.batch_write_row(@instance_name, batch_request)
+    {:ok, _result} = Client.batch_write_row(@instance_key, batch_request)
     Logger.info "test data is ready"
 
     var_get_range = %Var.GetRange{
@@ -54,7 +54,7 @@ defmodule ExAliyunOtsTest.GetRange do
       exclusive_end_primary_keys: [{"partition_key", 10}, {"id", PKType.inf_max}],
       limit: 3
     }
-    {:ok, get_range_response} = Client.get_range(@instance_name, var_get_range)
+    {:ok, get_range_response} = Client.get_range(@instance_key, var_get_range)
     rows = get_range_response.rows
     assert length(rows) == 3
     next_start_primary_key = get_range_response.next_start_primary_key
@@ -65,7 +65,7 @@ defmodule ExAliyunOtsTest.GetRange do
       exclusive_end_primary_keys: [{"partition_key", 10}, {"id", PKType.inf_max}],
       limit: 3
     }
-    {:ok, get_range_response2} = Client.get_range(@instance_name, var_get_range, next_start_primary_key)
+    {:ok, get_range_response2} = Client.get_range(@instance_key, var_get_range, next_start_primary_key)
     assert length(get_range_response2.rows) == 3
     assert get_range_response2.next_start_primary_key != nil
 
@@ -84,7 +84,7 @@ defmodule ExAliyunOtsTest.GetRange do
       inclusive_start_primary_keys: [{"partition_key", 1}, {"id", PKType.inf_min}],
       exclusive_end_primary_keys: [{"partition_key", 10}, {"id", PKType.inf_max}],
     }
-    {:ok, get_range_response} = Client.get_range(@instance_name, var_get_range_unlimit)
+    {:ok, get_range_response} = Client.get_range(@instance_key, var_get_range_unlimit)
     assert length(get_range_response.rows) == 10
     assert get_range_response.next_start_primary_key == nil
 
@@ -94,7 +94,7 @@ defmodule ExAliyunOtsTest.GetRange do
       exclusive_end_primary_keys: [{"partition_key", 10}, {"id", PKType.inf_max}],
       limit: 5
     }
-    {:ok, get_all_range_response} = Client.iterate_get_all_range(@instance_name, var_iterate_get_range)
+    {:ok, get_all_range_response} = Client.iterate_get_all_range(@instance_key, var_iterate_get_range)
     assert length(get_all_range_response.rows) == 10
 
     # test `iterate_get_all_range` with the huge rows
@@ -104,7 +104,7 @@ defmodule ExAliyunOtsTest.GetRange do
       exclusive_end_primary_keys: [{"partition_key", 200}, {"id", PKType.inf_max}],
       limit: 100
     }
-    {:ok, get_all_range_response} = Client.iterate_get_all_range(@instance_name, var_iterate_get_range)
+    {:ok, get_all_range_response} = Client.iterate_get_all_range(@instance_key, var_iterate_get_range)
     assert length(get_all_range_response.rows) == 200
     get_all_range_response.rows
     |> Enum.with_index()
@@ -116,7 +116,7 @@ defmodule ExAliyunOtsTest.GetRange do
       assert {"value", ^value, _timestamp} = Enum.at(attribute_columns, 1)
     end)
 
-    result = ExAliyunOts.Client.delete_table(@instance_name, table_name)
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
 
