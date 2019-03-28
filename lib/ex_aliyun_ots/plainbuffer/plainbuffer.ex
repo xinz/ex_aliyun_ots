@@ -491,12 +491,18 @@ defmodule ExAliyunOts.PlainBuffer do
     {updated_buffer, row_checksum}
   end
 
-  defp boolean_to_integer(value) do
-    if value, do: <<1>>, else: <<0>>
+  defp boolean_to_integer(true) do
+    <<1>>
+  end
+  defp boolean_to_integer(_) do
+    <<0>>
   end
 
-  defp integer_to_boolean(value) do
-    if value == 1, do: true, else: false
+  defp integer_to_boolean(1) do
+    true
+  end
+  defp integer_to_boolean(_) do
+    false
   end
 
   defp process_row_checksum(buffer, row_checksum) do
@@ -562,14 +568,6 @@ defmodule ExAliyunOts.PlainBuffer do
       end)
 
     Logger.debug(fn -> "checked_rows: #{inspect(checked_rows, limit: :infinity)}" end)
-
-    # Enum.map(checked_rows.tidied, fn(row_values) -> 
-    #  {primary_keys, attribute_columns} = deserialize_row_data(@pk_tag_marker <> row_values)
-    #  [{primary_keys, attribute_columns}]
-    # end)
-    # |> Enum.reduce([], fn(prepared_row, acc) ->
-    #  acc ++ prepared_row
-    # end)
 
     checked_rows.tidied
     |> Task.async_stream(
@@ -803,7 +801,7 @@ defmodule ExAliyunOts.PlainBuffer do
     end
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<2::little-integer-size(32)>>,
           <<@vt_boolean::integer>>, <<value::integer>>, (<<timestamp_rest::binary>>)>>
       ) do
@@ -812,7 +810,7 @@ defmodule ExAliyunOts.PlainBuffer do
     {value_boolean, timestamp}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<2::little-integer-size(32)>>,
           <<@vt_boolean::integer>>, (<<value::integer>>)>>
       ) do
@@ -820,14 +818,14 @@ defmodule ExAliyunOts.PlainBuffer do
     {value_boolean, nil}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<2::little-integer-size(32)>>,
           <<@vt_boolean::integer>>, (<<rest::binary>>)>>
       ) do
     raise ExAliyunOts.Error, "Invalid boolean value as: #{inspect(rest)}"
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
           <<@vt_integer::integer>>, <<value::little-integer-size(64)>>,
           (<<timestamp_rest::binary>>)>>
@@ -836,21 +834,21 @@ defmodule ExAliyunOts.PlainBuffer do
     {value, timestamp}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
           <<@vt_integer::integer>>, (<<value::little-integer-size(64)>>)>>
       ) do
     {value, nil}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
           <<@vt_integer::integer>>, (<<rest::binary>>)>>
       ) do
     raise ExAliyunOts.Error, "Invalid integer value as: #{inspect(rest)}"
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
           <<@vt_double::integer>>, <<value::float-little>>, (<<timestamp_rest::binary>>)>>
       ) do
@@ -858,21 +856,21 @@ defmodule ExAliyunOts.PlainBuffer do
     {value, timestamp}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
           <<@vt_double::integer>>, (<<value::float-little>>)>>
       ) do
     {value, nil}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
           <<@vt_double::integer>>, (<<rest::binary>>)>>
       ) do
     raise ExAliyunOts.Error, "Invalid float value as: #{inspect(rest)}"
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
           <<@vt_string::integer>>, <<value_size::little-integer-size(32), value::binary-size(value_size)>>,
           (<<timestamp_rest::binary>>)>>
@@ -881,21 +879,21 @@ defmodule ExAliyunOts.PlainBuffer do
     {value, timestamp}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
           <<@vt_string::integer>>, (<<value_size::little-integer-size(32), value::binary-size(value_size)>>)>>
       ) do
     {value, nil}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
           <<@vt_string::integer>>, rest::binary>>
       ) do
     raise ExAliyunOts.Error, "Unexcepted string value as: #{inspect(rest)}"
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
           <<@vt_blob::integer>>, <<value_size::little-integer-size(32), value::binary-size(value_size)>>,
           (<<timestamp_rest::binary>>)>>
@@ -904,21 +902,21 @@ defmodule ExAliyunOts.PlainBuffer do
     {value, timestamp}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
           <<@vt_blob::integer>>, (<<value_size::little-integer-size(32), value::binary-size(value_size)>>)>>
       ) do
     {value, nil}
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
           <<@vt_blob::integer>>, rest::binary>>
       ) do
     raise ExAliyunOts.Error, "Unexcepted string value as: #{inspect(rest)}"
   end
 
-  def deserialize_process_column_value_with_checksum(
+  defp deserialize_process_column_value_with_checksum(
         <<(<<@tag_cell_value::integer>>), rest::binary>>
       ) do
     raise ExAliyunOts.Error, "Unexcepted value as: #{inspect(rest)}"

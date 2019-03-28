@@ -29,19 +29,10 @@ use Mix.Config
 #
 #     import_config "#{Mix.env}.exs"
 
-config :logger, level: :info
-
-# Config aliyun ots access
-#
-# config :ex_aliyun_ots,
-#   instances: %{
-#     "YOUR_INSTANCE_NAME" => %{
-#       endpoint: "YOUR_INSTANCE_ENDPOINT",
-#       access_key_id: "YOUR_ACCESS_KEY_ID",
-#       access_key_secret: "YOUR_ACCESS_KEY_SECRET",
-#     },
-#   },
-#   clients_pool: [size: 100, max_overflow: 20]
-#
+config :logger,
+  level: :info,
+  compile_time_purge_matching: [
+    [level_lower_than: :info]
+  ]
 
 import_config "ots.secret.exs"
