@@ -29,14 +29,15 @@ defmodule ExAliyunOts.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:credo, "~> 1.0", only: :dev, runtime: false},
       {:exprotobuf, "~> 1.2"},
       {:timex, "~> 3.3"},
       {:poolboy, "~> 1.5"},
       {:retry, "~> 0.11.2"},
-      {:mock, "~> 0.3.2", only: :test},
       {:tesla, "~> 1.2"},
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:credo, "~> 1.0", only: :dev, runtime: false},
+      {:benchee, "~> 0.14", only: :dev, runtime: false},
+      {:mock, "~> 0.3.2", only: :test},
       {:excoveralls, "~> 0.10", only: :test}
     ]
   end
