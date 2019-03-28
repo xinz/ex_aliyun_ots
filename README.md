@@ -52,6 +52,8 @@ config :ex_aliyun_ots, instances: [MyInstance]
   * [DeleteTable](#DeleteTable)
   * [UpdateTable](#UpdateTable)
   * [DescribeTable](#DescribeTable)
+
+* [行操作](#Row)
   * [PutRow](#PutRow)
   * [GetRow](#GetRow)
   * [UpdateRow](#UpdateRow)
@@ -198,6 +200,8 @@ defmodule Sample do
   
 end
 ```
+
+### <a name="Row"></a>行操作
 
 #### <a name="PutRow"></a>PutRow
 
