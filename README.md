@@ -663,6 +663,11 @@ end
 
 ### <a name="LocalTransaction"></a>局部事务
 
+目前支持在以下方法中使用局部事务
+
+读操作：`GetRow`、`GetRange`
+写操作：`PutRow`、`UpdateRow`、`DeleteRow`、`BatchWriteRow`
+
 *注*：目前存在以下情况（记录于2019年04月01日），当未来表格存储产品更新后，以下情况也将会做对应的更新。
 
 * 如果表有主键自增列，当前不支持使用局部事务。
@@ -680,7 +685,7 @@ defmodule Sample do
   # 针对表的分区键，创建对应的事务，获取到相应的transaction_id，
   # 然后使用transaction_id
   # 用于读操作：GetRow/GetRange
-  # 用于写操作：PutRow/UpdateRow/BatchWrite/DeleteRow
+  # 用于写操作：PutRow/UpdateRow/DeleteRow/BatchWrite
   #
   # 请注意，这里是针对表的分区键创建局部事务，而不是表的完整的主键创建局部事务
   #
@@ -718,7 +723,7 @@ defmodule Sample do
 
   #
   # 使用transacation_id进行一些写操作后，
-  # 确认需要回滚这一系列的更新操作，通过该接口可以回滚整个事务操作
+  # 确认需要丢弃这一系列的更新操作，通过该接口可以回滚整个事务操作
   #
   def test() do
     abort_transaction(transaction_id)
