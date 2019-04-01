@@ -507,13 +507,13 @@ defmodule Sample do
   
   #
   # 局部事务仅限于对一张表中的分区键下进行一些读写事务操作，所以当进行批量写操作时，
-  # 同时使用局部事务功能时，传入的参数是一个元组{table, [update_xxx(), ...]}，
+  # 同时使用局部事务功能时，传入的参数是一个元组{table, [write_xxx(), ...]}，
   # 而不是包含多张表的批量更新操作的列表。
   #
   def test_transaction() do
     partition_key = {"key", "key1"}
     batch_write {
-      @table,
+      table_name1,
       [
         write_update([partition_key],
           put: [{"new_added1", 100}, {"new_added2", 101}],
