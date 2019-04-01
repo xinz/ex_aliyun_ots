@@ -95,6 +95,18 @@ defmodule ExAliyunOts do
         execute_describe_search_index(@instance, table, index_name, options)
       end
 
+      def start_local_transaction(table, partition_key, options \\ Keyword.new()) do
+        execute_start_local_transaction(@instance, table, partition_key, options)
+      end
+
+      def commit_transaction(transaction_id, options \\ Keyword.new()) do
+        execute_commit_transaction(@instance, transaction_id, options)
+      end
+
+      def abort_transaction(transaction_id, options \\ Keyword.new()) do
+        execute_abort_transaction(@instance, transaction_id, options)
+      end
+
     end
   end
 

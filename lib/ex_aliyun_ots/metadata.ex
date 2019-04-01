@@ -50,23 +50,23 @@ end
 defmodule ExAliyunOts.Var.UpdateRow do
   alias ExAliyunOts.Const.ReturnType
   require ReturnType
-  defstruct table_name: "", primary_keys: [], updates: %{}, condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none, return_columns: []
+  defstruct table_name: "", primary_keys: [], updates: %{}, condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none, return_columns: [], transaction_id: nil
 end
 
 defmodule ExAliyunOts.Var.PutRow do
   alias ExAliyunOts.Const.ReturnType
   require ReturnType
-  defstruct table_name: "", primary_keys: [], attribute_columns: [], condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none
+  defstruct table_name: "", primary_keys: [], attribute_columns: [], condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none, transaction_id: nil
 end
 
 defmodule ExAliyunOts.Var.GetRow do
-  defstruct table_name: "", primary_keys: [], columns_to_get: [], max_versions: 1, time_range: nil, filter: nil, start_column: nil, end_column: nil
+  defstruct table_name: "", primary_keys: [], columns_to_get: [], max_versions: 1, time_range: nil, filter: nil, start_column: nil, end_column: nil, transaction_id: nil
 end
 
 defmodule ExAliyunOts.Var.DeleteRow do
   alias ExAliyunOts.Const.ReturnType
   require ReturnType
-  defstruct table_name: "", primary_keys: [], condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none
+  defstruct table_name: "", primary_keys: [], condition: %ExAliyunOts.Var.Condition{}, return_type: ReturnType.none, transaction_id: nil
 end
 
 defmodule ExAliyunOts.Var.StreamSpec do
@@ -84,7 +84,7 @@ end
 defmodule ExAliyunOts.Var.GetRange do
   alias ExAliyunOts.Const.Direction
   require Direction
-  defstruct table_name: "", direction: Direction.forward, columns_to_get: [], time_range: nil, max_versions: 1, limit: nil, inclusive_start_primary_keys: nil, exclusive_end_primary_keys: nil, filter: nil, start_column: nil, end_column: nil
+  defstruct table_name: "", direction: Direction.forward, columns_to_get: [], time_range: nil, max_versions: 1, limit: nil, inclusive_start_primary_keys: nil, exclusive_end_primary_keys: nil, filter: nil, start_column: nil, end_column: nil, transaction_id: nil
 end
 
 defmodule ExAliyunOts.Var.RowInBatchWriteRequest do
@@ -219,4 +219,14 @@ defmodule ExAliyunOts.Var.Search do
     # 例如：有一个小学生学生状态监测系统，其中存了小学生的身高，但是小学生身高一直在长，所以“身高”这个字段，采用了array的方式。然后我们查询的时候，想根据身高进行排序，就可以设置`score_mode`为`max`，这样就能得到最近的一次身高。
     defstruct path: "", query: nil, score_mode: ScoreMode.none
   end
+end
+
+# Transaction
+
+defmodule ExAliyunOts.Var.Transaction do
+
+  defmodule StartLocalTransactionRequest do
+    defstruct table_name: "", partition_key: {}
+  end
+
 end

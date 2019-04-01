@@ -27,7 +27,12 @@ defmodule ExAliyunOts.Client.Row do
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
     serialized_row = PlainBuffer.serialize_for_put_row(var_put_row.primary_keys, var_put_row.attribute_columns)
 
-    [table_name: var_put_row.table_name, row: serialized_row, condition: proto_condition]
+    [
+      table_name: var_put_row.table_name,
+      row: serialized_row,
+      condition: proto_condition,
+      transaction_id: var_put_row.transaction_id
+    ]
     |> PutRowRequest.new()
     |> map_return_content(var_put_row.return_type, nil)
     |> PutRowRequest.encode()
@@ -52,7 +57,8 @@ defmodule ExAliyunOts.Client.Row do
       columns_to_get: var_get_row.columns_to_get,
       filter: filter,
       start_column: var_get_row.start_column,
-      end_column: var_get_row.end_column
+      end_column: var_get_row.end_column,
+      transaction_id: var_get_row.transaction_id
     )
 
     parameter_time_range = var_get_row.time_range
@@ -85,7 +91,12 @@ defmodule ExAliyunOts.Client.Row do
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
 
-    [table_name: var_update_row.table_name, row_change: serialized_row, condition: proto_condition]
+    [
+      table_name: var_update_row.table_name,
+      row_change: serialized_row,
+      condition: proto_condition,
+      transaction_id: var_update_row.transaction_id
+    ]
     |> UpdateRowRequest.new()
     |> map_return_content(var_update_row.return_type, var_update_row.return_columns)
     |> UpdateRowRequest.encode()
@@ -109,7 +120,12 @@ defmodule ExAliyunOts.Client.Row do
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
 
-    [table_name: var_delete_row.table_name, primary_key: serialized_primary_keys, condition: proto_condition]
+    [
+      table_name: var_delete_row.table_name,
+      primary_key: serialized_primary_keys,
+      condition: proto_condition,
+      transaction_id: var_delete_row.transaction_id
+    ]
     |> DeleteRowRequest.new()
     |> map_return_content(var_delete_row.return_type, nil)
     |> DeleteRowRequest.encode()
@@ -146,7 +162,8 @@ defmodule ExAliyunOts.Client.Row do
       exclusive_end_primary_key: prepared_exclusive_end_primary_keys,
       filter: filter,
       start_column: var_get_range.start_column,
-      end_column: var_get_range.end_column
+      end_column: var_get_range.end_column,
+      transaction_id: var_get_range.transaction_id
     )
     get_range_request =
       case parameter_time_range do
@@ -243,23 +260,34 @@ defmodule ExAliyunOts.Client.Row do
     |> Enum.map(fn({:ok, response}) -> response end)
   end
 
-  def request_to_batch_write_row(vars_batch_write_row) do
+  def request_to_batch_write_row(vars_batch_write_row, nil) when is_list(vars_batch_write_row) do
+    # BatchWriteRow for multi tables with local transaction are not supported.
     tables =
       Enum.map(vars_batch_write_row, fn(var_batch_write_row) ->
-        rows = var_batch_write_row.rows
-        if length(rows) > @batch_write_limit_per_request, do: raise ExAliyunOts.Error, "The number of rows in BatchWriteRow exceeds the maximun #{@batch_write_limit_per_request} limit"
-        stream = Task.async_stream(var_batch_write_row.rows, fn(var_row_in_request) ->
-          do_request_to_batch_write_row(var_row_in_request)
-        end, timeout: :infinity)
-        encoded_rows = Enum.map(stream, fn({:ok, request}) -> request end)
-        table_name = var_batch_write_row.table_name
-        TableInBatchWriteRowRequest.new(
-          table_name: table_name,
-          rows: encoded_rows
-        )
+        map_table_in_batch_write_row_request(var_batch_write_row)
       end)
     request = BatchWriteRowRequest.new(tables: tables)
     BatchWriteRowRequest.encode(request)
+  end
+
+  def request_to_batch_write_row(var_batch_write_row, transaction_id) do
+    table = map_table_in_batch_write_row_request(var_batch_write_row)
+    request = BatchWriteRowRequest.new(tables: [table], transaction_id: transaction_id)
+    BatchWriteRowRequest.encode(request)
+  end
+
+  defp map_table_in_batch_write_row_request(var_batch_write_row) do
+    rows = var_batch_write_row.rows
+    if length(rows) > @batch_write_limit_per_request, do: raise ExAliyunOts.Error, "The number of rows in BatchWriteRow exceeds the maximun #{@batch_write_limit_per_request} limit"
+    stream = Task.async_stream(var_batch_write_row.rows, fn(var_row_in_request) ->
+      do_request_to_batch_write_row(var_row_in_request)
+    end, timeout: :infinity)
+    encoded_rows = Enum.map(stream, fn({:ok, request}) -> request end)
+    table_name = var_batch_write_row.table_name
+    TableInBatchWriteRowRequest.new(
+      table_name: table_name,
+      rows: encoded_rows
+    )
   end
 
   defp do_request_to_batch_write_row(var_row_in_request) do

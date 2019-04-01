@@ -6,7 +6,7 @@ defmodule ExAliyunOts.Client do
 
   @request_timeout 60_000
 
-  alias ExAliyunOts.Client.{Table, Row, Search}
+  alias ExAliyunOts.Client.{Table, Row, Search, Transaction}
 
   alias ExAliyunOts.PlainBuffer
 
@@ -78,8 +78,19 @@ defmodule ExAliyunOts.Client do
     call_transaction(instance_key, {:batch_get_row, encoded_request}, request_timeout)
   end
 
-  def batch_write_row(instance_key, vars_batch_write_row, request_timeout \\ :infinity) when is_list(vars_batch_write_row) do
-    encoded_request = Row.request_to_batch_write_row(vars_batch_write_row)
+  def batch_write_row(instance_key, var_batch_write_row, options \\ [transaction_id: nil, request_timeout: :infinity])
+  def batch_write_row(instance_key, var_batch_write_row, request_timeout)
+    when is_list(var_batch_write_row) and request_timeout == :infinity
+    when is_list(var_batch_write_row) and is_integer(request_timeout) do
+    encoded_request = Row.request_to_batch_write_row(var_batch_write_row, nil)
+    call_transaction(instance_key, {:batch_write_row, encoded_request}, request_timeout)
+  end
+  def batch_write_row(instance_key, var_batch_write_row, options)
+    when is_map(var_batch_write_row) and is_list(options)
+    when is_list(var_batch_write_row) and is_list(options) do
+    request_timeout = Keyword.get(options, :request_timeout, :infinity)
+    transaction_id = Keyword.get(options, :transaction_id, nil)
+    encoded_request = Row.request_to_batch_write_row(var_batch_write_row, transaction_id)
     call_transaction(instance_key, {:batch_write_row, encoded_request}, request_timeout)
   end
 
@@ -106,6 +117,21 @@ defmodule ExAliyunOts.Client do
   def describe_search_index(instance_key, var_describe_search_index, request_timeout \\ :infinity) do
     encoded_request = Search.request_to_describe_search_index(var_describe_search_index)
     call_transaction(instance_key, {:describe_search_index, encoded_request}, request_timeout)
+  end
+
+  def start_local_transaction(instance_key, var_start_local_transaction, request_timeout \\ :infinity) do
+    encoded_request = Transaction.request_to_start_local_transaction(var_start_local_transaction)
+    call_transaction(instance_key, {:start_local_transaction, encoded_request}, request_timeout)
+  end
+
+  def commit_transaction(instance_key, transaction_id, request_timeout \\ :infinity) do
+    encoded_request = Transaction.request_to_commit_transaction(transaction_id)
+    call_transaction(instance_key, {:commit_transaction, encoded_request}, request_timeout)
+  end
+
+  def abort_transaction(instance_key, transaction_id, request_timeout \\ :infinity) do
+    encoded_request = Transaction.request_to_abort_transaction(transaction_id)
+    call_transaction(instance_key, {:abort_transaction, encoded_request}, request_timeout)
   end
 
   def handle_call({:create_table, request_body}, _from, state) do
@@ -185,6 +211,18 @@ defmodule ExAliyunOts.Client do
   end
   def handle_call({:describe_search_index, request_body}, _from, state) do
     result = Search.remote_describe_search_index(state.instance, request_body)
+    {:reply, result, state}
+  end
+  def handle_call({:start_local_transaction, request_body}, _from, state) do
+    result = Transaction.remote_start_local_transaction(state.instance, request_body)
+    {:reply, result, state}
+  end
+  def handle_call({:commit_transaction, request_body}, _from, state) do
+    result = Transaction.remote_commit_transaction(state.instance, request_body)
+    {:reply, result, state}
+  end
+  def handle_call({:abort_transaction, request_body}, _from, state) do
+    result = Transaction.remote_abort_transaction(state.instance, request_body)
     {:reply, result, state}
   end
 

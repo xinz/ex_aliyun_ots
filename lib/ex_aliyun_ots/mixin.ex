@@ -114,6 +114,18 @@ defmodule ExAliyunOts.Mixin do
         execute_describe_search_index(instance_key, table, index_name, options)
       end
 
+      def start_local_transaction(instance_key, table, partition_key, options \\ Keyword.new()) do
+        execute_start_local_transaction(instance_key, table, partition_key, options)
+      end
+
+      def commit_transaction(instance_key, transaction_id, options \\ Keyword.new()) do
+        execute_commit_transaction(instance_key, transaction_id, options)
+      end
+
+      def abort_transaction(instance_key, transaction_id, options \\ Keyword.new()) do
+        execute_abort_transaction(instance_key, transaction_id, options)
+      end
+
     end
   end
 
@@ -180,19 +192,21 @@ defmodule ExAliyunOts.Mixin do
     end
   end
 
-  def execute_batch_write(instance_key, write_requests, options) do
+  def execute_batch_write(instance_key, write_requests, options) when is_list(write_requests) do
     batch_write_requests = Enum.map(write_requests, fn({table, write_rows}) ->
       %Var.BatchWriteRequest{
         table_name: table,
         rows: write_rows
       }
     end)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.batch_write_row(instance_key, batch_write_requests, request_time)
-    else
-      Client.batch_write_row(instance_key, batch_write_requests)
-    end
+    Client.batch_write_row(instance_key, batch_write_requests, options)
+  end
+  def execute_batch_write(instance_key, {table, write_rows}, options) do
+    batch_write_request = %Var.BatchWriteRequest{
+      table_name: table,
+      rows: write_rows
+    }
+    Client.batch_write_row(instance_key, batch_write_request, options)
   end
 
   def execute_get_row(instance_key, table, pk_keys, options) do
@@ -386,6 +400,25 @@ defmodule ExAliyunOts.Mixin do
     else
       Client.describe_search_index(instance_key, var_describe_request)
     end
+  end
+
+  def execute_start_local_transaction(instance_key, table, partition_key, options) do
+    var_start_local_transaction = %Var.Transaction.StartLocalTransactionRequest{
+      table_name: table,
+      partition_key: partition_key
+    }
+    request_time = Keyword.get(options, :request_time, :infinity)
+    Client.start_local_transaction(instance_key, var_start_local_transaction, request_time)
+  end
+
+  def execute_commit_transaction(instance_key, transaction_id, options) do
+    request_time = Keyword.get(options, :request_time, :infinity)
+    Client.commit_transaction(instance_key, transaction_id, request_time)
+  end
+
+  def execute_abort_transaction(instance_key, transaction_id, options) do
+    request_time = Keyword.get(options, :request_time, :infinity)
+    Client.abort_transaction(instance_key, transaction_id, request_time)
   end
 
   defp map_options(var, nil) do
