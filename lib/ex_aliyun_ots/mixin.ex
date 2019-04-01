@@ -135,30 +135,15 @@ defmodule ExAliyunOts.Mixin do
         primary_keys: pk_keys
     }
     prepared_var = map_options(var_create_table, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.create_table(instance_key, prepared_var, request_time)
-    else
-      Client.create_table(instance_key, prepared_var)
-    end
+    Client.create_table(instance_key, prepared_var, options)
   end
 
   def execute_delete_table(instance_key, table, options) do
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.delete_table(instance_key, table, request_time)
-    else
-      Client.delete_table(instance_key, table)
-    end
+    Client.delete_table(instance_key, table, options)
   end
 
   def execute_list_table(instance_key, options) do
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.list_table(instance_key, request_time)
-    else
-      Client.list_table(instance_key)
-    end
+    Client.list_table(instance_key, options)
   end
 
   def execute_update_table(instance_key, table, options) do
@@ -166,30 +151,15 @@ defmodule ExAliyunOts.Mixin do
       table_name: table
     }
     prepared_var = map_options(var_update_table, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.update_table(instance_key, prepared_var, request_time)
-    else
-      Client.update_table(instance_key, prepared_var)
-    end
+    Client.update_table(instance_key, prepared_var, options)
   end
 
   def execute_describe_table(instance_key, table, options) do
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.describe_table(instance_key, table, request_time)
-    else
-      Client.describe_table(instance_key, table)
-    end
+    Client.describe_table(instance_key, table, options)
   end
 
   def execute_batch_get(instance_key, get_requests, options) do
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.batch_get_row(instance_key, get_requests, request_time)
-    else
-      Client.batch_get_row(instance_key, get_requests)
-    end
+    Client.batch_get_row(instance_key, get_requests, options)
   end
 
   def execute_batch_write(instance_key, write_requests, options) when is_list(write_requests) do
@@ -215,12 +185,7 @@ defmodule ExAliyunOts.Mixin do
       primary_keys: pk_keys
     }
     prepared_var = map_options(var_get_row, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.get_row(instance_key, prepared_var, request_time)
-    else
-      Client.get_row(instance_key, prepared_var)
-    end
+    Client.get_row(instance_key, prepared_var, options)
   end
 
   def execute_get(table, pk_keys, options) do
@@ -238,12 +203,7 @@ defmodule ExAliyunOts.Mixin do
       attribute_columns: attrs,
     }
     prepared_var = map_options(var_put_row, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.put_row(instance_key, prepared_var, request_time)
-    else
-      Client.put_row(instance_key, prepared_var)
-    end
+    Client.put_row(instance_key, prepared_var, options)
   end
 
   def execute_update_row(instance_key, table, pk_keys, options) do
@@ -255,12 +215,8 @@ defmodule ExAliyunOts.Mixin do
       var_update_row
       |> map_options(options)
       |> Map.put(:updates, map_updates(options))
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.update_row(instance_key, prepared_var, request_time)
-    else
-      Client.update_row(instance_key, prepared_var)
-    end
+    
+    Client.update_row(instance_key, prepared_var, options)
   end
 
   def execute_delete_row(instance_key, table, pk_keys, options) do
@@ -269,12 +225,7 @@ defmodule ExAliyunOts.Mixin do
       primary_keys: pk_keys
     }
     prepared_var = map_options(var_delete_row, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.delete_row(instance_key, prepared_var, request_time)
-    else
-      Client.delete_row(instance_key, prepared_var)
-    end
+    Client.delete_row(instance_key, prepared_var, options)
   end
 
   def execute_write_put(pk_keys, attrs, options) do
@@ -310,12 +261,7 @@ defmodule ExAliyunOts.Mixin do
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
     prepared_var = map_options(var_get_range, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.get_range(instance_key, prepared_var, nil, request_time)
-    else
-      Client.get_range(instance_key, prepared_var)
-    end
+    Client.get_range(instance_key, prepared_var, nil, options)
   end
   def execute_get_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_binary(inclusive_start_primary_keys) do
     var_get_range = %Var.GetRange{
@@ -323,12 +269,7 @@ defmodule ExAliyunOts.Mixin do
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
     prepared_var = map_options(var_get_range, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.get_range(instance_key, prepared_var, inclusive_start_primary_keys, request_time)
-    else
-      Client.get_range(instance_key, prepared_var, inclusive_start_primary_keys)
-    end
+    Client.get_range(instance_key, prepared_var, inclusive_start_primary_keys, options)
   end
 
   def execute_iterate_all_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) do
@@ -338,12 +279,7 @@ defmodule ExAliyunOts.Mixin do
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
     prepared_var = map_options(var_iterate_all_range, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.iterate_get_all_range(instance_key, prepared_var, request_time)
-    else
-      Client.iterate_get_all_range(instance_key, prepared_var)
-    end
+    Client.iterate_get_all_range(instance_key, prepared_var, options)
   end
 
   def execute_pagination(offset, limit) do
@@ -359,21 +295,11 @@ defmodule ExAliyunOts.Mixin do
       index_name: index_name
     }
     prepared_var = map_search_options(var_search_request, options)
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.search(instance_key, prepared_var, request_time)
-    else
-      Client.search(instance_key, prepared_var)
-    end
+    Client.search(instance_key, prepared_var, options)
   end
 
   def execute_list_search_index(instance_key, table, options) do
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.list_search_index(instance_key, table, request_time)
-    else
-      Client.list_search_index(instance_key, table)
-    end
+    Client.list_search_index(instance_key, table, options)
   end
 
   def execute_delete_search_index(instance_key, table, index_name, options) do
@@ -381,12 +307,7 @@ defmodule ExAliyunOts.Mixin do
       table_name: table,
       index_name: index_name
     }
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.delete_search_index(instance_key, var_delete_request, request_time)
-    else
-      Client.delete_search_index(instance_key, var_delete_request)
-    end
+    Client.delete_search_index(instance_key, var_delete_request, options)
   end
 
   def execute_describe_search_index(instance_key, table, index_name, options) do
@@ -394,12 +315,7 @@ defmodule ExAliyunOts.Mixin do
       table_name: table,
       index_name: index_name
     }
-    request_time = Keyword.get(options, :request_time)
-    if request_time != nil do
-      Client.describe_search_index(instance_key, var_describe_request, request_time)
-    else
-      Client.describe_search_index(instance_key, var_describe_request)
-    end
+    Client.describe_search_index(instance_key, var_describe_request, options)
   end
 
   def execute_start_local_transaction(instance_key, table, partition_key, options) do
@@ -407,18 +323,15 @@ defmodule ExAliyunOts.Mixin do
       table_name: table,
       partition_key: partition_key
     }
-    request_time = Keyword.get(options, :request_time, :infinity)
-    Client.start_local_transaction(instance_key, var_start_local_transaction, request_time)
+    Client.start_local_transaction(instance_key, var_start_local_transaction, options)
   end
 
   def execute_commit_transaction(instance_key, transaction_id, options) do
-    request_time = Keyword.get(options, :request_time, :infinity)
-    Client.commit_transaction(instance_key, transaction_id, request_time)
+    Client.commit_transaction(instance_key, transaction_id, options)
   end
 
   def execute_abort_transaction(instance_key, transaction_id, options) do
-    request_time = Keyword.get(options, :request_time, :infinity)
-    Client.abort_transaction(instance_key, transaction_id, request_time)
+    Client.abort_transaction(instance_key, transaction_id, options)
   end
 
   defp map_options(var, nil) do

@@ -145,7 +145,7 @@ defmodule ExAliyunOts.Client.Search do
     ListSearchIndexRequest.new(table_name: table_name) |> ListSearchIndexRequest.encode()
   end
 
- def remote_list_search_index(instance, request_body) do
+  def remote_list_search_index(instance, request_body) do
     instance
     |> Http.client("/ListSearchIndex", request_body, &ListSearchIndexResponse.decode/1)
     |> Http.post()

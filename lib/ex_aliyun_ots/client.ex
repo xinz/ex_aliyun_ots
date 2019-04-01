@@ -18,63 +18,75 @@ defmodule ExAliyunOts.Client do
     {:ok, %__MODULE__{instance: instance}}
   end
 
-  def create_table(instance_key, var_create_table, request_timeout \\ @request_timeout) do
+  def create_table(instance_key, var_create_table, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Table.request_to_create_table(var_create_table)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:create_table, encoded_request}, request_timeout)
   end
 
-  def list_table(instance_key, request_timeout \\ @request_timeout) do
+  def list_table(instance_key, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Table.request_to_list_table()
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:list_table, encoded_request}, request_timeout)
   end
 
-  def delete_table(instance_key, table_name, request_timeout \\ @request_timeout) do
+  def delete_table(instance_key, table_name, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Table.request_to_delete_table(table_name)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:delete_table, encoded_request}, request_timeout)
   end
 
-  def update_table(instance_key, var_update_table, request_timeout \\ @request_timeout) do
+  def update_table(instance_key, var_update_table, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Table.request_to_update_table(var_update_table)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:update_table, encoded_request}, request_timeout)
   end
 
-  def describe_table(instance_key, var_describe_table, request_timeout \\ @request_timeout) do
+  def describe_table(instance_key, var_describe_table, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Table.request_to_describe_table(var_describe_table)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:describe_table, encoded_request}, request_timeout)
   end
 
-  def put_row(instance_key, var_put_row, request_timeout \\ @request_timeout) do
+  def put_row(instance_key, var_put_row, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Row.request_to_put_row(var_put_row)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:put_row, encoded_request}, request_timeout)
   end
 
-  def get_row(instance_key, var_get_row, request_timeout \\ @request_timeout) do
+  def get_row(instance_key, var_get_row, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Row.request_to_get_row(var_get_row)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:get_row, encoded_request}, request_timeout)
   end
 
-  def update_row(instance_key, var_update_row, request_timeout \\ @request_timeout) do
+  def update_row(instance_key, var_update_row, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Row.request_to_update_row(var_update_row)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:update_row, encoded_request}, request_timeout)
   end
 
-  def delete_row(instance_key, var_delete_row, request_timeout \\ @request_timeout) do
+  def delete_row(instance_key, var_delete_row, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Row.request_to_delete_row(var_delete_row)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:delete_row, encoded_request}, request_timeout)
   end
 
-  def get_range(instance_key, var_get_range, next_start_primary_key \\ nil, request_timeout \\ @request_timeout) do
+  def get_range(instance_key, var_get_range, next_start_primary_key \\ nil, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Row.request_to_get_range(var_get_range, next_start_primary_key)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:get_range, encoded_request}, request_timeout)
   end
 
-  def iterate_get_all_range(instance_key, var_get_range, request_timeout \\ :infinity) do
+  def iterate_get_all_range(instance_key, var_get_range, options \\ [request_timeout: :infinity]) do
     encoded_request = Row.request_to_get_range(var_get_range)
+    request_timeout = Keyword.get(options, :request_timeout, :infinity)
     call_transaction(instance_key, {:iterate_get_all_range, encoded_request, var_get_range}, request_timeout)
   end
 
-  def batch_get_row(instance_key, vars_batch_get_row, request_timeout \\ :infinity) when is_list(vars_batch_get_row) do
+  def batch_get_row(instance_key, vars_batch_get_row, options \\ [request_timeout: :infinity]) when is_list(vars_batch_get_row) do
     encoded_request = Row.request_to_batch_get_row(vars_batch_get_row)
+    request_timeout = Keyword.get(options, :request_timeout, :infinity)
     call_transaction(instance_key, {:batch_get_row, encoded_request}, request_timeout)
   end
 
@@ -94,43 +106,51 @@ defmodule ExAliyunOts.Client do
     call_transaction(instance_key, {:batch_write_row, encoded_request}, request_timeout)
   end
 
-  def create_search_index(instance_key, var_create_search_index, request_timeout \\ :infinity) do
+  def create_search_index(instance_key, var_create_search_index, options \\ [request_timeout: :infinity]) do
     encoded_request = Search.request_to_create_search_index(var_create_search_index)
+    request_timeout = Keyword.get(options, :request_timeout, :infinity)
     call_transaction(instance_key, {:create_search_index, encoded_request}, request_timeout)
   end
 
-  def search(instance_key, var_search_request, request_timeout \\ :infinity) do
+  def search(instance_key, var_search_request, options \\ [request_timeout: :infinity]) do
     encoded_request = Search.request_to_search(var_search_request)
+    request_timeout = Keyword.get(options, :request_timeout, :infinity)
     call_transaction(instance_key, {:search, encoded_request}, request_timeout)
   end
 
-  def delete_search_index(instance_key, var_delete_search_index, request_timeout \\ :infinity) do
+  def delete_search_index(instance_key, var_delete_search_index, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Search.request_to_delete_search_index(var_delete_search_index)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:delete_search_index, encoded_request}, request_timeout)
   end
 
-  def list_search_index(instance_key, table_name, request_timeout \\ :infinity) do
+  def list_search_index(instance_key, table_name, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Search.request_to_list_search_index(table_name)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:list_search_index, encoded_request}, request_timeout)
   end
 
-  def describe_search_index(instance_key, var_describe_search_index, request_timeout \\ :infinity) do
+  def describe_search_index(instance_key, var_describe_search_index, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Search.request_to_describe_search_index(var_describe_search_index)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:describe_search_index, encoded_request}, request_timeout)
   end
 
-  def start_local_transaction(instance_key, var_start_local_transaction, request_timeout \\ :infinity) do
+  def start_local_transaction(instance_key, var_start_local_transaction, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Transaction.request_to_start_local_transaction(var_start_local_transaction)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:start_local_transaction, encoded_request}, request_timeout)
   end
 
-  def commit_transaction(instance_key, transaction_id, request_timeout \\ :infinity) do
+  def commit_transaction(instance_key, transaction_id, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Transaction.request_to_commit_transaction(transaction_id)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:commit_transaction, encoded_request}, request_timeout)
   end
 
-  def abort_transaction(instance_key, transaction_id, request_timeout \\ :infinity) do
+  def abort_transaction(instance_key, transaction_id, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Transaction.request_to_abort_transaction(transaction_id)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:abort_transaction, encoded_request}, request_timeout)
   end
 
