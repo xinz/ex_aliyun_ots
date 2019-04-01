@@ -43,6 +43,7 @@ config :ex_aliyun_ots, instances: [MyInstance]
 * 使用过滤器
 * 原子计数器
 * 多元索引
+* 局部事务
 
 ## Supported API
 
@@ -67,6 +68,11 @@ config :ex_aliyun_ots, instances: [MyInstance]
   * [DescribeSearchIndex](#DescribeSearchIndex)
   * [DeleteSearchIndex](#DeleteSearchIndex)
   * [Search](#Search)
+
+* [局部事务](#LocalTransaction)
+  * [StartLocalTransaction](#StartLocalTransaction)
+  * [CommitTransaction](#CommitTransaction)
+  * [AbortTransaction](#AbortTransaction)
 
 * [SDK内置提供](#Other)
 
@@ -215,11 +221,21 @@ defmodule Sample do
   # `RowExistence` options: 
   #   :ignore | :expect_not_exist | :expect_exist
   #
+  # 可选设定项:
+  # `transaction_id`，更新操作使用局部事务
+  #
   def test() do
     put_row "table_name",
       [{"key1", "id1"}],
       [{"name", "name1"}, {"age", 20}],
       condition: condition(RowExistence.expect_not_exist),
+      return_type: :pk
+
+    put_row "table_name",
+      [{"key1", "id1"}],
+      [{"name", "name1"}, {"age", 20}],
+      condition: condition(RowExistence.expect_not_exist),
+      transaction_id: "transaction_id"
       return_type: :pk
   end
   
@@ -251,6 +267,7 @@ defmodule Sample do
   # `time_range`，和max_versions只能存在一个，读取数据的版本时间戳范围，支持2种定义方式，如：
   #   time_range: {start_timestamp, end_timestamp}
   #   time_range: specail_timestamp
+  # `transaction_id`，读取操作使用局部事务
   #
   def test() do
     get_row table_name1,
@@ -262,6 +279,10 @@ defmodule Sample do
       [{"key", "1"}],
       start_column: "room",
       filter: pagination(offset: 0, limit: 3)
+
+    get_row table_name,
+      [{"key", "1"}],
+      transaction_id: "transaction_id"
   end
   
 end
@@ -293,6 +314,9 @@ defmodule Sample do
   #   `:ignore`，表示不做行存在性检查；
   #   同时支持在condition()进行条件查询，见`filter`操作。
   #
+  # 可选设定项
+  # `transaction_id`，更新操作使用局部事务
+  #
   def test() do
     value = "value1"
     update_row table_name1,
@@ -314,6 +338,13 @@ defmodule Sample do
         condition: condition(:ignore)
   end
   
+  def test_with_transaction() do
+    update_row @table, [partition_key],
+      put: [{"new_attr1", "a1"}],
+      delete_all: ["level", "size"],
+      condition: condition(:ignore),
+      transaction_id: "transaction_id"
+  end
 end
 ```
 
@@ -328,10 +359,18 @@ defmodule Sample do
   #
   # 删除行操作支持按条件筛选，通过condition()。
   #
+  # 可选设定项
+  #   `transaction_id`，删除操作使用局部事务
+  #
   def test() do
     delete_row table_name1,
       [{"key1", 3}, {"key2", "3"}],
       condition: condition(:expect_exist, "attr2" == "value2")
+
+    delete_row table_name1,
+      [{"key1", 3}, {"key2", "3"}],
+      condition: condition(:expect_exist, "attr2" == "value2"),
+      transaction_id: "transaction_id"
   end
   
 end
@@ -361,6 +400,7 @@ defmodule Sample do
   # `time_range`，和max_versions只能存在一个，读取数据的版本时间戳范围，支持2种定义方式，如：
   #   time_range: {start_timestamp, end_timestamp}
   #   time_range: specail_timestamp
+  # `transaction_id`，读取操作使用局部事务
   #
   def test() do  
     #
@@ -394,6 +434,12 @@ defmodule Sample do
       [{"key1", 4}, {"key2", PKType.inf_max}],
       time_range: 1525942123224,
       direction: :forward
+
+    # 局部事务
+    get_range @table_range,
+      [{"key", "key1"}, {"key2", PKType.inf_min}],
+      [{"key", "key1"}, {"key2", PKType.inf_max}],
+      transaction_id: "transaction_id"
   end
   
 end
@@ -434,6 +480,9 @@ defmodule Sample do
   # 批量插入、修改或删除一个或多个表中的若干行数据，为多个 PutRow、UpdateRow、DeleteRow 操作的集合
   # 通过write_delete()、write_put()、write_update()进行更新操作，支持的选项可参考`UpdateRow`。
   #
+  # 可选设定项
+  # `transaction_id`，批量写操作使用局部事务
+  #
   def test() do
     batch_write [
       {table_name1, [
@@ -456,6 +505,22 @@ defmodule Sample do
      ]
   end
   
+  #
+  # 局部事务仅限于对一张表中的分区键下进行一些读写事务操作，所以当进行批量写操作时，
+  # 同时使用局部事务功能时，传入的参数是一个元组{table, [update_xxx(), ...]}，
+  # 而不是包含多张表的批量更新操作的列表。
+  #
+  def test_transaction() do
+    partition_key = {"key", "key1"}
+    batch_write {
+      @table,
+      [
+        write_update([partition_key],
+          put: [{"new_added1", 100}, {"new_added2", 101}],
+          condition: condition(:ignore)
+        )
+      ]}, transaction_id: "transaction_id"
+  end
 end
 ```
 
@@ -595,6 +660,71 @@ end
 
 一些使用方法请见 [测试用例](https://github.com/xinz/ex_aliyun_ots/blob/master/test/mixin/search_test.exs)
 
+
+### <a name="LocalTransaction"></a>局部事务
+
+*注*：目前存在以下情况（记录于2019年04月01日），当未来表格存储产品更新后，以下情况也将会做对应的更新。
+
+* 如果表有主键自增列，当前不支持使用局部事务。
+* 当前局部事务属于公测阶段，开通该功能是表级别的，若需要使用该功能需要向阿里云表格存储技术支持申请开通。
+
+#### <a name="StartLocalTransaction"></a>StartLocalTransaction
+
+```elixir
+defmodule Sample do
+
+  use ExAliyunOts,
+    instance: MyInstance
+
+  #
+  # 针对表的分区键，创建对应的事务，获取到相应的transaction_id，
+  # 然后使用transaction_id
+  # 用于读操作：GetRow/GetRange
+  # 用于写操作：PutRow/UpdateRow/BatchWrite/DeleteRow
+  #
+  # 请注意，这里是针对表的分区键创建局部事务，而不是表的完整的主键创建局部事务
+  #
+  def test() do
+    partition_key = {"key", "key1"}
+    {:ok, response} = start_local_transaction(@table, partition_key)
+    reponse.transaction_id
+  end
+```
+
+#### <a name="CommitTransaction"></a>CommitTransaction
+
+```elixir
+defmodule Sample do
+
+  use ExAliyunOts,
+    instance: MyInstance
+
+  #
+  # 使用transacation_id进行一些写操作后，
+  # 确认需要完整地提交这一系列的更新操作，通过该接口可以完成整个事务操作
+  #
+  def test() do
+    commit_transaction(transaction_id)
+  end
+```
+
+#### <a name="AbortTransaction"></a>AbortTransaction
+
+```elixir
+defmodule Sample do
+
+  use ExAliyunOts,
+    instance: MyInstance
+
+  #
+  # 使用transacation_id进行一些写操作后，
+  # 确认需要回滚这一系列的更新操作，通过该接口可以回滚整个事务操作
+  #
+  def test() do
+    abort_transaction(transaction_id)
+  end
+```
+
 ### <a name="Other"></a>Other
 
 以下功能是由SDK内置提供
@@ -682,7 +812,7 @@ end
 
 ## TODO
 
-* 支持局部事务 
+* Tunnel Service
 
 ## License
 
