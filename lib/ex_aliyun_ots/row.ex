@@ -1,5 +1,6 @@
 defmodule ExAliyunOts.Client.Row do
-  require Logger
+
+  import ExAliyunOts.Logger, only: [debug: 1]
 
   alias ExAliyunOts.TableStore.{PutRowRequest, Condition, PutRowResponse, ReturnContent,
     TimeRange, GetRowRequest, GetRowResponse, UpdateRowRequest, UpdateRowResponse, GetRangeRequest,
@@ -43,7 +44,12 @@ defmodule ExAliyunOts.Client.Row do
       instance
       |> Http.client("/PutRow", request_body, &PutRowResponse.decode/1)
       |> Http.post()
-    Logger.debug(fn -> "put_row result: #{inspect result}" end)
+    debug(fn ->
+      [
+        "put_row result: ",
+        inspect(result)
+      ]
+    end)
     result
   end
 
@@ -78,7 +84,12 @@ defmodule ExAliyunOts.Client.Row do
       instance
       |> Http.client("/GetRow", request_body, &GetRowResponse.decode/1)
       |> Http.post()
-    Logger.debug(fn -> "get_row result: #{inspect result}" end)
+    debug(fn ->
+      [
+        "get_row result: ",
+        inspect(result)
+      ]
+    end)
     result
   end
 
@@ -107,7 +118,12 @@ defmodule ExAliyunOts.Client.Row do
       instance
       |> Http.client("/UpdateRow", request_body, &UpdateRowResponse.decode/1)
       |> Http.post()
-    Logger.debug(fn -> "update_row result: #{inspect result}" end)
+    debug(fn ->
+      [
+        "update_row result: ",
+        inspect(result)
+      ]
+    end)
     result
   end
 
@@ -136,7 +152,12 @@ defmodule ExAliyunOts.Client.Row do
       instance
       |> Http.client("/DeleteRow", request_body, &DeleteRowResponse.decode/1)
       |> Http.post()
-    Logger.debug(fn -> "delete_row result: #{inspect result}" end)
+    debug(fn ->
+      [
+        "delete_row result: ",
+        inspect(result)
+      ]
+    end)
     result
   end
 
@@ -181,7 +202,12 @@ defmodule ExAliyunOts.Client.Row do
       instance
       |> Http.client("/GetRange", request_body, &GetRangeResponse.decode/1)
       |> Http.post()
-    Logger.debug(fn -> "get_range result: #{inspect result}" end)
+    debug(fn ->
+      [
+        "get_range result: ",
+        inspect(result)
+      ]
+    end)
     result
   end
 
@@ -244,7 +270,12 @@ defmodule ExAliyunOts.Client.Row do
         %{decoded | tables: readable_tables}
       end)
       |> Http.post()
-    Logger.debug(fn -> "batch_get_row result: #{inspect result}" end)
+    debug(fn ->
+      [
+        "batch_get_row result: ",
+        inspect(result)
+      ]
+    end)
     result
   end
 
@@ -324,7 +355,12 @@ defmodule ExAliyunOts.Client.Row do
         %{decoded | tables: readable_tables}
       end)
       |> Http.post()
-    Logger.debug(fn -> "batch_write_row result: #{inspect result}" end)
+    debug(fn ->
+      [
+        "batch_write_row result: ",
+        inspect(result)
+      ]
+    end)
     result
   end
 

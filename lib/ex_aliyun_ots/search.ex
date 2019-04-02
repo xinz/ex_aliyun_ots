@@ -1,6 +1,5 @@
 defmodule ExAliyunOts.Client.Search do
   # SearchIndex functions
-  require Logger
 
   alias ExAliyunOts.TableStoreSearch.{
     CreateSearchIndexRequest,
@@ -39,6 +38,7 @@ defmodule ExAliyunOts.Client.Search do
   alias ExAliyunOts.Var.Search
   alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, ScoreMode}
 
+  import ExAliyunOts.Logger, only: [error: 1]
   require FieldType
   require SortOrder
   require QueryType
@@ -248,7 +248,13 @@ defmodule ExAliyunOts.Client.Search do
     Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order))
   end
   defp prepare_sorter(sorter) do
-    Logger.error("** #{inspect(sorter)} sorter is not implemented yet.")
+    error(fn ->
+      [
+        "** ",
+        inspect(sorter),
+        " sorter is not implemented yet."
+      ]
+    end)
     nil
   end
 

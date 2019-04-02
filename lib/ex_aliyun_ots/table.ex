@@ -1,5 +1,4 @@
 defmodule ExAliyunOts.Client.Table do
-  require Logger
 
   alias ExAliyunOts.TableStore.{
     CreateTableRequest,
@@ -20,6 +19,7 @@ defmodule ExAliyunOts.Client.Table do
 
   alias ExAliyunOts.{Var, Http}
   alias ExAliyunOts.Const.PKType
+  import ExAliyunOts.Logger, only: [debug: 1]
 
   require PKType
 
@@ -73,7 +73,10 @@ defmodule ExAliyunOts.Client.Table do
       |> Http.client("/CreateTable", request_body, nil)
       |> Http.post()
 
-    Logger.debug(fn -> "create_table result: #{inspect(result)}" end)
+    debug([
+      "create_table result: ",
+      inspect(result)
+    ])
     result
   end
 
@@ -87,7 +90,10 @@ defmodule ExAliyunOts.Client.Table do
       |> Http.client("/ListTable", request_body, &ListTableResponse.decode/1)
       |> Http.post()
 
-    Logger.debug(fn -> "list_table result: #{inspect(result)}" end)
+    debug([
+      "list_table result: ",
+      inspect(result)
+    ])
     result
   end
 
@@ -101,7 +107,10 @@ defmodule ExAliyunOts.Client.Table do
       |> Http.client("/DeleteTable", request_body, nil)
       |> Http.post()
 
-    Logger.debug(fn -> "delete_table result: #{inspect(result)}" end)
+    debug([
+      "delete_table result: ",
+      inspect(result)
+    ])
     result
   end
 
@@ -133,7 +142,10 @@ defmodule ExAliyunOts.Client.Table do
       |> Http.client("/UpdateTable", request_body, &UpdateTableResponse.decode/1)
       |> Http.post()
 
-    Logger.debug(fn -> "update_table result: #{inspect(result)}" end)
+    debug([
+      "update_table result: ",
+      inspect(result)
+    ])
     result
   end
 
@@ -147,7 +159,10 @@ defmodule ExAliyunOts.Client.Table do
       |> Http.client("/DescribeTable", request_body, &DescribeTableResponse.decode/1)
       |> Http.post()
 
-    Logger.debug(fn -> "describe_table result: #{inspect(result)}" end)
+    debug([
+      "describe_table result: ",
+      inspect(result)
+    ])
     result
   end
 

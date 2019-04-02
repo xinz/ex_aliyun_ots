@@ -1,9 +1,11 @@
 defmodule ExAliyunOts.Protocol do
-  require Logger
+  @moduledoc false
 
   @api_version "2015-12-31"
   @printable_ascii_beginning_dec 32
   @printable_ascii_end_dec 126
+
+  import ExAliyunOts.Logger, only: [debug: 1]
 
   def add_x_ots_to_headers(instance, uri, request_body) do
     request = %ExAliyunOts.HTTPRequest{
@@ -34,16 +36,29 @@ defmodule ExAliyunOts.Protocol do
       {"x-ots-contentmd5", md5},
     ]
     signature = to_signature(request, headers)
-    Logger.debug(fn -> "calculated signature: #{signature}" end)
     prepared_headers = headers ++ [{"x-ots-signature", signature}]
-    Logger.debug(fn -> "prepared headers: #{inspect prepared_headers}" end)
+    debug(fn ->
+      [
+        "calculated signature: ",
+        signature,
+        ?\n,
+        "prepared_headers: "
+        | inspect(prepared_headers)
+      ]
+    end)
     prepared_headers
   end
 
   defp to_signature(request, headers) do
     headers_str = headers_to_str(headers)
     data_to_sign = "#{request.uri}\n#{request.method}\n\n#{headers_str}\n"
-    Logger.debug(fn -> "using data: #{inspect data_to_sign} to signature" end)
+    debug(fn ->
+      [
+        "using data: ",
+        inspect(data_to_sign),
+        " to signature"
+      ]
+    end)
     Base.encode64(:crypto.hmac(:sha, request.instance.access_key_secret, data_to_sign))
   end
 

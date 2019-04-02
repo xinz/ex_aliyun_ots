@@ -1,8 +1,6 @@
 defmodule ExAliyunOts.Http.Middleware do
   @behaviour Tesla.Middleware
 
-  require Logger
-
   @moduledoc """
   Config and setup http request
 
@@ -24,6 +22,8 @@ defmodule ExAliyunOts.Http.Middleware do
   ### Option
   - `:deserialize_row` - need to deserialize row from response
   """
+
+  import ExAliyunOts.Logger, only: [error: 1]
 
   alias ExAliyunOts.{PlainBuffer, Protocol}
 
@@ -87,7 +87,13 @@ defmodule ExAliyunOts.Http.Middleware do
   end
 
   defp log_error_keyinfo([], error_msg) do
-    Logger.error(fn -> "** ExAliyunOts Error: #{inspect error_msg}, and response with empty headers" end)
+    error(fn ->
+      [
+        "** ExAliyunOts Error: ",
+        inspect(error_msg),
+        ", and response with empty headers"
+      ]
+    end)
   end
   defp log_error_keyinfo(response_headers, error_msg) do
     keyinfo =
@@ -101,7 +107,14 @@ defmodule ExAliyunOts.Http.Middleware do
             acc
         end
       end)
-    Logger.error(fn -> "** ExAliyunOts Error: #{inspect error_msg} #{keyinfo}" end)
+    error(fn ->
+      [
+        "** ExAliyunOts Error: ",
+        inspect(error_msg),
+        ?\s,
+        inspect(keyinfo)
+      ]
+    end)
   end
 
 end

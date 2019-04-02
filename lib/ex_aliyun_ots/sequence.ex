@@ -1,5 +1,4 @@
 defmodule ExAliyunOts.Sequence do
-  require Logger
 
   alias ExAliyunOts.Const.{ReturnType, PKType}
   require ReturnType
@@ -11,6 +10,8 @@ defmodule ExAliyunOts.Sequence do
   @primary_key_name "name"
   @value_column "value"
   @retry_delay_max 3_000 # 3 second
+
+  import ExAliyunOts.Logger, only: [info: 1, error: 1]
 
   def create(instance_name, sequence) do
     create_table instance_name, sequence.name,
@@ -29,7 +30,12 @@ defmodule ExAliyunOts.Sequence do
           {:halt, res}
       end
     end
-    Logger.info "finally return next_value: #{inspect result}"
+    info(fn ->
+      [
+        "finally return next_value: ",
+        inspect(result)
+      ]
+    end)
     result
   end
 
@@ -59,7 +65,13 @@ defmodule ExAliyunOts.Sequence do
     value
   end
   defp return_value({:error, error}) do
-    Logger.error("** ExAliyunOts: generate the next value when update occur error: #{inspect error}, will retry it")
+    error(fn ->
+      [
+        "** ExAliyunOts: generate the next value when update occur error: ",
+        inspect(error),
+        ", will retry it."
+      ]
+    end)
     {:error, error}
   end
 
