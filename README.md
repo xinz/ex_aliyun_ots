@@ -28,11 +28,14 @@ config :ex_aliyun_ots, MyInstance
   pool_size: 100, # Optional
   pool_max_overflow: 20 # Optional
 
-config :ex_aliyun_ots, instances: [MyInstance]
+config :ex_aliyun_ots,
+  instances: [MyInstance],
+  debug: false # Optional
 ```
 
 * `pool_size`，配置对应表格存储实例http请求连接池的最大可用数，默认值是100
 * `pool_max_overflow`，配置对应表格存储实例，允许当连接池满负荷用尽时，允许临时创建可用的请求进程数，默认值是20
+* `debug`, 配置是否打开debug logger，默认值为false
 
 ## Supported Functions
 

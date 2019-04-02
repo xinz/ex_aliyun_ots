@@ -2,7 +2,7 @@ defmodule ExAliyunOts.Application do
   @moduledoc false
 
   use Application
-  require Logger
+
   alias ExAliyunOts.{Client, Instance}
 
   @app Mix.Project.config[:app]

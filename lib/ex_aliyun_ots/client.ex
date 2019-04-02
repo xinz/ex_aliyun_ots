@@ -2,13 +2,13 @@ defmodule ExAliyunOts.Client do
 
   use GenServer
 
-  require Logger
-
   @request_timeout 60_000
 
   alias ExAliyunOts.Client.{Table, Row, Search, Transaction}
 
   alias ExAliyunOts.PlainBuffer
+
+  import ExAliyunOts.Logger, only: [error: 1]
 
   defstruct [instance: nil]
 
@@ -260,10 +260,21 @@ defmodule ExAliyunOts.Client do
         catch
           :exit, {:timeout, _} ->
             {request_operation, _request_body} = request
-            Logger.error(fn -> "** ExAliyunOts occur timeout error when call #{inspect request_operation}, will retry it" end)
+            error(fn ->
+              [
+                "** ExAliyunOts occur timeout error when call ",
+                inspect(request_operation),
+                ", will retry it."
+              ]
+            end)
             call_transaction(instance_key, request, request_timeout)
           error ->
-            Logger.error(fn -> "** ExAliyunOts occur an unexpected error: #{inspect error}" end)
+            error(fn ->
+              [
+                "** ExAliyunOts occur an unexpected error: ",
+                inspect(error)
+              ]
+            end)
             error
         end
       end),

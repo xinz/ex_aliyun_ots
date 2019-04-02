@@ -30,9 +30,8 @@ use Mix.Config
 #     import_config "#{Mix.env}.exs"
 
 config :logger,
-  level: :info,
-  compile_time_purge_matching: [
-    [level_lower_than: :info]
-  ]
+  level: :info
+
+config :ex_aliyun_ots, debug: false
 
 import_config "ots.secret.exs"

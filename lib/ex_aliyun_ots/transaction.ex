@@ -1,6 +1,5 @@
 defmodule ExAliyunOts.Client.Transaction do
   # Transaction module
-  require Logger
 
   alias ExAliyunOts.{PlainBuffer, Http}
 
@@ -12,6 +11,8 @@ defmodule ExAliyunOts.Client.Transaction do
     AbortTransactionRequest,
     AbortTransactionResponse
   }
+
+  import ExAliyunOts.Logger, only: [debug: 1]
 
   def request_to_start_local_transaction(var_start_transaction) do
     table_name = var_start_transaction.table_name
@@ -32,7 +33,12 @@ defmodule ExAliyunOts.Client.Transaction do
       )
       |> Http.post()
 
-    Logger.debug(fn -> "start_local_transaction result: #{inspect(result)}" end)
+    debug(fn ->
+      [
+        "start_local_transaction result:\s",
+        inspect(result)
+      ]
+    end)
     result
   end
 
@@ -47,7 +53,12 @@ defmodule ExAliyunOts.Client.Transaction do
       |> Http.client("/CommitTransaction", request_body, &CommitTransactionResponse.decode/1)
       |> Http.post()
 
-    Logger.debug(fn -> "commit_transaction result: #{inspect(result)}" end)
+    debug(fn ->
+      [
+        "commit_transaction result:\s",
+        inspect(result),
+      ]
+    end)
     result
   end
 
@@ -62,7 +73,12 @@ defmodule ExAliyunOts.Client.Transaction do
       |> Http.client("/AbortTransaction", request_body, &AbortTransactionResponse.decode/1)
       |> Http.post()
 
-    Logger.debug(fn -> "abort_transaction result: #{inspect(result)}" end)
+    debug(fn ->
+      [
+        "abort_transaction result:\s",
+        inspect(result)
+      ]
+    end)
     result
   end
 end
