@@ -32,7 +32,7 @@ defmodule ExAliyunOts.Sequence do
     end
     info(fn ->
       [
-        "finally return next_value:\s",
+        "finally return next_value: ",
         inspect(result)
       ]
     end)

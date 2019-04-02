@@ -35,7 +35,7 @@ defmodule ExAliyunOts.Client.Transaction do
 
     debug(fn ->
       [
-        "start_local_transaction result:\s",
+        "start_local_transaction result: ",
         inspect(result)
       ]
     end)
@@ -55,7 +55,7 @@ defmodule ExAliyunOts.Client.Transaction do
 
     debug(fn ->
       [
-        "commit_transaction result:\s",
+        "commit_transaction result: ",
         inspect(result),
       ]
     end)
@@ -75,7 +75,7 @@ defmodule ExAliyunOts.Client.Transaction do
 
     debug(fn ->
       [
-        "abort_transaction result:\s",
+        "abort_transaction result: ",
         inspect(result)
       ]
     end)

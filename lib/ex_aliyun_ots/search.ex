@@ -250,7 +250,7 @@ defmodule ExAliyunOts.Client.Search do
   defp prepare_sorter(sorter) do
     error(fn ->
       [
-        "**\s",
+        "** ",
         inspect(sorter),
         " sorter is not implemented yet."
       ]
