@@ -34,9 +34,10 @@ defmodule ExAliyunOts.Mixfile do
       {:poolboy, "~> 1.5"},
       {:retry, "~> 0.11.2"},
       {:tesla, "~> 1.2"},
+      {:gen_state_machine, "~> 2.0"},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:credo, "~> 1.0", only: :dev, runtime: false},
-      {:benchee, "~> 0.14", only: :dev, runtime: false},
+      {:benchee, "~> 1.0", only: :dev, runtime: false},
       {:mock, "~> 0.3.2", only: :test},
       {:excoveralls, "~> 0.10", only: :test}
     ]

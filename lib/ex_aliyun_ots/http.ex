@@ -21,6 +21,7 @@ defmodule ExAliyunOts.Http.Middleware do
 
   ### Option
   - `:deserialize_row` - need to deserialize row from response
+  - `:require_response_size` - return byte size of response body
   """
 
   import ExAliyunOts.Logger, only: [error: 1]
@@ -33,11 +34,12 @@ defmodule ExAliyunOts.Http.Middleware do
     request_body = Keyword.get(options, :request_body)
     decoder = Keyword.get(options, :decoder)
     require_deserialize_row = Keyword.get(options, :deserialize_row, false)
+    require_response_size = Keyword.get(options, :require_response_size, false)
 
     env
     |> prepare_request(instance, uri, request_body)
     |> Tesla.run(next)
-    |> decode_response(decoder, require_deserialize_row)
+    |> decode_response(decoder, require_deserialize_row, require_response_size)
   end
 
   defp prepare_request(env, instance, uri, request_body) do
@@ -48,7 +50,7 @@ defmodule ExAliyunOts.Http.Middleware do
     |> Map.put(:body, request_body)
   end
 
-  defp decode_response({:ok, response}, nil, _require_deserialize_row) do
+  defp decode_response({:ok, response}, nil, _require_deserialize_row, _require_response_size) do
     if response.status == 200 do
       :ok
     else
@@ -57,7 +59,7 @@ defmodule ExAliyunOts.Http.Middleware do
       {:error, error_msg}
     end
   end
-  defp decode_response({:ok, response}, decoder, require_deserialize_row) do
+  defp decode_response({:ok, response}, decoder, require_deserialize_row, require_response_size) do
     if response.status == 200 do
       readable_result =
         if require_deserialize_row == true do
@@ -65,14 +67,18 @@ defmodule ExAliyunOts.Http.Middleware do
         else
           decoder.(response.body)
         end
-      {:ok, readable_result}
+      if require_response_size == true do
+        {:ok, readable_result, byte_size(response.body)}
+      else
+        {:ok, readable_result}
+      end
     else
       error_msg = Protocol.bin_to_printable(response.body)
       log_error_keyinfo(response.headers, error_msg)
       {:error, error_msg}
     end
   end
-  defp decode_response({:error, reason}, _decoder, _require_deserialize_row) do
+  defp decode_response({:error, reason}, _decoder, _require_deserialize_row, _require_response_size) do
     {:error, reason}
   end
 
@@ -138,6 +144,11 @@ defmodule ExAliyunOts.Http do
   def client(instance, "/UpdateRow", request_body, decoder) do
     Tesla.client([
       {ExAliyunOts.Http.Middleware, instance: instance, uri: "/UpdateRow", request_body: request_body, decoder: decoder, deserialize_row: true}
+    ])
+  end
+  def client(instance, uri = "/tunnel/readrecords", request_body, decoder) do
+    Tesla.client([
+      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder, require_response_size: true}
     ])
   end
   def client(instance, uri, request_body, decoder) do

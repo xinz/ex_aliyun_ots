@@ -2,18 +2,39 @@ defmodule ExAliyunOts.Protocol do
   @moduledoc false
 
   @api_version "2015-12-31"
+  @tunnel_api_version "2018-04-01"
+
   @printable_ascii_beginning_dec 32
   @printable_ascii_end_dec 126
 
+  @tunnel_uris [
+    "/tunnel/create",
+    "/tunnel/delete",
+    "/tunnel/list",
+    "/tunnel/describe",
+    "/tunnel/connect",
+    "/tunnel/heartbeat",
+    "/tunnel/shutdown",
+    "/tunnel/getcheckpoint",
+    "/tunnel/readrecords",
+    "/tunnel/checkpoint"
+  ]
+
   import ExAliyunOts.Logger, only: [debug: 1]
 
+  def add_x_ots_to_headers(instance, uri, request_body) when uri in @tunnel_uris do
+    md5 = :crypto.hash(:md5, request_body) |> Base.encode64
+
+    instance
+    |> request(uri, request_body)
+    |> prepare_x_ots_headers(md5, @tunnel_api_version)
+  end
   def add_x_ots_to_headers(instance, uri, request_body) do
-    request = %ExAliyunOts.HTTPRequest{
-      instance: instance,
-      uri: uri,
-      body: request_body
-    }
-    get_x_ots_headers_to_auth(request)
+    md5 = :crypto.hash(:md5, request_body) |> Base.encode16 |> Base.encode64
+
+    instance
+    |> request(uri, request_body)
+    |> prepare_x_ots_headers(md5, @api_version)
   end
 
   def bin_to_printable(binary) do
@@ -24,16 +45,23 @@ defmodule ExAliyunOts.Protocol do
     |> List.to_string
   end
 
-  defp get_x_ots_headers_to_auth(request) do
-    md5 = :crypto.hash(:md5, request.body) |> Base.encode16 |> Base.encode64
+  defp request(instance, uri, request_body) do
+    %ExAliyunOts.HTTPRequest{
+      instance: instance,
+      uri: uri,
+      body: request_body
+    }
+  end
+
+  defp prepare_x_ots_headers(request, md5, api_version) do
     date = Timex.format!(Timex.now(), "%Y-%m-%dT%H:%M:%S.000Z", :strftime)
     instance = request.instance
     headers = [
       {"x-ots-date", date},
-      {"x-ots-apiversion", @api_version},
+      {"x-ots-apiversion", api_version},
       {"x-ots-instancename", instance.name},
       {"x-ots-accesskeyid", instance.access_key_id},
-      {"x-ots-contentmd5", md5},
+      {"x-ots-contentmd5", md5}
     ]
     signature = to_signature(request, headers)
     prepared_headers = headers ++ [{"x-ots-signature", signature}]
