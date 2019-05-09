@@ -25,7 +25,8 @@ defmodule ExAliyunOts.Tunnel.Worker do
     Process.flag(:trap_exit, true)
 
     state = %{
-      instance_key: instance_key
+      instance_key: instance_key,
+      subscribers: %{}
     }
 
     {:ok, state}
@@ -39,6 +40,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
       pool_name(instance_key),
       fn worker ->
         GenServer.cast(worker, {:start, var})
+        worker
       end,
       :infinity
     )
@@ -55,11 +57,22 @@ defmodule ExAliyunOts.Tunnel.Worker do
     end
   end
 
+  @spec subscribe(worker_pid :: pid()) :: :ok
+  def subscribe(worker_pid) do
+    GenServer.call(worker_pid, :subscribe)
+  end
+
   def handle_messages(worker, records, next_token, handler_module) do
     GenServer.cast(worker, {:handle_messages, records, next_token, handler_module})
   end
 
   # Callbacks
+
+  def handle_call(:subscribe, {pid, _}, state) do
+    ref = Process.monitor(pid)
+    state = put_in(state, [:subscribers, ref], pid)
+    {:reply, :ok, state}
+  end
 
   def handle_info({:heartbeat, var}, state) do
     result = heartbeat(state, var)
@@ -97,8 +110,14 @@ defmodule ExAliyunOts.Tunnel.Worker do
     {:noreply, state}
   end
 
+  def handle_info({:DOWN, ref, _, _pid, _reason}, state) do
+    subscribers = Map.drop(state.subscribers, [ref])
+    {:noreply, %{state | subscribers: subscribers}}
+  end
+
   def handle_cast({:start, var}, state) do
     worker_pid = self()
+
     Logger.info("start worker as #{inspect(worker_pid)}")
 
     case Registry.new_worker(entry_worker(tunnel_id: var.tunnel_id, pid: self())) do
@@ -110,14 +129,16 @@ defmodule ExAliyunOts.Tunnel.Worker do
           {:error, _error} ->
             {:stop, {:shutdown, :start_error}, state}
         end
-
       false ->
         raise ExAliyunOts.Error, "Tunnel worker #{inspect(worker_pid)} has already been exitsed."
     end
   end
 
   def handle_cast({:handle_messages, records, next_token, handler_module}, state) do
-    handler_module.handle_messages(records, next_token)
+    #handler_module.handle_messages(records, next_token)
+    Enum.each(state.subscribers, fn {_ref, subscriber_pid} ->
+      send(subscriber_pid, {:record_event, self(), {records, next_token}})
+    end)
     {:noreply, state}
   end
 
@@ -174,7 +195,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
              }}
           ]
         )
-
+        :ok
       error ->
         Logger.error("ConnectTunnel failed: #{inspect(error)} **")
         error
@@ -362,6 +383,8 @@ defmodule ExAliyunOts.Tunnel.Worker do
             ]
           end)
         end
+
+        Registry.remove_worker(tunnel_id)
 
         if tunnel_id != nil do
           remote_shutdown_tunnel(state.instance_key, tunnel_id, client_id)

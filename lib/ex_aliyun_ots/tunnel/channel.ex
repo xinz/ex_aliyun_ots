@@ -267,7 +267,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   defp merge(channel_from_heartbeat) do
     channel_id = channel_from_heartbeat.channel_id
-    {_channel_id, _, _, _, _cur_status, cur_version} = Registry.channel(channel_id)
+    [_channel_id, _, _, _, _cur_status, cur_version] = Registry.channel(channel_id)
     latest_version = channel_from_heartbeat.version
 
     if latest_version > cur_version do
@@ -282,7 +282,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   defp merge(channel_from_heartbeat, status) do
     channel_id = channel_from_heartbeat.channel_id
-    {_channel_id, _, _, _, _cur_status, cur_version} = Registry.channel(channel_id)
+    [_channel_id, _, _, _, _cur_status, cur_version] = Registry.channel(channel_id)
     latest_version = channel_from_heartbeat.version
 
     if latest_version > cur_version do
