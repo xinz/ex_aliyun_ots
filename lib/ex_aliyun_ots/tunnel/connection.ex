@@ -22,7 +22,6 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
             client_id: nil,
             token: nil,
             finished?: false,
-            stream?: false,
             instance_key: nil,
             backoff: nil,
             status: ChannelConnectionStatus.wait(),
@@ -44,12 +43,12 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
     end
   end
 
-  def process(conn, handler_module) do
+  def process(conn) do
     Logger.info("connection process conn: #{inspect(conn)}")
 
     conn
     |> read_records()
-    |> process_records(handler_module)
+    |> process_records()
   end
 
   def status(conn) do
@@ -178,21 +177,20 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
     )
   end
 
-  defp process_records({records, next_token, conn}, handler_module) do
+  defp process_records({records, next_token, conn}) do
     Agent.update(
       conn,
       fn state ->
         Logger.info(
-          ">>> handle_messages from connection@#{inspect(self())} with records: #{
+          ">>> handle_records from connection@#{inspect(self())} with records: #{
             inspect(records)
           } <<<"
         )
 
-        Worker.handle_messages(
+        Worker.handle_records(
           state.worker,
           records,
-          next_token,
-          handler_module
+          next_token
         )
 
         checkpointer = %Checkpointer{
@@ -228,11 +226,11 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
     end
   end
 
-  defp process_records(:tunnel_expired, _handler_module) do
+  defp process_records(:tunnel_expired) do
     :tunnel_expired
   end
 
-  defp process_records(nil, _handler_module) do
+  defp process_records(nil) do
     :ok
   end
 
@@ -262,9 +260,4 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
   defp stream_channel_expired?(error_msg) do
     String.contains?(error_msg, "OTSTunnelServerUnavailableuOTSTrimmedDataAccess")
   end
-end
-
-defmodule ExAliyunOts.Tunnel.Channel.FailedConnection do
-  # TODO
-  :todo
 end

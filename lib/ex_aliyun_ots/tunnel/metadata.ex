@@ -30,8 +30,3 @@ end
 defmodule ExAliyunOts.Var.Tunnel.ReadRecords do
   defstruct [tunnel_id: nil, client_id: nil, channel_id: nil, token: nil]
 end
-
-defmodule ExAliyunOts.Var.Tunnel.Start do
-  # all time related variables in seconds
-  defstruct [tunnel_id: nil, connect_timeout: 300, client_tag: nil, heartbeat_timeout: 300, heartbeat_interval: 30, handler_module: nil]
-end

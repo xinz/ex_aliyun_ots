@@ -43,11 +43,10 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   @spec update(
           channel :: pid(),
-          channel_from_heartbeat :: %ExAliyunOts.TableStoreTunnel.Channel{},
-          handler_module :: ExAliyunOts.Tunnel.Handler.t()
+          channel_from_heartbeat :: %ExAliyunOts.TableStoreTunnel.Channel{}
         ) :: :ok
-  def update(channel, channel_from_heartbeat, handler_module) do
-    GenStateMachine.call(channel, {:update, channel_from_heartbeat, handler_module})
+  def update(channel, channel_from_heartbeat) do
+    GenStateMachine.call(channel, {:update, channel_from_heartbeat})
   end
 
   def stop(channel) do
@@ -57,7 +56,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   def handle_event(
         {:call, from},
-        {:update, channel_from_heartbeat, handler_module},
+        {:update, channel_from_heartbeat},
         ChannelStatus.open(),
         channel
       ) do
@@ -74,7 +73,6 @@ defmodule ExAliyunOts.Tunnel.Channel do
       channel,
       connection_status,
       connection,
-      handler_module,
       channel_from_heartbeat,
       from
     )
@@ -82,7 +80,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   def handle_event(
         {:call, from},
-        {:update, channel_from_heartbeat, _handler_module},
+        {:update, channel_from_heartbeat},
         ChannelStatus.closing(),
         channel
       ) do
@@ -112,7 +110,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   def handle_event(
         {:call, from},
-        {:update, channel_from_heartbeat, _handler_module},
+        {:update, channel_from_heartbeat},
         ChannelStatus.close(),
         channel
       ) do
@@ -136,7 +134,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   def handle_event(
         {:call, from},
-        {:update, channel_from_heartbeat, _handler_module},
+        {:update, channel_from_heartbeat},
         channel_status,
         channel
       ) do
@@ -175,30 +173,27 @@ defmodule ExAliyunOts.Tunnel.Channel do
          channel,
          ChannelConnectionStatus.wait(),
          connection,
-         handler_module,
          channel_from_heartbeat,
          from
        ) do
     Connection.status_running(connection)
-    do_process_pipeline(channel, connection, handler_module, channel_from_heartbeat, from)
+    do_process_pipeline(channel, connection, channel_from_heartbeat, from)
   end
 
   defp process_pipeline(
          channel,
          ChannelConnectionStatus.running(),
          connection,
-         handler_module,
          channel_from_heartbeat,
          from
        ) do
-    do_process_pipeline(channel, connection, handler_module, channel_from_heartbeat, from)
+    do_process_pipeline(channel, connection, channel_from_heartbeat, from)
   end
 
   defp process_pipeline(
          channel,
          ChannelConnectionStatus.closed(),
          _connection,
-         _handler_module,
          _channel_from_heartbeat,
          from
        ) do
@@ -221,7 +216,6 @@ defmodule ExAliyunOts.Tunnel.Channel do
          channel,
          ChannelConnectionStatus.closing(),
          _connection,
-         _handler_module,
          channel_from_heartbeat,
          from
        ) do
@@ -229,10 +223,10 @@ defmodule ExAliyunOts.Tunnel.Channel do
     {:next_state, channel_from_heartbeat.status, channel, [{:reply, from, :ok}]}
   end
 
-  defp do_process_pipeline(channel, connection, handler_module, channel_from_heartbeat, from) do
+  defp do_process_pipeline(channel, connection, channel_from_heartbeat, from) do
     case channel_from_heartbeat.status do
       ChannelStatus.open() ->
-        case Connection.process(connection, handler_module) do
+        case Connection.process(connection) do
           :ok ->
             Logger.info(">>>> process_pipeline done")
             latest_status = channel_from_heartbeat.status

@@ -2,9 +2,9 @@ defmodule ExAliyunOts.Tunnel.Worker do
   use GenServer
 
   alias ExAliyunOts.Client
-  alias ExAliyunOts.Var.Tunnel.{ConnectTunnel, Heartbeat, Shutdown, GetCheckpoint, Start}
+  alias ExAliyunOts.Var.Tunnel.{ConnectTunnel, Heartbeat, Shutdown, GetCheckpoint}
   alias ExAliyunOts.Var.Tunnel.Channel, as: VarChannel
-  alias ExAliyunOts.Tunnel.{Registry, Channel, Handler, EntryWorker, Backoff, Utils}
+  alias ExAliyunOts.Tunnel.{Registry, Channel, EntryWorker, Backoff, Utils}
   alias ExAliyunOts.Tunnel.Channel.Connection
 
   alias ExAliyunOts.Logger
@@ -32,14 +32,15 @@ defmodule ExAliyunOts.Tunnel.Worker do
     {:ok, state}
   end
 
-  @spec start(instance_key :: atom(), var :: %Start{}) :: term()
-  def start(instance_key, var) do
-    validate(var)
+  @spec start(instance_key :: atom(), opts :: Keyword.t()) :: term()
+  def start(instance_key, opts) do
+    opts = validate(opts)
+    subscriber_pid = self()
 
     :poolboy.transaction(
       pool_name(instance_key),
       fn worker ->
-        GenServer.cast(worker, {:start, var})
+        GenServer.cast(worker, {:start, opts, subscriber_pid})
         worker
       end,
       :infinity
@@ -53,29 +54,18 @@ defmodule ExAliyunOts.Tunnel.Worker do
         GenServer.stop(worker_pid, {:shutdown, :manual_stop})
 
       nil ->
-        Logger.info("tunnel_id: #{inspect(tunnel_id)} is not exitsed.")
+        Logger.info("tunnel_id: #{inspect(tunnel_id)} is not existed.")
     end
   end
 
-  @spec subscribe(worker_pid :: pid()) :: :ok
-  def subscribe(worker_pid) do
-    GenServer.call(worker_pid, :subscribe)
-  end
-
-  def handle_messages(worker, records, next_token, handler_module) do
-    GenServer.cast(worker, {:handle_messages, records, next_token, handler_module})
+  def handle_records(worker, records, next_token) do
+    GenServer.cast(worker, {:handle_records, records, next_token})
   end
 
   # Callbacks
 
-  def handle_call(:subscribe, {pid, _}, state) do
-    ref = Process.monitor(pid)
-    state = put_in(state, [:subscribers, ref], pid)
-    {:reply, :ok, state}
-  end
-
-  def handle_info({:heartbeat, var}, state) do
-    result = heartbeat(state, var)
+  def handle_info({:heartbeat, opts}, state) do
+    result = heartbeat(state, opts)
 
     Logger.info(fn ->
       ">>>>> handle_info with heartbeat: #{inspect(result)}"
@@ -86,7 +76,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
         {:noreply, state}
 
       {:shutdown, :finished} ->
-        var.handler_module.shutdown()
         {:stop, {:shutdown, :finished}, state}
 
       {:error, error} ->
@@ -115,18 +104,21 @@ defmodule ExAliyunOts.Tunnel.Worker do
     {:noreply, %{state | subscribers: subscribers}}
   end
 
-  def handle_cast({:start, var}, state) do
+  def handle_cast({:start, opts, subscriber_pid}, state) do
     worker_pid = self()
 
-    Logger.info("start worker as #{inspect(worker_pid)}")
+    tunnel_id = opts[:tunnel_id]
 
-    case Registry.new_worker(entry_worker(tunnel_id: var.tunnel_id, pid: self())) do
+    Logger.info("start worker #{inspect(worker_pid)} for tunnel id #{inspect tunnel_id}")
+
+    case Registry.new_worker(entry_worker(tunnel_id: tunnel_id, pid: self())) do
       true ->
-        case connect_heartbeat(state, var) do
+        case connect_heartbeat(state, opts) do
           :ok ->
-            {:noreply, state}
+            subscribe(subscriber_pid, state)
 
           {:error, _error} ->
+            Registry.remove_worker(tunnel_id)
             {:stop, {:shutdown, :start_error}, state}
         end
       false ->
@@ -134,8 +126,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     end
   end
 
-  def handle_cast({:handle_messages, records, next_token, handler_module}, state) do
-    #handler_module.handle_messages(records, next_token)
+  def handle_cast({:handle_records, records, next_token}, state) do
     Enum.each(state.subscribers, fn {_ref, subscriber_pid} ->
       send(subscriber_pid, {:record_event, self(), {records, next_token}})
     end)
@@ -160,14 +151,14 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
   # Private 
 
-  defp connect_heartbeat(state, var) do
-    tunnel_id = var.tunnel_id
-    connect_timeout = var.connect_timeout
+  defp connect_heartbeat(state, opts) do
+    tunnel_id = opts[:tunnel_id]
+    connect_timeout = opts[:connect_timeout]
 
     var_connect = %ConnectTunnel{
       tunnel_id: tunnel_id,
       timeout: connect_timeout,
-      client_tag: var.client_tag
+      client_tag: opts[:client_tag]
     }
 
     result =
@@ -179,22 +170,22 @@ defmodule ExAliyunOts.Tunnel.Worker do
       {:ok, response} ->
         client_id = response.client_id
 
-        heartbeat_interval = var.heartbeat_interval * 1_000
+        heartbeat_interval = opts[:heartbeat_interval] * 1_000
 
         Registry.update_worker(
-          var.tunnel_id,
+          tunnel_id,
           [
             {:client_id, client_id},
             {:meta,
              %{
-               client_tag: var.client_tag,
                heartbeat_interval: heartbeat_interval,
-               heartbeat_timeout: var.heartbeat_timeout * 1_000,
-               timer_ref: schedule_heartbeat(var, heartbeat_interval),
+               heartbeat_timeout: opts[:heartbeat_timeout] * 1_000,
+               timer_ref: schedule_heartbeat(opts, heartbeat_interval),
                last_heartbeat_time: DateTime.utc_now()
              }}
           ]
         )
+
         :ok
       error ->
         Logger.error("ConnectTunnel failed: #{inspect(error)} **")
@@ -202,9 +193,15 @@ defmodule ExAliyunOts.Tunnel.Worker do
     end
   end
 
-  defp validate(var) do
-    heartbeat_interval = var.heartbeat_interval
-    heartbeat_timeout = var.heartbeat_timeout
+  defp validate(opts) do
+    # default 30 seconds
+    heartbeat_interval = opts[:heartbeat_interval] || 30
+    # default 300 seconds
+    heartbeat_timeout = opts[:heartbeat_timeout] || 300
+    # default 300 seconds
+    connect_timeout = opts[:connect_timeout] || 300
+
+    tunnel_id = opts[:tunnel_id]
 
     if heartbeat_interval < @min_heartbeat_interval do
       raise ExAliyunOts.Error,
@@ -218,28 +215,25 @@ defmodule ExAliyunOts.Tunnel.Worker do
             } seconds)."
     end
 
-    handler_module = var.handler_module
-
-    if handler_module == nil do
-      raise ExAliyunOts.Error, "Invalid parameter, handler_module is required when start_worker."
+    if tunnel_id == nil do
+      raise ExAliyunOts.Error, "Invalid parameter, tunnel_id is required"
     end
 
-    if not Handler.impl?(handler_module) do
-      raise ExAliyunOts.Error,
-            "Invalid parameter, handler_module: #{inspect(handler_module)} required implement #{
-              inspect(Handler)
-            } behaviour."
-    end
-
-    :ok
+    [
+      tunnel_id: tunnel_id,
+      client_tag: opts[:client_tag],
+      connect_timeout: connect_timeout,
+      heartbeat_interval: heartbeat_interval,
+      heartbeat_timeout: heartbeat_timeout
+    ]
   end
 
-  defp heartbeat(state, var) do
+  defp heartbeat(state, opts) do
     now = DateTime.utc_now()
 
     instance_key = state.instance_key
 
-    tunnel_id = var.tunnel_id
+    tunnel_id = opts[:tunnel_id]
 
     [_tunnel_id, client_id, worker_pid, meta] = Registry.worker(tunnel_id)
 
@@ -295,7 +289,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
           client_id,
           worker_pid,
           channels_from_response,
-          var.handler_module,
           local_channel_ids
         )
 
@@ -304,7 +297,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         updated_meta =
           meta
           |> Map.put(:last_heartbeat_time, last_heartbeat_time)
-          |> Map.put(:timer_ref, schedule_heartbeat(var, meta.heartbeat_interval))
+          |> Map.put(:timer_ref, schedule_heartbeat(opts, meta.heartbeat_interval))
 
         Logger.info(fn ->
           [
@@ -312,15 +305,18 @@ defmodule ExAliyunOts.Tunnel.Worker do
           ]
         end)
 
-        Logger.info("~~~~~~~~~~~~~~~~~~~ remove closed channel ~~~~~~~~~~~~~~~~~")
-
         Registry.update_worker(tunnel_id, [
           {:meta, updated_meta}
         ])
 
         current_local_channels = Registry.channels(tunnel_id)
 
-        Logger.info("after heartbeat, current_local_channels: #{inspect(current_local_channels)}")
+        Logger.info(fn ->
+          [
+            "after heartbeat, current_local_channels: ",
+            inspect(current_local_channels)
+          ]
+        end)
 
         :ok
 
@@ -423,8 +419,8 @@ defmodule ExAliyunOts.Tunnel.Worker do
     MapSet.difference(local, remote)
   end
 
-  defp schedule_heartbeat(var, heartbeat_interval) do
-    Process.send_after(self(), {:heartbeat, var}, heartbeat_interval)
+  defp schedule_heartbeat(opts, heartbeat_interval) do
+    Process.send_after(self(), {:heartbeat, opts}, heartbeat_interval)
   end
 
   defp update_channels(
@@ -433,7 +429,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
          client_id,
          worker_pid,
          channels_from_response,
-         handler_module,
          local_channel_ids
        ) do
     Enum.map(channels_from_response, fn channel_from_heartbeat ->
@@ -445,11 +440,11 @@ defmodule ExAliyunOts.Tunnel.Worker do
           {:ok, channel_pid} =
             init_channel(instance_key, tunnel_id, client_id, worker_pid, channel_from_heartbeat)
 
-          Channel.update(channel_pid, channel_from_heartbeat, handler_module)
+          Channel.update(channel_pid, channel_from_heartbeat)
 
         [_channel_id, _tunnel_id, _client_id, channel_pid, _status, _version] ->
           # already in local
-          Channel.update(channel_pid, channel_from_heartbeat, handler_module)
+          Channel.update(channel_pid, channel_from_heartbeat)
       end
     end)
 
@@ -485,22 +480,19 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     case result do
       {:ok, response} ->
-        token = response.checkpoint
-        stream? = Utils.stream_token?(token)
 
         conn_opts = [
           worker: worker_pid,
           tunnel_id: tunnel_id,
           channel_id: channel_id,
           client_id: client_id,
-          token: token,
+          token: response.checkpoint,
           finished?: false,
-          stream?: stream?,
           instance_key: instance_key,
           sequence_number: response.sequence_number + 1
         ]
 
-        {:ok, connection} = start_connection(stream?, conn_opts)
+        {:ok, connection} = start_connection(conn_opts)
 
         start_channel(
           channel_id,
@@ -519,22 +511,25 @@ defmodule ExAliyunOts.Tunnel.Worker do
           ]
         end)
 
-        # TODO: Using FailedConnection
         error_result
     end
   end
 
-  defp start_connection(_stream? = true, opts) do
-    opts
-    |> Keyword.put(:backoff, Backoff.new())
-    |> Connection.start_link()
-  end
-
-  defp start_connection(_stream? = false, opts) do
+  defp start_connection(opts) do
+    stream? = Utils.stream_token?(opts[:token])
+    opts = if stream?, do: Keyword.put(opts, :backoff, Backoff.new()), else: opts
+    Logger.info "start_connection with opts: #{inspect opts}"
     Connection.start_link(opts)
   end
 
   defp start_channel(channel_id, tunnel_id, client_id, status, version, connection) do
     Channel.start_link(channel_id, tunnel_id, client_id, status, version, connection)
   end
+
+  defp subscribe(pid, state) do
+    ref = Process.monitor(pid)
+    state = put_in(state, [:subscribers, ref], pid)
+    {:noreply, state}
+  end
+
 end

@@ -6,9 +6,9 @@ defmodule ExAliyunOts.Tunnel.Registry do
   import EntryWorker
   import EntryChannel
 
-  @table_worker :worker_registry
+  @table_worker :registry_worker
 
-  @table_channel :channel_registry
+  @table_channel :registry_channel
 
   def start_link(), do: GenServer.start_link(__MODULE__, [], name: __MODULE__)
 
