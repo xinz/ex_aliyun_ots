@@ -1,3 +1,7 @@
+defmodule ExAliyunOts.Var.Tunnel.CreateTunnel do
+  defstruct [table_name: "", tunnel_name: "", type: nil]
+end
+
 defmodule ExAliyunOts.Var.Tunnel.DescribeTunnel do
   defstruct [table_name: "", tunnel_name: "", tunnel_id: nil]
 end
@@ -5,6 +9,10 @@ end
 defmodule ExAliyunOts.Var.Tunnel.ConnectTunnel do
   # timeout, default 300 seconds
   defstruct [tunnel_id: nil, timeout: 300, client_tag: nil]
+end
+
+defmodule ExAliyunOts.Var.Tunnel.DeleteTunnel do
+  defstruct [table_name: "", tunnel_name: "", tunnel_id: nil]
 end
 
 defmodule ExAliyunOts.Var.Tunnel.Heartbeat do

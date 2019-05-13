@@ -3,6 +3,11 @@ defmodule ExAliyunOts.Client.Tunnel do
   alias ExAliyunOts.Http
 
   alias ExAliyunOts.TableStoreTunnel.{
+    CreateTunnelRequest,
+    CreateTunnelResponse,
+    Tunnel,
+    DeleteTunnelRequest,
+    DeleteTunnelResponse,
     ListTunnelRequest,
     ListTunnelResponse,
     DescribeTunnelRequest,
@@ -26,6 +31,55 @@ defmodule ExAliyunOts.Client.Tunnel do
   alias ExAliyunOts.PlainBuffer
 
   import ExAliyunOts.Logger, only: [debug: 1]
+
+  def request_to_create_tunnel(var_create_tunnel) do
+    tunnel = Tunnel.new(
+      table_name: var_create_tunnel.table_name,
+      tunnel_name: var_create_tunnel.tunnel_name,
+      tunnel_type: var_create_tunnel.type
+    )
+    CreateTunnelRequest.new(tunnel: tunnel) |> CreateTunnelRequest.encode()
+  end
+
+  def remote_create_tunnel(instance, request_body) do
+    result =
+      instance
+      |> Http.client("/tunnel/create", request_body, &CreateTunnelResponse.decode/1)
+      |> Http.post()
+
+    debug(fn ->
+      [
+        "create_tunnel result: ",
+        inspect(result)
+      ]
+    end)
+    result
+  end
+
+  def request_to_delete_tunnel(var_delete_tunnel) do
+    [
+      table_name: var_delete_tunnel.table_name,
+      tunnel_name: var_delete_tunnel.tunnel_name,
+      tunnel_id: var_delete_tunnel.tunnel_id
+    ]
+    |> DeleteTunnelRequest.new()
+    |> DeleteTunnelRequest.encode()
+  end
+
+  def remote_delete_tunnel(instance, request_body) do
+    result =
+      instance
+      |> Http.client("/tunnel/delete", request_body, &DeleteTunnelResponse.decode/1)
+      |> Http.post()
+
+    debug(fn ->
+      [
+        "delete_tunnel result: ",
+        inspect(result)
+      ]
+    end)
+    result
+  end
 
   def request_to_list_tunnel(table_name) do
     ListTunnelRequest.new(table_name: table_name) |> ListTunnelRequest.encode()

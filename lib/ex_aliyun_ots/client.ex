@@ -154,6 +154,18 @@ defmodule ExAliyunOts.Client do
     call_transaction(instance_key, {:abort_transaction, encoded_request}, request_timeout)
   end
 
+  def create_tunnel(instance_key, var_create_tunnel, options \\ [request_timeout: @request_timeout]) do
+    encoded_request = Tunnel.request_to_create_tunnel(var_create_tunnel)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
+    call_transaction(instance_key, {:create_tunnel, encoded_request}, request_timeout)
+  end
+
+  def delete_tunnel(instance_key, var_delete_tunnel, options \\ [request_timeout: @request_timeout]) do
+    encoded_request = Tunnel.request_to_delete_tunnel(var_delete_tunnel)
+    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
+    call_transaction(instance_key, {:delete_tunnel, encoded_request}, request_timeout)
+  end
+
   def list_tunnel(instance_key, table_name, options \\ [request_timeout: @request_timeout]) do
     encoded_request = Tunnel.request_to_list_tunnel(table_name)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
@@ -291,6 +303,14 @@ defmodule ExAliyunOts.Client do
   end
   def handle_call({:abort_transaction, request_body}, _from, state) do
     result = Transaction.remote_abort_transaction(state.instance, request_body)
+    {:reply, result, state}
+  end
+  def handle_call({:create_tunnel, request_body}, _from, state) do
+    result = Tunnel.remote_create_tunnel(state.instance, request_body)
+    {:reply, result, state}
+  end
+  def handle_call({:delete_tunnel, request_body}, _from, state) do
+    result = Tunnel.remote_delete_tunnel(state.instance, request_body)
     {:reply, result, state}
   end
   def handle_call({:list_tunnel, request_body}, _from, state) do

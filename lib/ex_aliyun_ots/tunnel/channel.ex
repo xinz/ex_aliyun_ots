@@ -259,30 +259,30 @@ defmodule ExAliyunOts.Tunnel.Channel do
     end
   end
 
-  defp merge(channel_from_heartbeat) do
+  defp merge(channel_from_heartbeat, status \\ nil) do
     channel_id = channel_from_heartbeat.channel_id
     [_channel_id, _, _, _, _cur_status, cur_version] = Registry.channel(channel_id)
     latest_version = channel_from_heartbeat.version
 
-    if latest_version > cur_version do
-      Registry.update_channel(channel_id, [
-        {:version, latest_version},
-        {:status, channel_from_heartbeat.status}
-      ])
-    else
-      Registry.update_channel(channel_id, [{:status, channel_from_heartbeat.status}])
-    end
+    updates =
+      if status != nil do
+        [
+          {:status, status}
+        ]
+      else
+        [
+          {:status, channel_from_heartbeat.status}
+        ]
+      end
+
+    updates =
+      if latest_version > cur_version do
+        [{:version, latest_version} | updates]
+      else
+        updates
+      end
+
+    Registry.update_channel(channel_id, updates)
   end
 
-  defp merge(channel_from_heartbeat, status) do
-    channel_id = channel_from_heartbeat.channel_id
-    [_channel_id, _, _, _, _cur_status, cur_version] = Registry.channel(channel_id)
-    latest_version = channel_from_heartbeat.version
-
-    if latest_version > cur_version do
-      Registry.update_channel(channel_id, [{:version, latest_version}, {:status, status}])
-    else
-      Registry.update_channel(channel_id, [{:status, status}])
-    end
-  end
 end
