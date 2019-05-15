@@ -4,7 +4,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
   use Agent
 
   alias ExAliyunOts.{Client, Logger}
-  alias ExAliyunOts.Tunnel.{Worker, Utils, Checkpointer, Backoff, Channel}
+  alias ExAliyunOts.Tunnel.{Worker, Utils, Checkpointer, Backoff}
 
   alias ExAliyunOts.Var.Tunnel.ReadRecords
   alias ExAliyunOts.Const.Tunnel.{Common, ChannelConnectionStatus}
@@ -105,10 +105,6 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
           }
         )
 
-      Logger.info(fn ->
-        "read_records result: #{inspect(result)}"
-      end)
-
       case result do
         {:ok, response, size} ->
           backoff = state.backoff
@@ -176,6 +172,8 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
 
     Worker.handle_records(state.worker, records, next_token)
 
+    Logger.info "start checkpointer after consume records for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}, next_token: #{inspect next_token}"
+
     checkpointer = %Checkpointer{
       tunnel_id: state.tunnel_id,
       client_id: state.client_id,
@@ -195,16 +193,13 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
         |> Checkpointer.checkpoint()
       end
 
-    if next_token == Common.finish_tag() do
-      Channel.update(state.channel_pid, :channel_finished)
-    end
+    Logger.info "finish process_records in connection for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}"
 
     state
     |> Map.put(:token, next_token)
     |> Map.put(:sequence_number, updated_sequence_number)
   end
   defp process_records({:tunnel_expired, state}) do
-    Channel.update(state.channel_pid, :tunnel_expired)
     state
   end
   defp process_records({:nil, state}) do

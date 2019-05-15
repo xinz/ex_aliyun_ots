@@ -20,7 +20,8 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   def init({channel_id, tunnel_id, client_id, status, version, connection}) do
     channel_pid = self()
-    Logger.info("Channel GenStateMachine pid: #{inspect(channel_pid)}")
+
+    Process.flag(:trap_exit, true)
 
     channel = %{
       channel_id: channel_id,
@@ -41,6 +42,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
     {:ok, status, channel}
   end
 
+
   @spec update(
           channel :: pid(),
           channel_from_heartbeat :: %ExAliyunOts.TableStoreTunnel.Channel{}
@@ -49,24 +51,10 @@ defmodule ExAliyunOts.Tunnel.Channel do
     GenStateMachine.call(channel, {:update, channel_from_heartbeat})
   end
 
+
   def stop(channel) do
-    Logger.info(">>>>>> Channel stop <<<<<<")
+    Logger.info(">>>>>> stop finished channel <<<<<<")
     GenStateMachine.stop(channel, {:shutdown, :channel_finished})
-  end
-
-  def handle_event(
-        {:call, from},
-        {:update, reason},
-        status,
-        channel
-      ) when reason == :tunnel_expired
-        when reason == :channel_finished do
-
-    Logger.info(
-      ">>>>>>>>>>>>>>> handle_event stop channel with reason: #{reason}, current channel status #{status}."
-    )
-    Connection.status_closed(channel.connection)
-    {:stop_and_reply, {:shutdown, reason}, [{:reply, from, :ok}]}
   end
 
   def handle_event(
@@ -168,6 +156,8 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   def terminate(reason, state, channel) do
     Connection.stop(channel.connection)
+
+    Registry.remove_channel(channel.channel_id)
 
     Logger.info(fn ->
       [
