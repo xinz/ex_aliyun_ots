@@ -52,14 +52,13 @@ defmodule ExAliyunOts.Tunnel.Worker do
     case Registry.worker(tunnel_id) do
       [_tunnel_id, _client_id, worker_pid, _meta] ->
         GenServer.stop(worker_pid, {:shutdown, :manual_stop})
-
       nil ->
         Logger.info("tunnel_id: #{inspect(tunnel_id)} is not existed.")
     end
   end
 
   def handle_records(worker, records, next_token) do
-    GenServer.cast(worker, {:handle_records, records, next_token})
+    GenServer.call(worker, {:handle_records, records, next_token}, :infinity)
   end
 
   # Callbacks
@@ -126,11 +125,11 @@ defmodule ExAliyunOts.Tunnel.Worker do
     end
   end
 
-  def handle_cast({:handle_records, records, next_token}, state) do
+  def handle_call({:handle_records, records, next_token}, _from, state) do
     Enum.each(state.subscribers, fn {_ref, subscriber_pid} ->
-      send(subscriber_pid, {:record_event, self(), {records, next_token}})
+      GenServer.call(subscriber_pid, {:record_event, self(), {records, next_token}}, :infinity)
     end)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
   def terminate({:shutdown, :start_error}, _state) do
@@ -440,6 +439,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
           {:ok, channel_pid} =
             init_channel(instance_key, tunnel_id, client_id, worker_pid, channel_from_heartbeat)
 
+
           Channel.update(channel_pid, channel_from_heartbeat)
 
         [_channel_id, _tunnel_id, _client_id, channel_pid, _status, _version] ->
@@ -523,7 +523,9 @@ defmodule ExAliyunOts.Tunnel.Worker do
   end
 
   defp start_channel(channel_id, tunnel_id, client_id, status, version, connection) do
-    Channel.start_link(channel_id, tunnel_id, client_id, status, version, connection)
+    {:ok, channel_pid} = Channel.start_link(channel_id, tunnel_id, client_id, status, version, connection)
+    Connection.bind_channel(connection, channel_pid)
+    {:ok, channel_pid}
   end
 
   defp subscribe(pid, state) do

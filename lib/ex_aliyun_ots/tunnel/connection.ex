@@ -4,7 +4,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
   use Agent
 
   alias ExAliyunOts.{Client, Logger}
-  alias ExAliyunOts.Tunnel.{Worker, Utils, Checkpointer, Backoff}
+  alias ExAliyunOts.Tunnel.{Worker, Utils, Checkpointer, Backoff, Channel}
 
   alias ExAliyunOts.Var.Tunnel.ReadRecords
   alias ExAliyunOts.Const.Tunnel.{Common, ChannelConnectionStatus}
@@ -24,6 +24,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
             finished?: false,
             instance_key: nil,
             backoff: nil,
+            channel_pid: nil,
             status: ChannelConnectionStatus.wait(),
             sequence_number: nil,
             latest_checkpoint: nil
@@ -43,12 +44,18 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
     end
   end
 
-  def process(conn) do
-    Logger.info("connection process conn: #{inspect(conn)}")
+  def bind_channel(conn, channel_pid) do
+    Agent.update(conn, fn(state) ->
+      Map.put(state, :channel_pid, channel_pid)
+    end)
+  end
 
-    conn
-    |> read_records()
-    |> process_records()
+  def process(conn) do
+    Agent.cast(conn, fn(state) ->
+      state
+      |> read_records()
+      |> process_records()
+    end)
   end
 
   def status(conn) do
@@ -83,155 +90,125 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
     update_status(conn, ChannelConnectionStatus.closed())
   end
 
-  defp read_records(conn) do
-    Agent.get_and_update(
-      conn,
-      fn state ->
-        token = state.token
+  defp read_records(state) do
+    token = state.token
 
-        Logger.info(fn ->
-          "read_records with token: #{inspect(token)}"
-        end)
+    if token != nil and token != Common.finish_tag() do
+      result =
+        Client.read_records(
+          state.instance_key,
+          %ReadRecords{
+            tunnel_id: state.tunnel_id,
+            client_id: state.client_id,
+            channel_id: state.channel_id,
+            token: token
+          }
+        )
 
-        if token != nil and token != Common.finish_tag() do
-          result =
-            Client.read_records(
-              state.instance_key,
-              %ReadRecords{
-                tunnel_id: state.tunnel_id,
-                client_id: state.client_id,
-                channel_id: state.channel_id,
-                token: token
-              }
-            )
+      Logger.info(fn ->
+        "read_records result: #{inspect(result)}"
+      end)
 
-          Logger.info(fn ->
-            "read_records result: #{inspect(result)}"
-          end)
+      case result do
+        {:ok, response, size} ->
+          backoff = state.backoff
+          records = response.records
+          next_token = response.next_token
 
-          case result do
-            {:ok, response, size} ->
-              backoff = state.backoff
-              records = response.records
-              next_token = response.next_token
-
-              if backoff != nil do
-                updated_backoff =
-                  if stream_full_data?(length(records), size) do
-                    Logger.debug(fn -> "reset backoff" end)
-                    Backoff.reset()
-                  else
-                    {next_backoff, sleep_ms} = Backoff.next_backoff_ms(backoff)
-                    Process.sleep(sleep_ms)
-                    next_backoff
-                  end
-
-                {
-                  {records, next_token, conn},
-                  Map.put(state, :backoff, updated_backoff)
-                }
+          if backoff != nil do
+            updated_backoff =
+              if stream_full_data?(length(records), size) do
+                Logger.debug(fn -> "reset backoff" end)
+                Backoff.reset()
               else
-                {
-                  {records, next_token, conn},
-                  state
-                }
+                {next_backoff, sleep_ms} = Backoff.next_backoff_ms(backoff)
+                Process.sleep(sleep_ms)
+                next_backoff
               end
 
-            {:error, error_msg} ->
-              Logger.error(fn ->
-                [
-                  "occur an error when read_records, ",
-                  "tunnel_id: ",
-                  inspect(state.tunnel_id),
-                  " client_id: ",
-                  inspect(state.client_id),
-                  " channel_id: ",
-                  inspect(state.channel_id),
-                  " token: ",
-                  inspect(token),
-                  " error message: ",
-                  inspect(error_msg)
-                ]
-              end)
-
-              if stream_channel_expired?(error_msg) do
-                # The tunnel has a 7-day life cycle, if there's an active connect-read-check loop, the tunnel will not expire.
-                # raise ExAliyunOts.Error, "#{error_msg}. The current tunnel is expired, please renew one tunnel to use it."
-                {:tunnel_expired, state}
-              else
-                {nil, state}
-              end
+            {records, next_token, Map.put(state, :backoff, updated_backoff)}
+          else
+            {records, next_token, state}
           end
-        else
-          Logger.info(fn ->
+
+        {:error, error_msg} ->
+          Logger.error(fn ->
             [
-              "channel is finished, it will be closed, token: ",
-              inspect(token)
+              "occur an error when read_records, ",
+              "tunnel_id: ",
+              inspect(state.tunnel_id),
+              " client_id: ",
+              inspect(state.client_id),
+              " channel_id: ",
+              inspect(state.channel_id),
+              " token: ",
+              inspect(token),
+              " error message: ",
+              inspect(error_msg)
             ]
           end)
 
-          {nil, state}
-        end
-      end,
-      :infinity
-    )
-  end
-
-  defp process_records({records, next_token, conn}) do
-    Agent.update(
-      conn,
-      fn state ->
-        Logger.info(
-          ">>> handle_records from connection@#{inspect(self())} with records: #{
-            inspect(records)
-          } <<<"
-        )
-
-        Worker.handle_records(
-          state.worker,
-          records,
-          next_token
-        )
-
-        checkpointer = %Checkpointer{
-          tunnel_id: state.tunnel_id,
-          client_id: state.client_id,
-          instance_key: state.instance_key,
-          channel_id: state.channel_id,
-          sequence_number: state.sequence_number
-        }
-
-        updated_sequence_number =
-          if next_token == nil or Common.finish_tag() == next_token do
-            checkpointer
-            |> Map.put(:token, Common.finish_tag())
-            |> Checkpointer.checkpoint()
+          if stream_channel_expired?(error_msg) do
+            # The tunnel has a 7-day life cycle, if there's an active connect-read-check loop, the tunnel will not expire.
+            # raise ExAliyunOts.Error, "#{error_msg}. The current tunnel is expired, please renew one tunnel to use it."
+            {:tunnel_expired, state}
           else
-            checkpointer
-            |> Map.put(:token, next_token)
-            |> Checkpointer.checkpoint()
+            {nil, state}
           end
-
-        state
-        |> Map.put(:token, next_token)
-        |> Map.put(:sequence_number, updated_sequence_number)
-      end,
-      :infinity
-    )
-
-    if Common.finish_tag() == next_token do
-      :finished
+      end
     else
-      :ok
+      Logger.info(fn ->
+          [
+            "channel is finished, it will be closed, token: ",
+            inspect(token)
+          ]
+        end)
+      {nil, state}
     end
   end
 
-  defp process_records(:tunnel_expired) do
-    :tunnel_expired
-  end
+  defp process_records({records, next_token, state}) do
+    Logger.info(
+        ">>> handle_records from connection@#{inspect(self())} with records: #{
+          inspect(records)
+        } <<<"
+      )
 
-  defp process_records(nil) do
-    :ok
+    Worker.handle_records(state.worker, records, next_token)
+
+    checkpointer = %Checkpointer{
+      tunnel_id: state.tunnel_id,
+      client_id: state.client_id,
+      instance_key: state.instance_key,
+      channel_id: state.channel_id,
+      sequence_number: state.sequence_number
+    }
+
+    updated_sequence_number =
+      if next_token == nil or Common.finish_tag() == next_token do
+        checkpointer
+        |> Map.put(:token, Common.finish_tag())
+        |> Checkpointer.checkpoint()
+      else
+        checkpointer
+        |> Map.put(:token, next_token)
+        |> Checkpointer.checkpoint()
+      end
+
+    if next_token == Common.finish_tag() do
+      Channel.update(state.channel_pid, :channel_finished)
+    end
+
+    state
+    |> Map.put(:token, next_token)
+    |> Map.put(:sequence_number, updated_sequence_number)
+  end
+  defp process_records({:tunnel_expired, state}) do
+    Channel.update(state.channel_pid, :tunnel_expired)
+    state
+  end
+  defp process_records({:nil, state}) do
+    state
   end
 
   defp update_status(conn, new_status)
@@ -260,4 +237,5 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
   defp stream_channel_expired?(error_msg) do
     String.contains?(error_msg, "OTSTunnelServerUnavailableuOTSTrimmedDataAccess")
   end
+
 end

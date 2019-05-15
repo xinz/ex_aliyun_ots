@@ -56,6 +56,21 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   def handle_event(
         {:call, from},
+        {:update, reason},
+        status,
+        channel
+      ) when reason == :tunnel_expired
+        when reason == :channel_finished do
+
+    Logger.info(
+      ">>>>>>>>>>>>>>> handle_event stop channel with reason: #{reason}, current channel status #{status}."
+    )
+    Connection.status_closed(channel.connection)
+    {:stop_and_reply, {:shutdown, reason}, [{:reply, from, :ok}]}
+  end
+
+  def handle_event(
+        {:call, from},
         {:update, channel_from_heartbeat},
         ChannelStatus.open(),
         channel
@@ -226,23 +241,9 @@ defmodule ExAliyunOts.Tunnel.Channel do
   defp do_process_pipeline(channel, connection, channel_from_heartbeat, from) do
     case channel_from_heartbeat.status do
       ChannelStatus.open() ->
-        case Connection.process(connection) do
-          :ok ->
-            Logger.info(">>>> process_pipeline done")
-            latest_status = channel_from_heartbeat.status
-            merge(channel_from_heartbeat)
-            {:next_state, latest_status, channel, [{:reply, from, :ok}]}
-
-          :finished ->
-            Logger.info(">>>> process_pipeline finished")
-            Connection.status_closed(connection)
-            {:stop_and_reply, {:shutdown, :channel_finished}, [{:reply, from, :channel_finished}]}
-
-          process_error ->
-            Logger.info(">>>> process_pipeline with error")
-            Connection.status_closed(connection)
-            {:stop_and_reply, {:shutdown, process_error}, [{:reply, from, process_error}]}
-        end
+        Logger.info "process readrecords and checkpoint for open channel"
+        Connection.process(connection)
+        {:next_state, ChannelStatus.open(), channel, [{:reply, from, :ok}]}
 
       ChannelStatus.closing() ->
         Logger.info("do_process_pipeline with channel closing status from heartbeat")
