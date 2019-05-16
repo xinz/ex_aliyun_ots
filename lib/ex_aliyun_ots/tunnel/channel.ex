@@ -24,7 +24,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
     Process.flag(:trap_exit, true)
 
     channel = %{
-      channel_id: channel_id,
+      pid: channel_pid,
       connection: connection
     }
 
@@ -107,7 +107,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
         :ignore
     end
 
-    merge(channel_from_heartbeat, ChannelStatus.close())
+    merge(channel_from_heartbeat, channel.pid, ChannelStatus.close())
     {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
   end
 
@@ -130,7 +130,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
       Connection.status_closed(connection)
     end
 
-    merge(channel_from_heartbeat, ChannelStatus.close())
+    merge(channel_from_heartbeat, channel.pid, ChannelStatus.close())
     Registry.inc_channel_version(channel_from_heartbeat.channel_id)
     {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
   end
@@ -149,7 +149,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
       }, connection_status: #{inspect(connection_status)}"
     )
 
-    merge(channel_from_heartbeat)
+    merge(channel_from_heartbeat, channel.pid)
 
     {:next_state, channel_from_heartbeat.status, channel, [{:reply, from, :ok}]}
   end
@@ -157,7 +157,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
   def terminate(reason, state, channel) do
     Connection.stop(channel.connection)
 
-    Registry.remove_channel(channel.channel_id)
+    Registry.remove_channel(channel.pid)
 
     Logger.info(fn ->
       [
@@ -202,17 +202,16 @@ defmodule ExAliyunOts.Tunnel.Channel do
          _channel_from_heartbeat,
          from
        ) do
-    channel_id = channel.channel_id
-
+    pid = channel.pid
     case Connection.finished?(channel.connection) do
       true ->
-        Registry.update_channel(channel_id, [{:status, ChannelStatus.terminated()}])
-        Registry.inc_channel_version(channel_id)
+        Registry.update_channel(pid, [{:status, ChannelStatus.terminated()}])
+        Registry.inc_channel_version(pid)
         {:next_state, ChannelStatus.terminated(), channel, [{:reply, from, :ok}]}
 
       false ->
-        Registry.update_channel(channel_id, [{:status, ChannelStatus.close()}])
-        Registry.inc_channel_version(channel_id)
+        Registry.update_channel(pid, [{:status, ChannelStatus.close()}])
+        Registry.inc_channel_version(pid)
         {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
     end
   end
@@ -224,7 +223,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
          channel_from_heartbeat,
          from
        ) do
-    merge(channel_from_heartbeat)
+    merge(channel_from_heartbeat, channel.pid)
     {:next_state, channel_from_heartbeat.status, channel, [{:reply, from, :ok}]}
   end
 
@@ -238,21 +237,21 @@ defmodule ExAliyunOts.Tunnel.Channel do
       ChannelStatus.closing() ->
         Logger.info("do_process_pipeline with channel closing status from heartbeat")
         Connection.status_closing(connection)
-        merge(channel_from_heartbeat, ChannelStatus.close())
+        merge(channel_from_heartbeat, channel.pid, ChannelStatus.close())
         Registry.inc_channel_version(channel_from_heartbeat.channel_id)
         {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
 
       ChannelStatus.close() ->
         Logger.info("do_process_pipeline with channel close status from heartbeat")
         Connection.status_closed(connection)
-        merge(channel_from_heartbeat)
+        merge(channel_from_heartbeat, channel.pid)
         {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
     end
   end
 
-  defp merge(channel_from_heartbeat, status \\ nil) do
+  defp merge(channel_from_heartbeat, pid, status \\ nil) do
     channel_id = channel_from_heartbeat.channel_id
-    [_channel_id, _, _, _, _cur_status, cur_version] = Registry.channel(channel_id)
+    [^channel_id, _, _, _, _cur_status, cur_version] = Registry.channel(pid)
     latest_version = channel_from_heartbeat.version
 
     updates =
@@ -273,7 +272,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
         updates
       end
 
-    Registry.update_channel(channel_id, updates)
+    Registry.update_channel(pid, updates)
   end
 
 end

@@ -433,7 +433,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     Enum.map(channels_from_response, fn channel_from_heartbeat ->
       channel_id = channel_from_heartbeat.channel_id
 
-      case Registry.channel(channel_id) do
+      case Registry.channel(channel_id, tunnel_id, client_id) do
         nil ->
           # not existed yet in local
           {:ok, channel_pid} =
@@ -451,7 +451,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     local_channel_ids
     |> to_be_removed_channel_ids(channels_from_response)
     |> Enum.map(fn tbr_channel_id ->
-      case Registry.channel(tbr_channel_id) do
+      case Registry.channel(tbr_channel_id, tunnel_id, client_id) do
         nil ->
           :ok
 

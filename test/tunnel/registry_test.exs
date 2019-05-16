@@ -93,13 +93,15 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
       version: 2
     ))
 
-    channel1 = Registry.channel("channel_id1")
+    fake_channel_pid = Process.spawn(fn -> :ok end, [:link])
+
+    channel1 = Registry.channel(channel_pid)
     ["channel_id1", "tunnel_id1", "client_id1", ^channel_pid, "OPEN", 1] = channel1
 
-    inc_result = Registry.inc_channel_version("channel_id1")
+    inc_result = Registry.inc_channel_version(channel_pid)
     assert inc_result == 2
 
-    res = Registry.channel("fake_channel_id1")
+    res = Registry.channel(fake_channel_pid)
     assert res == nil
 
     channels = Registry.channels(tunnel_id)
@@ -111,9 +113,8 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
     remove_result = Registry.remove_channel(channel_pid)
     assert remove_result == true
 
-    fake_channel_pid = Process.spawn(fn -> :ok end, [:link])
     remove_result = Registry.remove_channel(fake_channel_pid)
-    assert remove_result == false
+    assert remove_result == true
 
   end
 

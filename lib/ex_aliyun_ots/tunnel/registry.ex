@@ -28,7 +28,7 @@ defmodule ExAliyunOts.Tunnel.Registry do
         :set,
         :named_table,
         :public,
-        keypos: 2,
+        keypos: 5,
         read_concurrency: true,
         write_concurrency: true
       ])
@@ -69,9 +69,32 @@ defmodule ExAliyunOts.Tunnel.Registry do
     end
   end
 
-  @spec channel(channel_id :: String.t()) :: nil | tuple()
-  def channel(channel_id) when is_binary(channel_id) do
-    case :ets.lookup(@table_channel, channel_id) do
+  @spec channel(pid :: pid()) :: nil | list()
+  def channel(pid) when is_pid(pid) do
+    case :ets.lookup(@table_channel, pid) do
+      [] ->
+        nil
+
+      [items] when is_tuple(items) ->
+        Tuple.delete_at(items, 0) |> Tuple.to_list()
+    end
+  end
+
+  @spec channel(channel_id :: String.t(), tunnel_id :: String.t(), client_id :: String.t()) ::
+          nil | list()
+  def channel(channel_id, tunnel_id, client_id)
+      when is_binary(channel_id) and is_binary(tunnel_id) and is_binary(client_id) do
+    case :ets.match_object(
+           @table_channel,
+           entry_channel(
+             channel_id: channel_id,
+             tunnel_id: tunnel_id,
+             client_id: client_id,
+             pid: :_,
+             status: :_,
+             version: :_
+           )
+         ) do
       [] ->
         nil
 
@@ -85,34 +108,16 @@ defmodule ExAliyunOts.Tunnel.Registry do
     :ets.delete(@table_worker, tunnel_id)
   end
 
-  @spec remove_channel(channel_id :: String.t()) :: true
-  def remove_channel(channel_id) when is_binary(channel_id) do
-    :ets.delete(@table_channel, channel_id)
+  @spec remove_channel(pid :: pid()) :: true
+  def remove_channel(pid) when is_pid(pid) do
+    :ets.delete(@table_channel, pid)
   end
 
-  @spec remove_channel(channel_pid :: pid()) :: boolean()
-  def remove_channel(channel_pid) when is_pid(channel_pid) do
-    case :ets.match(
-           @table_channel,
-           entry_channel(
-             channel_id: :"$1",
-             tunnel_id: :_,
-             client_id: :_,
-             pid: channel_pid,
-             status: :_,
-             version: :_
-           )
-         ) do
-      [] -> false
-      [[channel_id]] -> remove_channel(channel_id)
-    end
-  end
-
-  @spec inc_channel_version(channel_id :: String.t(), inc_offset :: integer()) :: term()
-  def inc_channel_version(channel_id, inc_offset \\ 1) do
+  @spec inc_channel_version(pid :: pid(), inc_offset :: integer()) :: term()
+  def inc_channel_version(pid, inc_offset \\ 1) do
     :ets.update_counter(
       @table_channel,
-      channel_id,
+      pid,
       {EntryChannel.index(:version) + 1, inc_offset}
     )
   end
@@ -131,10 +136,10 @@ defmodule ExAliyunOts.Tunnel.Registry do
     :ets.update_element(@table_worker, tunnel_id, fields)
   end
 
-  @spec update_channel(channel_id :: String.t(), updates :: [{atom(), term()}]) :: boolean()
-  def update_channel(channel_id, updates) do
+  @spec update_channel(pid :: pid(), updates :: [{atom(), term()}]) :: boolean()
+  def update_channel(pid, updates) do
     fields = Enum.map(updates, fn {k, v} -> {EntryChannel.index(k) + 1, v} end)
-    :ets.update_element(@table_channel, channel_id, fields)
+    :ets.update_element(@table_channel, pid, fields)
   end
 
   @spec worker(tunnel_id :: String.t()) :: nil | term()

@@ -164,11 +164,16 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
   end
 
   defp process_records({records, next_token, state}) do
-    Logger.info(
-        ">>> handle_records from connection@#{inspect(self())} with records: #{
-          inspect(records)
-        } <<<"
-      )
+    Logger.info(fn ->
+      [
+        ">>> handle_records for channel_id: ",
+        inspect(state.channel_id),
+        " client_id: ",
+        inspect(state.client_id),
+        " with records: ",
+        inspect(records)
+      ]
+    end)
 
     Worker.handle_records(state.worker, records, next_token)
 
