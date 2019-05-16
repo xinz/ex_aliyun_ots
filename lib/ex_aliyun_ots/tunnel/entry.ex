@@ -3,17 +3,18 @@ defmodule ExAliyunOts.Tunnel.EntryWorker do
 
   require Record
 
-  @fields [tunnel_id: nil, client_id: nil, pid: nil, meta: %{}]
+  @fields [tunnel_id: nil, client_id: nil, pid: nil, meta: %{}, subscriber: nil]
 
   Record.defrecord(:entry_worker, @fields)
 
   @type entry_worker ::
           record(
             :entry_worker,
-            tunnel_id: String.t(),
-            client_id: String.t(),
-            pid: pid(),
-            meta: map()
+            tunnel_id: String.t() | nil,
+            client_id: String.t() | nil,
+            pid: pid() | nil,
+            meta: map() | nil,
+            subscriber: tuple() | nil
           )
 
   def index(field) when is_atom(field) do
@@ -33,12 +34,12 @@ defmodule ExAliyunOts.Tunnel.EntryChannel do
   @type entry_channel ::
           record(
             :entry_channel,
-            channel_id: String.t(),
-            tunnel_id: String.t(),
-            client_id: String.t(),
-            pid: pid(),
-            status: String.t(),
-            version: integer()
+            channel_id: String.t() | nil,
+            tunnel_id: String.t() | nil,
+            client_id: String.t() | nil,
+            pid: pid() | nil,
+            status: String.t() | nil,
+            version: integer() | nil
           )
 
   def index(field) when is_atom(field) do

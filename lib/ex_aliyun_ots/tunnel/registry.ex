@@ -125,8 +125,8 @@ defmodule ExAliyunOts.Tunnel.Registry do
   @spec workers() :: list()
   def workers() do
     :ets.tab2list(@table_worker)
-    |> Enum.map(fn entry_worker(tunnel_id: tunnel_id, client_id: client_id, pid: pid, meta: meta) ->
-      {tunnel_id, client_id, pid, meta}
+    |> Enum.map(fn entry_worker(tunnel_id: tunnel_id, client_id: client_id, pid: pid, meta: meta, subscriber: subscriber) ->
+      {tunnel_id, client_id, pid, meta, subscriber}
     end)
   end
 
@@ -154,7 +154,7 @@ defmodule ExAliyunOts.Tunnel.Registry do
   def worker(worker_pid) when is_pid(worker_pid) do
     case :ets.match(
            @table_worker,
-           entry_worker(tunnel_id: :"$1", client_id: :"$2", pid: worker_pid, meta: :"$3")
+           entry_worker(tunnel_id: :"$1", client_id: :"$2", pid: worker_pid, meta: :"$3", subscriber: :"$4")
          ) do
       [] ->
         nil
@@ -163,4 +163,25 @@ defmodule ExAliyunOts.Tunnel.Registry do
         List.insert_at(list, 2, worker_pid)
     end
   end
+
+  @spec remove_subscriber(ref :: reference(), subscriber_pid :: pid()) :: boolean()
+  def remove_subscriber(ref, subscriber_pid) do
+    case :ets.match(@table_worker, entry_worker(tunnel_id: :"$1", client_id: :_, pid: :_, meta: :_, subscriber: {ref, subscriber_pid})) do
+      [] ->
+        false
+      [[tunnel_id]] ->
+        update_worker(tunnel_id, [{:subscriber, nil}])
+    end
+  end
+
+  @spec subscriber(tunnel_id :: String.t()) :: {reference(), pid()} | nil
+  def subscriber(tunnel_id) do
+    case :ets.match(@table_worker, entry_worker(tunnel_id: tunnel_id, client_id: :_, pid: :_, meta: :_, subscriber: :"$1")) do
+      [] ->
+        nil
+      [[subscriber]] ->
+        subscriber
+    end
+  end
+
 end

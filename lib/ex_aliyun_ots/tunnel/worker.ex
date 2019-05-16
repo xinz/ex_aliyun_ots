@@ -25,8 +25,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     Process.flag(:trap_exit, true)
 
     state = %{
-      instance_key: instance_key,
-      subscribers: %{}
+      instance_key: instance_key
     }
 
     {:ok, state}
@@ -50,15 +49,11 @@ defmodule ExAliyunOts.Tunnel.Worker do
   @spec stop(tunnel_id :: String.t()) :: term()
   def stop(tunnel_id) do
     case Registry.worker(tunnel_id) do
-      [_tunnel_id, _client_id, worker_pid, _meta] ->
+      [_tunnel_id, _client_id, worker_pid, _meta, _subscriber] ->
         GenServer.stop(worker_pid, {:shutdown, :manual_stop})
       nil ->
         Logger.info("tunnel_id: #{inspect(tunnel_id)} is not existed.")
     end
-  end
-
-  def handle_records(worker, records, next_token) do
-    GenServer.call(worker, {:handle_records, records, next_token}, :infinity)
   end
 
   # Callbacks
@@ -98,9 +93,9 @@ defmodule ExAliyunOts.Tunnel.Worker do
     {:noreply, state}
   end
 
-  def handle_info({:DOWN, ref, _, _pid, _reason}, state) do
-    subscribers = Map.drop(state.subscribers, [ref])
-    {:noreply, %{state | subscribers: subscribers}}
+  def handle_info({:DOWN, ref, _, pid, _reason}, state) do
+    Registry.remove_subscriber(ref, pid)
+    {:noreply, state}
   end
 
   def handle_cast({:start, opts, subscriber_pid}, state) do
@@ -112,9 +107,9 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     case Registry.new_worker(entry_worker(tunnel_id: tunnel_id, pid: self())) do
       true ->
-        case connect_heartbeat(state, opts) do
+        case connect_heartbeat(state, opts, subscriber_pid) do
           :ok ->
-            subscribe(subscriber_pid, state)
+            {:noreply, state}
 
           {:error, _error} ->
             Registry.remove_worker(tunnel_id)
@@ -123,13 +118,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
       false ->
         raise ExAliyunOts.Error, "Tunnel worker #{inspect(worker_pid)} has already been exitsed."
     end
-  end
-
-  def handle_call({:handle_records, records, next_token}, _from, state) do
-    Enum.each(state.subscribers, fn {_ref, subscriber_pid} ->
-      GenServer.call(subscriber_pid, {:record_event, self(), {records, next_token}}, :infinity)
-    end)
-    {:reply, :ok, state}
   end
 
   def terminate({:shutdown, :start_error}, _state) do
@@ -150,7 +138,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
   # Private 
 
-  defp connect_heartbeat(state, opts) do
+  defp connect_heartbeat(state, opts, subscriber_pid) do
     tunnel_id = opts[:tunnel_id]
     connect_timeout = opts[:connect_timeout]
 
@@ -171,17 +159,21 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
         heartbeat_interval = opts[:heartbeat_interval] * 1_000
 
+        ref = Process.monitor(subscriber_pid)
+
         Registry.update_worker(
           tunnel_id,
           [
             {:client_id, client_id},
             {:meta,
-             %{
-               heartbeat_interval: heartbeat_interval,
-               heartbeat_timeout: opts[:heartbeat_timeout] * 1_000,
-               timer_ref: schedule_heartbeat(opts, heartbeat_interval),
-               last_heartbeat_time: DateTime.utc_now()
-             }}
+              %{
+                heartbeat_interval: heartbeat_interval,
+                heartbeat_timeout: opts[:heartbeat_timeout] * 1_000,
+                timer_ref: schedule_heartbeat(opts, heartbeat_interval),
+                last_heartbeat_time: DateTime.utc_now()
+              }
+            },
+            {:subscriber, {ref, subscriber_pid}}
           ]
         )
 
@@ -234,7 +226,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     tunnel_id = opts[:tunnel_id]
 
-    [_tunnel_id, client_id, worker_pid, meta] = Registry.worker(tunnel_id)
+    [_tunnel_id, client_id, worker_pid, meta, _subscriber] = Registry.worker(tunnel_id)
 
     last_heartbeat_time = meta.last_heartbeat_time
 
@@ -365,7 +357,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
   defp shutdown(state) do
     case Registry.worker(self()) do
-      [tunnel_id, client_id, _worker_pid, meta] ->
+      [tunnel_id, client_id, _worker_pid, meta, _subscriber] ->
         timer_ref = Map.get(meta, :timer_ref)
 
         if timer_ref != nil do
@@ -526,12 +518,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
     {:ok, channel_pid} = Channel.start_link(channel_id, tunnel_id, client_id, status, version, connection)
     Connection.bind_channel(connection, channel_pid)
     {:ok, channel_pid}
-  end
-
-  defp subscribe(pid, state) do
-    ref = Process.monitor(pid)
-    state = put_in(state, [:subscribers, ref], pid)
-    {:noreply, state}
   end
 
 end

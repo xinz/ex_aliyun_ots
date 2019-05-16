@@ -4,7 +4,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
   use Agent
 
   alias ExAliyunOts.{Client, Logger}
-  alias ExAliyunOts.Tunnel.{Worker, Utils, Checkpointer, Backoff}
+  alias ExAliyunOts.Tunnel.{Utils, Checkpointer, Backoff, Registry}
 
   alias ExAliyunOts.Var.Tunnel.ReadRecords
   alias ExAliyunOts.Const.Tunnel.{Common, ChannelConnectionStatus}
@@ -175,34 +175,42 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
       ]
     end)
 
-    Worker.handle_records(state.worker, records, next_token)
+    case Registry.subscriber(state.tunnel_id) do
+      nil ->
+        Logger.info "not found subscriber for tunnel_id: #{inspect(state.tunnel_id)} consume records"
+        Map.put(state, :token, next_token)
 
-    Logger.info "start checkpointer after consume records for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}, next_token: #{inspect next_token}"
+      {_ref, subscriber_pid} ->
 
-    checkpointer = %Checkpointer{
-      tunnel_id: state.tunnel_id,
-      client_id: state.client_id,
-      instance_key: state.instance_key,
-      channel_id: state.channel_id,
-      sequence_number: state.sequence_number
-    }
+        GenServer.call(subscriber_pid, {:record_event, state.worker, {records, next_token}}, :infinity)
 
-    updated_sequence_number =
-      if next_token == nil or Common.finish_tag() == next_token do
-        checkpointer
-        |> Map.put(:token, Common.finish_tag())
-        |> Checkpointer.checkpoint()
-      else
-        checkpointer
+        Logger.info "start checkpointer after consume records for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}, next_token: #{inspect next_token}"
+
+        checkpointer = %Checkpointer{
+          tunnel_id: state.tunnel_id,
+          client_id: state.client_id,
+          instance_key: state.instance_key,
+          channel_id: state.channel_id,
+          sequence_number: state.sequence_number
+        }
+
+        updated_sequence_number =
+          if next_token == nil or Common.finish_tag() == next_token do
+            checkpointer
+            |> Map.put(:token, Common.finish_tag())
+            |> Checkpointer.checkpoint()
+          else
+            checkpointer
+            |> Map.put(:token, next_token)
+            |> Checkpointer.checkpoint()
+          end
+
+        Logger.info "finish process_records in connection for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}"
+
+        state
         |> Map.put(:token, next_token)
-        |> Checkpointer.checkpoint()
-      end
-
-    Logger.info "finish process_records in connection for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}"
-
-    state
-    |> Map.put(:token, next_token)
-    |> Map.put(:sequence_number, updated_sequence_number)
+        |> Map.put(:sequence_number, updated_sequence_number)
+    end
   end
   defp process_records({:tunnel_expired, state}) do
     state

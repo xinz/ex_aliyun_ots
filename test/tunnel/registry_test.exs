@@ -17,7 +17,7 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
 
     Registry.update_worker("tunnel_id0", [{:client_id, "client_id0"}])
 
-    [{"tunnel_id0", "client_id0", nil_client_pid, %{}}] = Registry.workers()
+    [{"tunnel_id0", "client_id0", nil_client_pid, %{}, nil}] = Registry.workers()
 
     assert nil_client_pid == nil
 
@@ -34,13 +34,17 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
     assert index_tunnel_id == 1
     assert index_client_id == 2
 
+    subscriber_pid = self()
+    ref = Process.monitor(subscriber_pid)
+
     Registry.new_worker(entry_worker(
       tunnel_id: "tunnel_id2",
       client_id: "client_id2",
       pid: client_pid,
       meta: %{
         client_tag: "client_tag2"
-      }
+      },
+      subscriber: {ref, self()}
     ))
 
     updated_meta = %{
@@ -50,19 +54,33 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
     update_result = Registry.update_worker("tunnel_id1", [{:meta, updated_meta}])
     assert update_result == true
 
-    [_tunnel_id, _client_id, _worker_pid, meta] = Registry.worker("tunnel_id1")
+
+    subscriber1 = Registry.subscriber("tunnel_id1")
+    assert subscriber1 == nil
+
+    {ref2, return_subscriber_pid} = Registry.subscriber("tunnel_id2")
+    assert ref2 == ref and return_subscriber_pid == subscriber_pid
+
+    rm_subscriber_result = Registry.remove_subscriber(ref, subscriber_pid)
+    assert rm_subscriber_result == true
+
+    rm_subscriber_result = Registry.remove_subscriber(ref, Process.spawn(fn -> :ok end, [:link]))
+    assert rm_subscriber_result == false
+
+
+    [_tunnel_id, _client_id, _worker_pid, meta, _subscriber] = Registry.worker("tunnel_id1")
     assert meta == updated_meta
 
     Registry.remove_worker("tunnel_id1")
 
     result = Registry.workers()
     assert length(result) == 1
-    {"tunnel_id2", "client_id2", ^client_pid, _mate} = List.first(result)
+    {"tunnel_id2", "client_id2", ^client_pid, _mate, _subscriber} = List.first(result)
 
     worker1 = Registry.worker("tunnel_id1")
     assert worker1 == nil
-    ["tunnel_id2", "client_id2", ^client_pid, meta1] = Registry.worker("tunnel_id2")
-    ["tunnel_id2", "client_id2", ^client_pid, meta2] = Registry.worker(client_pid)
+    ["tunnel_id2", "client_id2", ^client_pid, meta1, _subscriber] = Registry.worker("tunnel_id2")
+    ["tunnel_id2", "client_id2", ^client_pid, meta2, _subscriber] = Registry.worker(client_pid)
     assert meta1 == meta2
   end
 
