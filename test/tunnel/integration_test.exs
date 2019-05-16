@@ -94,6 +94,10 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
 
     on_exit(fn ->
 
+      Worker.stop(tunnel_id1)
+      Worker.stop(tunnel_id2)
+      Worker.stop(tunnel_id3)
+
       {del_result, _response} = Client.delete_tunnel(@instance_key, %DeleteTunnel{table_name: @table_name, tunnel_name: @tunnel_name1})
       assert :ok == del_result
       {del_result2, _response} = Client.delete_tunnel(@instance_key, %DeleteTunnel{table_name: @table_name, tunnel_name: @tunnel_name2})
@@ -186,7 +190,6 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
       assert TunnelData.match?(index + 1, record.record) == true
     end)
 
-    Worker.stop(tunnel_id2)
   end
 
   test "base tunnel read data", context do
@@ -211,7 +214,6 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
       assert TunnelData.match?(index + 1, record.record) == true
     end)
 
-    Worker.stop(tunnel_id1)
   end
 
   test "base_and_stream read data", context do
@@ -249,7 +251,6 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
 
     assert MapSet.equal?(action_types, MapSet.new([:PUT_ROW, :DELETE_ROW])) == true
 
-    Worker.stop(tunnel_id3)
   end
 
 end
