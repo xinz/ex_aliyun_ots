@@ -66,21 +66,21 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
       Client.create_tunnel(@instance_key,
         table_name: @table_name,
         tunnel_name: @tunnel_name1,
-        type: TunnelType.base
+        tunnel_type: TunnelType.base
       )
 
     {:ok, response2} =
       Client.create_tunnel(@instance_key,
         table_name: @table_name,
         tunnel_name: @tunnel_name2,
-        type: TunnelType.stream
+        tunnel_type: TunnelType.stream
       )
 
     {:ok, response3} =
       Client.create_tunnel(@instance_key,
         table_name: @table_name,
         tunnel_name: @tunnel_name3,
-        type: TunnelType.base_and_stream
+        tunnel_type: TunnelType.base_and_stream
       )
     
     tunnel_id1 = response1.tunnel_id

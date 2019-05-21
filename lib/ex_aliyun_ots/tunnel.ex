@@ -33,12 +33,7 @@ defmodule ExAliyunOts.Client.Tunnel do
   import ExAliyunOts.Logger, only: [debug: 1]
 
   def request_to_create_tunnel(opts) do
-    tunnel = Tunnel.new(
-      table_name: opts[:table_name],
-      tunnel_name: opts[:tunnel_name],
-      tunnel_type: opts[:type]
-    )
-    CreateTunnelRequest.new(tunnel: tunnel) |> CreateTunnelRequest.encode()
+    CreateTunnelRequest.new(tunnel: Tunnel.new(opts)) |> CreateTunnelRequest.encode()
   end
 
   def remote_create_tunnel(instance, request_body) do
