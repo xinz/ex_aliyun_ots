@@ -2,8 +2,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
   use GenServer
 
   alias ExAliyunOts.Client
-  alias ExAliyunOts.Var.Tunnel.{ConnectTunnel, Heartbeat, Shutdown, GetCheckpoint}
-  alias ExAliyunOts.Var.Tunnel.Channel, as: VarChannel
   alias ExAliyunOts.Tunnel.{Registry, Channel, EntryWorker, Backoff, Utils}
   alias ExAliyunOts.Tunnel.Channel.Connection
 
@@ -142,14 +140,12 @@ defmodule ExAliyunOts.Tunnel.Worker do
     tunnel_id = opts[:tunnel_id]
     connect_timeout = opts[:connect_timeout]
 
-    var_connect = %ConnectTunnel{
-      tunnel_id: tunnel_id,
-      timeout: connect_timeout,
-      client_tag: opts[:client_tag]
-    }
-
     result =
-      Client.connect_tunnel(state.instance_key, var_connect,
+      Client.connect_tunnel(
+        state.instance_key,
+        tunnel_id: tunnel_id,
+        timeout: connect_timeout,
+        client_tag: opts[:client_tag],
         request_timeout: connect_timeout * 1_000
       )
 
@@ -239,22 +235,26 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     local_channels = Registry.channels(tunnel_id)
 
-    {var_channels, local_channel_ids} =
+    {channels_to_heartbeat, local_channel_ids} =
       Enum.map_reduce(local_channels, [], fn local_channel, acc ->
         [channel_id, _tunnel_id, _client_id, _channel_pid, status, version] = local_channel
 
         {
-          %VarChannel{channel_id: channel_id, version: version, status: status},
+          [channel_id: channel_id, version: version, status: status],
           [channel_id | acc]
         }
       end)
 
-    Logger.info("local var channels: #{inspect(var_channels)}")
-
-    var_heartbeat = %Heartbeat{channels: var_channels, tunnel_id: tunnel_id, client_id: client_id}
+    Logger.info("channels_to_heartbeat: #{inspect(channels_to_heartbeat)}")
 
     result =
-      Client.heartbeat(instance_key, var_heartbeat, request_timeout: meta.heartbeat_timeout)
+      Client.heartbeat(
+        instance_key,
+        request_timeout: meta.heartbeat_timeout,
+        channels: channels_to_heartbeat,
+        tunnel_id: tunnel_id,
+        client_id: client_id
+      )
 
     Logger.info(fn -> "heartbeat result: #{inspect(result)}" end)
 
@@ -383,8 +383,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   end
 
   defp remote_shutdown_tunnel(instance_key, tunnel_id, client_id) do
-    var_shutdown = %Shutdown{tunnel_id: tunnel_id, client_id: client_id}
-    shutdown_result = Client.shutdown_tunnel(instance_key, var_shutdown)
+    shutdown_result = Client.shutdown_tunnel(instance_key, tunnel_id: tunnel_id, client_id: client_id)
 
     Logger.info(fn ->
       [
@@ -462,13 +461,13 @@ defmodule ExAliyunOts.Tunnel.Worker do
   defp init_channel(instance_key, tunnel_id, client_id, worker_pid, channel_from_heartbeat) do
     channel_id = channel_from_heartbeat.channel_id
 
-    var = %GetCheckpoint{
-      tunnel_id: tunnel_id,
-      client_id: client_id,
-      channel_id: channel_id
-    }
-
-    result = Client.get_checkpoint(instance_key, var)
+    result =
+      Client.get_checkpoint(
+        instance_key,
+        tunnel_id: tunnel_id,
+        client_id: client_id,
+        channel_id: channel_id
+      )
 
     case result do
       {:ok, response} ->

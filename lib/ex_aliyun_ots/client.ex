@@ -154,14 +154,14 @@ defmodule ExAliyunOts.Client do
     call_transaction(instance_key, {:abort_transaction, encoded_request}, request_timeout)
   end
 
-  def create_tunnel(instance_key, var_create_tunnel, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_create_tunnel(var_create_tunnel)
+  def create_tunnel(instance_key, options) do
+    encoded_request = Tunnel.request_to_create_tunnel(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:create_tunnel, encoded_request}, request_timeout)
   end
 
-  def delete_tunnel(instance_key, var_delete_tunnel, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_delete_tunnel(var_delete_tunnel)
+  def delete_tunnel(instance_key, options) do
+    encoded_request = Tunnel.request_to_delete_tunnel(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:delete_tunnel, encoded_request}, request_timeout)
   end
@@ -172,44 +172,44 @@ defmodule ExAliyunOts.Client do
     call_transaction(instance_key, {:list_tunnel, encoded_request}, request_timeout)
   end
 
-  def describe_tunnel(instance_key, var_describe_tunnel, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_describe_tunnel(var_describe_tunnel)
+  def describe_tunnel(instance_key, options) do
+    encoded_request = Tunnel.request_to_describe_tunnel(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:describe_tunnel, encoded_request}, request_timeout)
   end
 
-  def connect_tunnel(instance_key, var_connect_tunnel, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_connect_tunnel(var_connect_tunnel)
+  def connect_tunnel(instance_key, options) do
+    encoded_request = Tunnel.request_to_connect_tunnel(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:connect_tunnel, encoded_request}, request_timeout)
   end
 
-  def heartbeat(instance_key, var_heartbeat, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_heartbeat(var_heartbeat)
+  def heartbeat(instance_key, options) do
+    encoded_request = Tunnel.request_to_heartbeat(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:heartbeat, encoded_request}, request_timeout)
   end
 
-  def shutdown_tunnel(instance_key, var_shutdown, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_shutdown(var_shutdown)
+  def shutdown_tunnel(instance_key, options) do
+    encoded_request = Tunnel.request_to_shutdown(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:shutdown, encoded_request}, request_timeout)
   end
 
-  def get_checkpoint(instance_key, var_get_checkpoint, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_get_checkpoint(var_get_checkpoint)
+  def get_checkpoint(instance_key, options) do
+    encoded_request = Tunnel.request_to_get_checkpoint(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:get_checkpoint, encoded_request}, request_timeout)
   end
 
-  def read_records(instance_key, var_read_records, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_readrecords(var_read_records)
+  def read_records(instance_key, options) do
+    encoded_request = Tunnel.request_to_readrecords(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:read_records, encoded_request}, request_timeout)
   end
 
-  def checkpoint(instance_key, var_checkpoint, options \\ [request_timeout: @request_timeout]) do
-    encoded_request = Tunnel.request_to_checkpoint(var_checkpoint)
+  def checkpoint(instance_key, options) do
+    encoded_request = Tunnel.request_to_checkpoint(options)
     request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
     call_transaction(instance_key, {:checkpoint, encoded_request}, request_timeout)
   end

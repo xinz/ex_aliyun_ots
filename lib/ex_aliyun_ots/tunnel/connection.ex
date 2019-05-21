@@ -6,7 +6,6 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
   alias ExAliyunOts.{Client, Logger}
   alias ExAliyunOts.Tunnel.{Utils, Checkpointer, Backoff, Registry}
 
-  alias ExAliyunOts.Var.Tunnel.ReadRecords
   alias ExAliyunOts.Const.Tunnel.{Common, ChannelConnectionStatus}
 
   require Common
@@ -97,12 +96,10 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
       result =
         Client.read_records(
           state.instance_key,
-          %ReadRecords{
-            tunnel_id: state.tunnel_id,
-            client_id: state.client_id,
-            channel_id: state.channel_id,
-            token: token
-          }
+          tunnel_id: state.tunnel_id,
+          client_id: state.client_id,
+          channel_id: state.channel_id,
+          token: token
         )
 
       case result do

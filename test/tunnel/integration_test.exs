@@ -6,9 +6,6 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
   alias ExAliyunOts.Client
   alias ExAliyunOts.Tunnel.Worker
 
-  alias ExAliyunOts.Var.Tunnel.{
-    CreateTunnel, DescribeTunnel, DeleteTunnel
-  }
   alias ExAliyunOts.Const.TunnelType
   require TunnelType
 
@@ -65,28 +62,26 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
 
     TunnelData.create_table(@table_name)
     
-    var_create = %CreateTunnel{
-      table_name: @table_name,
-      tunnel_name: @tunnel_name1,
-      type: TunnelType.base
-    }
+    {:ok, response1} =
+      Client.create_tunnel(@instance_key,
+        table_name: @table_name,
+        tunnel_name: @tunnel_name1,
+        type: TunnelType.base
+      )
 
-    {:ok, response1} = Client.create_tunnel(@instance_key, var_create)
+    {:ok, response2} =
+      Client.create_tunnel(@instance_key,
+        table_name: @table_name,
+        tunnel_name: @tunnel_name2,
+        type: TunnelType.stream
+      )
 
-    var_create = %CreateTunnel{
-      table_name: @table_name,
-      tunnel_name: @tunnel_name2,
-      type: TunnelType.stream
-    }
-
-    {:ok, response2} = Client.create_tunnel(@instance_key, var_create)
-
-    var_create = %CreateTunnel{
-      table_name: @table_name,
-      tunnel_name: @tunnel_name3,
-      type: TunnelType.base_and_stream
-    }
-    {:ok, response3} = Client.create_tunnel(@instance_key, var_create)
+    {:ok, response3} =
+      Client.create_tunnel(@instance_key,
+        table_name: @table_name,
+        tunnel_name: @tunnel_name3,
+        type: TunnelType.base_and_stream
+      )
     
     tunnel_id1 = response1.tunnel_id
     tunnel_id2 = response2.tunnel_id
@@ -98,11 +93,11 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
       Worker.stop(tunnel_id2)
       Worker.stop(tunnel_id3)
 
-      {del_result, _response} = Client.delete_tunnel(@instance_key, %DeleteTunnel{table_name: @table_name, tunnel_name: @tunnel_name1})
+      {del_result, _response} = Client.delete_tunnel(@instance_key, table_name: @table_name, tunnel_name: @tunnel_name1)
       assert :ok == del_result
-      {del_result2, _response} = Client.delete_tunnel(@instance_key, %DeleteTunnel{table_name: @table_name, tunnel_name: @tunnel_name2})
+      {del_result2, _response} = Client.delete_tunnel(@instance_key, table_name: @table_name, tunnel_name: @tunnel_name2)
       assert :ok == del_result2
-      {del_result3, _response} = Client.delete_tunnel(@instance_key, %DeleteTunnel{table_name: @table_name, tunnel_name: @tunnel_name3})
+      {del_result3, _response} = Client.delete_tunnel(@instance_key, table_name: @table_name, tunnel_name: @tunnel_name3)
       assert :ok == del_result3
 
       TunnelData.clean()
@@ -124,12 +119,12 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
 
   test "describe and list tunnel", context do
     Logger.info ">>>> self1(): #{inspect self()}"
-    var_describe = %DescribeTunnel{
-      table_name: @table_name,
-      tunnel_name: @tunnel_name1
-    }
 
-    {:ok, describe_response} = Client.describe_tunnel(@instance_key, var_describe)
+    {:ok, describe_response} =
+      Client.describe_tunnel(@instance_key,
+        table_name: @table_name,
+        tunnel_name: @tunnel_name1
+      )
     
     Logger.info("describe_response: #{inspect describe_response, pretty: true}")
 

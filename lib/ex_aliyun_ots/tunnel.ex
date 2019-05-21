@@ -32,11 +32,11 @@ defmodule ExAliyunOts.Client.Tunnel do
 
   import ExAliyunOts.Logger, only: [debug: 1]
 
-  def request_to_create_tunnel(var_create_tunnel) do
+  def request_to_create_tunnel(opts) do
     tunnel = Tunnel.new(
-      table_name: var_create_tunnel.table_name,
-      tunnel_name: var_create_tunnel.tunnel_name,
-      tunnel_type: var_create_tunnel.type
+      table_name: opts[:table_name],
+      tunnel_name: opts[:tunnel_name],
+      tunnel_type: opts[:type]
     )
     CreateTunnelRequest.new(tunnel: tunnel) |> CreateTunnelRequest.encode()
   end
@@ -56,12 +56,8 @@ defmodule ExAliyunOts.Client.Tunnel do
     result
   end
 
-  def request_to_delete_tunnel(var_delete_tunnel) do
-    [
-      table_name: var_delete_tunnel.table_name,
-      tunnel_name: var_delete_tunnel.tunnel_name,
-      tunnel_id: var_delete_tunnel.tunnel_id
-    ]
+  def request_to_delete_tunnel(opts) do
+    opts
     |> DeleteTunnelRequest.new()
     |> DeleteTunnelRequest.encode()
   end
@@ -100,12 +96,8 @@ defmodule ExAliyunOts.Client.Tunnel do
     result
   end
 
-  def request_to_describe_tunnel(var_describe_tunnel) do
-    [
-      table_name: var_describe_tunnel.table_name,
-      tunnel_name: var_describe_tunnel.tunnel_name,
-      tunnel_id: var_describe_tunnel.tunnel_id
-    ]
+  def request_to_describe_tunnel(opts) do
+    opts
     |> DescribeTunnelRequest.new()
     |> DescribeTunnelRequest.encode()
   end
@@ -125,13 +117,12 @@ defmodule ExAliyunOts.Client.Tunnel do
     result
   end
 
-  def request_to_connect_tunnel(var_connect_tunnel) do
-    config = ClientConfig.new(timeout: var_connect_tunnel.timeout, client_tag: var_connect_tunnel.client_tag)
-    [
-      tunnel_id: var_connect_tunnel.tunnel_id,
+  def request_to_connect_tunnel(opts) do
+    config = ClientConfig.new(timeout: opts[:timeout], client_tag: opts[:client_tag])
+    ConnectRequest.new(
+      tunnel_id: opts[:tunnel_id],
       client_config: config
-    ]
-    |> ConnectRequest.new()
+    )
     |> ConnectRequest.encode()
   end
 
@@ -150,21 +141,16 @@ defmodule ExAliyunOts.Client.Tunnel do
     result
   end
 
-  def request_to_heartbeat(var_heartbeat) do
+  def request_to_heartbeat(opts) do
     channels =
-      Enum.map(var_heartbeat.channels, fn(channel) ->
-        Channel.new(
-          channel_id: channel.channel_id,
-          version: channel.version,
-          status: channel.status
-        )
+      Enum.map(Keyword.get(opts, :channels, []), fn(channel) ->
+        Channel.new(channel)
       end)
-    [
-      tunnel_id: var_heartbeat.tunnel_id,
-      client_id: var_heartbeat.client_id,
+    HeartbeatRequest.new(
+      tunnel_id: opts[:tunnel_id],
+      client_id: opts[:client_id],
       channels: channels
-    ]
-    |> HeartbeatRequest.new()
+    )
     |> HeartbeatRequest.encode()
   end
 
@@ -182,11 +168,8 @@ defmodule ExAliyunOts.Client.Tunnel do
     result
   end
 
-  def request_to_shutdown(var_shutdown) do
-    [
-      tunnel_id: var_shutdown.tunnel_id,
-      client_id: var_shutdown.client_id
-    ]
+  def request_to_shutdown(opts) do
+    opts
     |> ShutdownRequest.new()
     |> ShutdownRequest.encode()
   end
@@ -205,12 +188,8 @@ defmodule ExAliyunOts.Client.Tunnel do
     result
   end
 
-  def request_to_get_checkpoint(var_getcheckpoint) do
-    [
-      tunnel_id: var_getcheckpoint.tunnel_id,
-      client_id: var_getcheckpoint.client_id,
-      channel_id: var_getcheckpoint.channel_id
-    ]
+  def request_to_get_checkpoint(opts) do
+    opts
     |> GetCheckpointRequest.new()
     |> GetCheckpointRequest.encode()
   end
@@ -229,13 +208,8 @@ defmodule ExAliyunOts.Client.Tunnel do
     result
   end
 
-  def request_to_readrecords(var_read_records) do
-    [
-      tunnel_id: var_read_records.tunnel_id,
-      client_id: var_read_records.client_id,
-      channel_id: var_read_records.channel_id,
-      token: var_read_records.token
-    ]
+  def request_to_readrecords(opts) do
+    opts
     |> ReadRecordsRequest.new()
     |> ReadRecordsRequest.encode()
   end
@@ -267,14 +241,8 @@ defmodule ExAliyunOts.Client.Tunnel do
     Map.put(response, :records, readable_records)
   end
 
-  def request_to_checkpoint(var_checkpoint) do
-    [
-      tunnel_id: var_checkpoint.tunnel_id,
-      client_id: var_checkpoint.client_id,
-      channel_id: var_checkpoint.channel_id,
-      checkpoint: var_checkpoint.checkpoint,
-      sequence_number: var_checkpoint.sequence_number
-    ]
+  def request_to_checkpoint(opts) do
+    opts
     |> CheckpointRequest.new()
     |> CheckpointRequest.encode()
   end
