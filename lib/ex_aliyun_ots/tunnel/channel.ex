@@ -51,7 +51,6 @@ defmodule ExAliyunOts.Tunnel.Channel do
     GenStateMachine.call(channel, {:update, channel_from_heartbeat})
   end
 
-
   def stop(channel) do
     Logger.info(">>>>>> stop finished channel <<<<<<")
     GenStateMachine.stop(channel, {:shutdown, :channel_finished})
@@ -131,7 +130,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
     end
 
     merge(channel_from_heartbeat, channel.pid, ChannelStatus.close())
-    Registry.inc_channel_version(channel_from_heartbeat.channel_id)
+    Registry.inc_channel_version(channel.pid)
     {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
   end
 
@@ -238,7 +237,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
         Logger.info("do_process_pipeline with channel closing status from heartbeat")
         Connection.status_closing(connection)
         merge(channel_from_heartbeat, channel.pid, ChannelStatus.close())
-        Registry.inc_channel_version(channel_from_heartbeat.channel_id)
+        Registry.inc_channel_version(channel.pid)
         {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
 
       ChannelStatus.close() ->
