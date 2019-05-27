@@ -2,30 +2,29 @@ defmodule ExAliyunOts.Tunnel.Channel do
   use GenStateMachine
 
   alias ExAliyunOts.Logger
-  alias ExAliyunOts.Const.Tunnel.{ChannelStatus, ChannelConnectionStatus}
+  alias ExAliyunOts.Const.Tunnel.ChannelStatus
   alias ExAliyunOts.Tunnel.{Registry, EntryChannel}
   require ChannelStatus
-  require ChannelConnectionStatus
 
   import EntryChannel
 
-  alias __MODULE__.Connection
+  alias __MODULE__.Agent
 
-  def start_link(channel_id, tunnel_id, client_id, status, version, connection) do
+  def start_link(channel_id, tunnel_id, client_id, status, version, agent) do
     GenStateMachine.start_link(
       __MODULE__,
-      {channel_id, tunnel_id, client_id, status, version, connection}
+      {channel_id, tunnel_id, client_id, status, version, agent}
     )
   end
 
-  def init({channel_id, tunnel_id, client_id, status, version, connection}) do
+  def init({channel_id, tunnel_id, client_id, status, version, agent}) do
     channel_pid = self()
 
     Process.flag(:trap_exit, true)
 
     channel = %{
       pid: channel_pid,
-      connection: connection
+      agent: agent
     }
 
     Registry.new_channel(
@@ -45,10 +44,10 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   @spec update(
           channel :: pid(),
-          channel_from_heartbeat :: %ExAliyunOts.TableStoreTunnel.Channel{}
+          remote_channel :: %ExAliyunOts.TableStoreTunnel.Channel{}
         ) :: :ok
-  def update(channel, channel_from_heartbeat) do
-    GenStateMachine.call(channel, {:update, channel_from_heartbeat})
+  def update(channel, remote_channel) do
+    GenStateMachine.call(channel, {:update, remote_channel})
   end
 
   def stop(channel) do
@@ -58,103 +57,84 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   def handle_event(
         {:call, from},
-        {:update, channel_from_heartbeat},
+        {:update, remote_channel},
         ChannelStatus.open(),
         channel
       ) do
-    connection = channel.connection
-    connection_status = Connection.status(connection)
 
     Logger.info(
-      ">>>>>>>>>>>>>>> update in channel_status open, channel_from_heartbeat: #{
-        inspect(channel_from_heartbeat)
-      }, connection_status: #{inspect(connection_status)}"
+      ">>>>>>>>>>>>>>> update in channel_status open, remote_channel: #{
+        inspect(remote_channel)
+      }"
     )
 
-    process_pipeline(
+    remote_channel_status = remote_channel.status
+
+    process_channel(
       channel,
-      connection_status,
-      connection,
-      channel_from_heartbeat,
+      channel.agent,
+      remote_channel,
+      remote_channel_status,
       from
     )
   end
 
   def handle_event(
         {:call, from},
-        {:update, channel_from_heartbeat},
+        {:update, remote_channel},
         ChannelStatus.closing(),
         channel
       ) do
-    connection = channel.connection
-    connection_status = Connection.status(connection)
 
     Logger.info(
-      ">>>>>>>>>>>>>>> update in channel_status closing, channel_from_heartbeat: #{
-        inspect(channel_from_heartbeat)
-      }, connection_status: #{inspect(connection_status)}"
+      ">>>>>>>>>>>>>>> update in channel_status closing, remote_channel: #{
+        inspect(remote_channel)
+      }"
     )
 
-    case connection_status do
-      ChannelConnectionStatus.wait() ->
-        Connection.status_closed(connection)
-
-      ChannelConnectionStatus.running() ->
-        Connection.status_closing(connection)
-
-      _ ->
-        :ignore
-    end
-
-    merge(channel_from_heartbeat, channel.pid, ChannelStatus.close())
+    merge(remote_channel, channel.pid, ChannelStatus.close())
     {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
   end
 
   def handle_event(
         {:call, from},
-        {:update, channel_from_heartbeat},
+        {:update, remote_channel},
         ChannelStatus.close(),
         channel
       ) do
-    connection = channel.connection
-    connection_status = Connection.status(connection)
 
     Logger.info(
-      ">>>>>>>>>>>>>>> update in channel_status close, channel_from_heartbeat: #{
-        inspect(channel_from_heartbeat)
-      }, connection_status: #{inspect(connection_status)}"
+      ">>>>>>>>>>>>>>> update in channel_status close, remote_channel: #{
+        inspect(remote_channel)
+      }"
     )
 
-    if connection_status == ChannelConnectionStatus.closing() do
-      Connection.status_closed(connection)
-    end
-
-    merge(channel_from_heartbeat, channel.pid, ChannelStatus.close())
+    merge(remote_channel, channel.pid, ChannelStatus.close())
     Registry.inc_channel_version(channel.pid)
     {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
   end
 
   def handle_event(
         {:call, from},
-        {:update, channel_from_heartbeat},
+        {:update, remote_channel},
         channel_status,
         channel
       ) do
-    connection_status = Connection.status(channel.connection)
 
     Logger.info(
-      "** update unexpected channel_status: #{inspect(channel_status)} with channel_from_heartbeat: #{
-        inspect(channel_from_heartbeat)
-      }, connection_status: #{inspect(connection_status)}"
+      "** update unexpected channel_status: #{inspect(channel_status)} with remote_channel: #{
+        inspect(remote_channel)
+      }"
     )
 
-    merge(channel_from_heartbeat, channel.pid)
+    merge(remote_channel, channel.pid)
 
-    {:next_state, channel_from_heartbeat.status, channel, [{:reply, from, :ok}]}
+    {:next_state, remote_channel.status, channel, [{:reply, from, :ok}]}
   end
 
   def terminate(reason, state, channel) do
-    Connection.stop(channel.connection)
+
+    Agent.stop(channel.agent)
 
     Registry.remove_channel(channel.pid)
 
@@ -166,92 +146,52 @@ defmodule ExAliyunOts.Tunnel.Channel do
         inspect(state),
         " channel: ",
         inspect(channel),
-        ", and close connection"
+        ", and close agent"
       ]
     end)
 
     :ok
   end
 
-  defp process_pipeline(
+  defp process_channel(
          channel,
-         ChannelConnectionStatus.wait(),
-         connection,
-         channel_from_heartbeat,
+         agent,
+         _remote_channel,
+         _remote_channel_status = ChannelStatus.open(),
          from
        ) do
-    Connection.status_running(connection)
-    do_process_pipeline(channel, connection, channel_from_heartbeat, from)
+    Logger.info "process readrecords and checkpoint for open channel"
+    Agent.process(agent)
+    {:next_state, ChannelStatus.open(), channel, [{:reply, from, :ok}]}
   end
-
-  defp process_pipeline(
+  defp process_channel(
          channel,
-         ChannelConnectionStatus.running(),
-         connection,
-         channel_from_heartbeat,
+         _agent,
+         remote_channel,
+         _remote_channel_status = ChannelStatus.closing(),
          from
        ) do
-    do_process_pipeline(channel, connection, channel_from_heartbeat, from)
+    Logger.info("process channel as closing status from heartbeat")
+    merge(remote_channel, channel.pid, ChannelStatus.close())
+    Registry.inc_channel_version(channel.pid)
+    {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
   end
-
-  defp process_pipeline(
+  defp process_channel(
          channel,
-         ChannelConnectionStatus.closed(),
-         _connection,
-         _channel_from_heartbeat,
+         _agent,
+         remote_channel,
+         _remote_channel_status = ChannelStatus.close(),
          from
        ) do
-    pid = channel.pid
-    case Connection.finished?(channel.connection) do
-      true ->
-        Registry.update_channel(pid, [{:status, ChannelStatus.terminated()}])
-        Registry.inc_channel_version(pid)
-        {:next_state, ChannelStatus.terminated(), channel, [{:reply, from, :ok}]}
-
-      false ->
-        Registry.update_channel(pid, [{:status, ChannelStatus.close()}])
-        Registry.inc_channel_version(pid)
-        {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
-    end
+    Logger.info("process channel as close status from heartbeat")
+    merge(remote_channel, channel.pid)
+    {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
   end
 
-  defp process_pipeline(
-         channel,
-         ChannelConnectionStatus.closing(),
-         _connection,
-         channel_from_heartbeat,
-         from
-       ) do
-    merge(channel_from_heartbeat, channel.pid)
-    {:next_state, channel_from_heartbeat.status, channel, [{:reply, from, :ok}]}
-  end
-
-  defp do_process_pipeline(channel, connection, channel_from_heartbeat, from) do
-    case channel_from_heartbeat.status do
-      ChannelStatus.open() ->
-        Logger.info "process readrecords and checkpoint for open channel"
-        Connection.process(connection)
-        {:next_state, ChannelStatus.open(), channel, [{:reply, from, :ok}]}
-
-      ChannelStatus.closing() ->
-        Logger.info("do_process_pipeline with channel closing status from heartbeat")
-        Connection.status_closing(connection)
-        merge(channel_from_heartbeat, channel.pid, ChannelStatus.close())
-        Registry.inc_channel_version(channel.pid)
-        {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
-
-      ChannelStatus.close() ->
-        Logger.info("do_process_pipeline with channel close status from heartbeat")
-        Connection.status_closed(connection)
-        merge(channel_from_heartbeat, channel.pid)
-        {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
-    end
-  end
-
-  defp merge(channel_from_heartbeat, pid, status \\ nil) do
-    channel_id = channel_from_heartbeat.channel_id
+  defp merge(remote_channel, pid, status \\ nil) do
+    channel_id = remote_channel.channel_id
     [^channel_id, _, _, _, _cur_status, cur_version] = Registry.channel(pid)
-    latest_version = channel_from_heartbeat.version
+    latest_version = remote_channel.version
 
     updates =
       if status != nil do
@@ -260,7 +200,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
         ]
       else
         [
-          {:status, channel_from_heartbeat.status}
+          {:status, remote_channel.status}
         ]
       end
 

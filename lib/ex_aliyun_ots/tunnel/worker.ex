@@ -3,7 +3,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
   alias ExAliyunOts.Client
   alias ExAliyunOts.Tunnel.{Registry, Channel, EntryWorker, Backoff, Utils}
-  alias ExAliyunOts.Tunnel.Channel.Connection
+  alias ExAliyunOts.Tunnel.Channel.Agent
 
   alias ExAliyunOts.Logger
 
@@ -478,12 +478,11 @@ defmodule ExAliyunOts.Tunnel.Worker do
           channel_id: channel_id,
           client_id: client_id,
           token: response.checkpoint,
-          finished?: false,
           instance_key: instance_key,
           sequence_number: response.sequence_number + 1
         ]
 
-        {:ok, connection} = start_connection(conn_opts)
+        {:ok, agent} = start_channel_agent(conn_opts)
 
         start_channel(
           channel_id,
@@ -491,7 +490,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
           client_id,
           channel_from_heartbeat.status,
           channel_from_heartbeat.version,
-          connection
+          agent
         )
 
       error_result ->
@@ -506,17 +505,15 @@ defmodule ExAliyunOts.Tunnel.Worker do
     end
   end
 
-  defp start_connection(opts) do
+  defp start_channel_agent(opts) do
     stream? = Utils.stream_token?(opts[:token])
     opts = if stream?, do: Keyword.put(opts, :backoff, Backoff.new()), else: opts
-    Logger.info "start_connection with opts: #{inspect opts}"
-    Connection.start_link(opts)
+    Logger.info "start_channel_agent with opts: #{inspect opts}"
+    Agent.start_link(opts)
   end
 
-  defp start_channel(channel_id, tunnel_id, client_id, status, version, connection) do
-    {:ok, channel_pid} = Channel.start_link(channel_id, tunnel_id, client_id, status, version, connection)
-    Connection.bind_channel(connection, channel_pid)
-    {:ok, channel_pid}
+  defp start_channel(channel_id, tunnel_id, client_id, status, version, agent) do
+    Channel.start_link(channel_id, tunnel_id, client_id, status, version, agent)
   end
 
 end

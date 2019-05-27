@@ -1,15 +1,14 @@
-defmodule ExAliyunOts.Tunnel.Channel.Connection do
+defmodule ExAliyunOts.Tunnel.Channel.Agent do
   @moduledoc false
 
   use Agent
 
   alias ExAliyunOts.{Client, Logger}
-  alias ExAliyunOts.Tunnel.{Utils, Checkpointer, Backoff, Registry}
+  alias ExAliyunOts.Tunnel.{Checkpointer, Backoff, Registry}
 
-  alias ExAliyunOts.Const.Tunnel.{Common, ChannelConnectionStatus}
+  alias ExAliyunOts.Const.Tunnel.Common
 
   require Common
-  require ChannelConnectionStatus
 
   @rpo_bar 500
   # 900 KB
@@ -20,33 +19,21 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
             channel_id: nil,
             client_id: nil,
             token: nil,
-            finished?: false,
             instance_key: nil,
             backoff: nil,
-            channel_pid: nil,
-            status: ChannelConnectionStatus.wait(),
-            sequence_number: nil,
-            latest_checkpoint: nil
+            sequence_number: nil
 
   def start_link(opts) do
     Agent.start_link(fn ->
-      %__MODULE__{}
-      |> struct(opts)
-      |> Map.put(:latest_checkpoint, Utils.utc_now_ms())
+      struct(%__MODULE__{}, opts)
     end)
   end
 
   def stop(conn) do
     if Process.alive?(conn) do
-      Logger.info("stop live connection pid: #{inspect(conn)}")
-      Agent.stop(conn, {:shutdown, :channel_connection_finished})
+      Logger.info("stop live agent pid: #{inspect(conn)}")
+      Agent.stop(conn, :shutdown)
     end
-  end
-
-  def bind_channel(conn, channel_pid) do
-    Agent.update(conn, fn(state) ->
-      Map.put(state, :channel_pid, channel_pid)
-    end)
   end
 
   def process(conn) do
@@ -57,37 +44,6 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
     end)
   end
 
-  def status(conn) do
-    Agent.get(
-      conn,
-      fn state ->
-        state.status
-      end,
-      :infinity
-    )
-  end
-
-  def finished?(conn) do
-    Agent.get(
-      conn,
-      fn state ->
-        state.finished?
-      end,
-      :infinity
-    )
-  end
-
-  def status_running(conn) do
-    update_status(conn, ChannelConnectionStatus.running())
-  end
-
-  def status_closing(conn) do
-    update_status(conn, ChannelConnectionStatus.closing())
-  end
-
-  def status_closed(conn) do
-    update_status(conn, ChannelConnectionStatus.closed())
-  end
 
   defp read_records(state) do
     token = state.token
@@ -214,25 +170,6 @@ defmodule ExAliyunOts.Tunnel.Channel.Connection do
   end
   defp process_records({:nil, state}) do
     state
-  end
-
-  defp update_status(conn, new_status)
-       when new_status == ChannelConnectionStatus.running()
-       when new_status == ChannelConnectionStatus.closing()
-       when new_status == ChannelConnectionStatus.closed() do
-    Agent.update(
-      conn,
-      fn state ->
-        Map.put(state, :status, new_status)
-      end,
-      :infinity
-    )
-  end
-
-  defp update_status(_conn, new_status) do
-    Logger.error(fn ->
-      "update with invalid new_status: #{inspect(new_status)}"
-    end)
   end
 
   defp stream_full_data?(records_num, size) do

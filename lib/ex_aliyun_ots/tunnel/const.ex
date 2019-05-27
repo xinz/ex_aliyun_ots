@@ -16,16 +16,6 @@ defmodule ExAliyunOts.Const.Tunnel.ChannelStatus do
   const(:terminated, :TERMINATED)
 end
 
-defmodule ExAliyunOts.Const.Tunnel.ChannelConnectionStatus do
-  import ExAliyunOts.Constants
-
-  const(:wait, :WAIT)
-  const(:running, :RUNNING)
-  const(:closing, :CLOSING)
-  const(:closed, :CLOSED)
-end
-
-
 defmodule ExAliyunOts.Const.Tunnel.Common do
   import ExAliyunOts.Constants
 
