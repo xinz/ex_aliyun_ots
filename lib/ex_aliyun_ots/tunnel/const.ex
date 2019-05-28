@@ -15,9 +15,3 @@ defmodule ExAliyunOts.Const.Tunnel.ChannelStatus do
   const(:close, :CLOSE)
   const(:terminated, :TERMINATED)
 end
-
-defmodule ExAliyunOts.Const.Tunnel.Common do
-  import ExAliyunOts.Constants
-
-  const(:finish_tag, "finished")
-end

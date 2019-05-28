@@ -2,12 +2,11 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
   @moduledoc false
 
   alias ExAliyunOts.Client
-  alias ExAliyunOts.Const.Tunnel.Common
   alias ExAliyunOts.Logger
 
-  require Common
-
   defstruct [:tunnel_id, :client_id, :instance_key, :channel_id, :sequence_number, :token]
+
+  def finish_tag(), do: "finished"
 
   def checkpoint(checkpointer) do
     case do_checkpoint(checkpointer) do
@@ -53,7 +52,7 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
   end
 
   defp do_checkpoint(checkpointer) do
-    token = if checkpointer.token == nil, do: Common.finish_tag(), else: checkpointer.token
+    token = if checkpointer.token == nil, do: finish_tag(), else: checkpointer.token
 
     Client.checkpoint(
       checkpointer.instance_key,

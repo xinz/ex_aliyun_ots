@@ -6,10 +6,6 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
   alias ExAliyunOts.{Client, Logger}
   alias ExAliyunOts.Tunnel.{Checkpointer, Backoff, Registry}
 
-  alias ExAliyunOts.Const.Tunnel.Common
-
-  require Common
-
   @rpo_bar 500
   # 900 KB
   @rpo_size_bar 900 * 1024
@@ -46,8 +42,9 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
 
   defp read_records(state) do
     token = state.token
+    finish_tag = Checkpointer.finish_tag()
 
-    if token != nil and token != Common.finish_tag() do
+    if token != nil and token != finish_tag do
       result =
         Client.read_records(
           state.instance_key,
@@ -146,10 +143,12 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
           sequence_number: state.sequence_number
         }
 
+        finish_tag = Checkpointer.finish_tag()
+
         updated_sequence_number =
-          if next_token == nil or Common.finish_tag() == next_token do
+          if next_token == nil or finish_tag == next_token do
             checkpointer
-            |> Map.put(:token, Common.finish_tag())
+            |> Map.put(:token, finish_tag)
             |> Checkpointer.checkpoint()
           else
             checkpointer
