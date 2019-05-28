@@ -173,7 +173,7 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
 
     TunnelData.write()
 
-    assert_receive {:"$gen_call", from, {:record_event, ^worker_pid2, {records, _next_token}}}, 40_000
+    assert_receive {:"$gen_call", from, {:record_event, {records, _next_token}}}, 40_000
     GenServer.reply(from, :ok)
 
     assert length(records) == @test_rows
@@ -193,11 +193,11 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
     tunnels = context[:tunnels]
     tunnel_id1 = tunnels[@tunnel_name1][:tunnel_id]
 
-    worker_pid1 = Worker.start(@instance_key, [tunnel_id: tunnel_id1])
+    _worker_pid1 = Worker.start(@instance_key, [tunnel_id: tunnel_id1])
 
     Process.sleep(5_000)
 
-    assert_receive {:"$gen_call", from, {:record_event, ^worker_pid1, {records, _next_token}}}, 40_000
+    assert_receive {:"$gen_call", from, {:record_event, {records, _next_token}}}, 40_000
     GenServer.reply(from, :ok)
 
     assert length(records) == @test_rows
@@ -225,7 +225,7 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
 
     TunnelData.write(20)
     
-    assert_receive {:"$gen_call", from, {:record_event, ^worker_pid3, {records, _next_token}}}, 40_000
+    assert_receive {:"$gen_call", from, {:record_event, {records, _next_token}}}, 40_000
     GenServer.reply(from, :ok)
 
     Logger.info "base_and_stream records: #{inspect records}"
@@ -233,7 +233,7 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
 
     TunnelData.clean()
 
-    assert_receive {:"$gen_call", from, {:record_event, ^worker_pid3, {records, _next_token}}}, 60_000
+    assert_receive {:"$gen_call", from, {:record_event, {records, _next_token}}}, 60_000
     GenServer.reply(from, :ok)
     Logger.info "base_and_stream records after clean all records: #{inspect records}"
 

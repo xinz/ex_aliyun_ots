@@ -222,7 +222,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     tunnel_id = opts[:tunnel_id]
 
-    [_tunnel_id, client_id, worker_pid, meta, _subscriber] = Registry.worker(tunnel_id)
+    [_tunnel_id, client_id, _worker_pid, meta, _subscriber] = Registry.worker(tunnel_id)
 
     last_heartbeat_time = meta.last_heartbeat_time
 
@@ -278,7 +278,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
           instance_key,
           tunnel_id,
           client_id,
-          worker_pid,
           channels_from_response,
           local_channel_ids
         )
@@ -417,7 +416,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
          instance_key,
          tunnel_id,
          client_id,
-         worker_pid,
          channels_from_response,
          local_channel_ids
        ) do
@@ -428,8 +426,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         nil ->
           # not existed yet in local
           {:ok, channel_pid} =
-            init_channel(instance_key, tunnel_id, client_id, worker_pid, channel_from_heartbeat)
-
+            init_channel(instance_key, tunnel_id, client_id, channel_from_heartbeat)
 
           Channel.update(channel_pid, channel_from_heartbeat)
 
@@ -458,7 +455,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     end)
   end
 
-  defp init_channel(instance_key, tunnel_id, client_id, worker_pid, channel_from_heartbeat) do
+  defp init_channel(instance_key, tunnel_id, client_id, channel_from_heartbeat) do
     channel_id = channel_from_heartbeat.channel_id
 
     result =
@@ -472,25 +469,15 @@ defmodule ExAliyunOts.Tunnel.Worker do
     case result do
       {:ok, response} ->
 
-        conn_opts = [
-          worker: worker_pid,
-          tunnel_id: tunnel_id,
-          channel_id: channel_id,
-          client_id: client_id,
-          token: response.checkpoint,
-          instance_key: instance_key,
-          sequence_number: response.sequence_number + 1
-        ]
-
-        {:ok, agent} = start_channel_agent(conn_opts)
-
         start_channel(
+          instance_key,
           channel_id,
           tunnel_id,
           client_id,
           channel_from_heartbeat.status,
           channel_from_heartbeat.version,
-          agent
+          response.checkpoint,
+          response.sequence_number + 1
         )
 
       error_result ->
@@ -512,7 +499,15 @@ defmodule ExAliyunOts.Tunnel.Worker do
     Agent.start_link(opts)
   end
 
-  defp start_channel(channel_id, tunnel_id, client_id, status, version, agent) do
+  defp start_channel(instance_key, channel_id, tunnel_id, client_id, status, version, token, sequence_number) do
+    {:ok, agent} = start_channel_agent(
+      tunnel_id: tunnel_id,
+      channel_id: channel_id,
+      client_id: client_id,
+      token: token,
+      instance_key: instance_key,
+      sequence_number: sequence_number
+    )
     Channel.start_link(channel_id, tunnel_id, client_id, status, version, agent)
   end
 

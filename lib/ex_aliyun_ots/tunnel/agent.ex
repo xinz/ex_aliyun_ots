@@ -14,8 +14,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
   # 900 KB
   @rpo_size_bar 900 * 1024
 
-  defstruct worker: nil,
-            tunnel_id: nil,
+  defstruct tunnel_id: nil,
             channel_id: nil,
             client_id: nil,
             token: nil,
@@ -135,7 +134,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
 
       {_ref, subscriber_pid} ->
 
-        GenServer.call(subscriber_pid, {:record_event, state.worker, {records, next_token}}, :infinity)
+        GenServer.call(subscriber_pid, {:record_event, {records, next_token}}, :infinity)
 
         Logger.info "start checkpointer after consume records for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}, next_token: #{inspect next_token}"
 
