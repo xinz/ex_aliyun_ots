@@ -158,7 +158,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
             |> Checkpointer.checkpoint()
           end
 
-        Logger.info "finish process_records in connection for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}"
+        Logger.info "finish process_records in agent for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}"
 
         state
         |> Map.put(:token, next_token)
