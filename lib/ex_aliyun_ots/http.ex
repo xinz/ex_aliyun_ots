@@ -61,25 +61,38 @@ defmodule ExAliyunOts.Http.Middleware do
   end
   defp decode_response({:ok, response}, decoder, require_deserialize_row, require_response_size) do
     if response.status == 200 do
-      readable_result =
-        if require_deserialize_row == true do
-          make_response_row_readable(decoder.(response.body))
-        else
-          decoder.(response.body)
-        end
-      if require_response_size == true do
-        {:ok, readable_result, byte_size(response.body)}
-      else
-        {:ok, readable_result}
-      end
+      decode_success_response(response, decoder, require_deserialize_row, require_response_size)
     else
-      error_msg = Protocol.bin_to_printable(response.body)
-      log_error_keyinfo(response.headers, error_msg)
-      {:error, error_msg}
+      decode_error_response(response)
     end
   end
   defp decode_response({:error, reason}, _decoder, _require_deserialize_row, _require_response_size) do
     {:error, reason}
+  end
+
+  defp decode_success_response(response, decoder, _require_deserialize_row = true, _require_response_size = true) do
+    body = response.body
+    readable_result = make_response_row_readable(decoder.(body))
+    {:ok, readable_result, byte_size(body)}
+  end
+  defp decode_success_response(response, decoder, _require_deserialize_row = false, _require_response_size = true) do
+    body = response.body
+    readable_result = decoder.(body)
+    {:ok, readable_result, byte_size(body)}
+  end
+  defp decode_success_response(response, decoder, _require_deserialize_row = true, _require_response_size = false) do
+    readable_result = make_response_row_readable(decoder.(response.body))
+    {:ok, readable_result}
+  end
+  defp decode_success_response(response, decoder, _require_deserialize_row = false, _require_response_size = false) do
+    readable_result = decoder.(response.body)
+    {:ok, readable_result}
+  end
+
+  defp decode_error_response(response) do
+    error_msg = Protocol.bin_to_printable(response.body)
+    log_error_keyinfo(response.headers, error_msg)
+    {:error, error_msg}
   end
 
   defp make_response_row_readable(decoded) do
