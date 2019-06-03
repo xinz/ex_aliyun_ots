@@ -50,20 +50,14 @@ defmodule ExAliyunOts.Tunnel.Worker do
       [_tunnel_id, _client_id, worker_pid, _meta, _subscriber] ->
         GenServer.stop(worker_pid, :shutdown)
       nil ->
-        Logger.info("tunnel_id: #{inspect(tunnel_id)} is not existed.")
+        Logger.info("Stop worker but tunnel_id: #{inspect(tunnel_id)} is not existed from Registry")
     end
   end
 
   # Callbacks
 
   def handle_info({:heartbeat, opts}, state) do
-    result = heartbeat(state, opts)
-
-    Logger.info(fn ->
-      ">>>>> handle_info with heartbeat: #{inspect(result)}"
-    end)
-
-    case result do
+    case heartbeat(state, opts) do
       :ok ->
         {:noreply, state}
 
@@ -79,7 +73,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     success? = Registry.remove_channel(pid)
 
     Logger.info(fn ->
-      "worker handle_info EXIT message channel pid: #{inspect(pid)} with channel_finished reason exited, remove from registry sucess? #{
+      "Worker handle_info EXIT message channel pid: #{inspect(pid)} with channel_finished reason exited, remove from registry sucess? #{
         inspect(success?)
       }"
     end)
@@ -101,7 +95,9 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     tunnel_id = opts[:tunnel_id]
 
-    Logger.info("start worker #{inspect(worker_pid)} for tunnel id #{inspect tunnel_id}")
+    Logger.info(fn ->
+      "Start worker #{inspect(worker_pid)} for tunnel id #{inspect tunnel_id}"
+    end)
 
     case Registry.new_worker(entry_worker(tunnel_id: tunnel_id, pid: self())) do
       true ->
@@ -119,7 +115,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   end
 
   def terminate({:shutdown, :start_error}, _state) do
-    Logger.info("start worker failed, terminate it.")
+    Logger.info("Start worker failed, terminate it.")
     :ok
   end
 
@@ -128,7 +124,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     Logger.info(fn ->
       [
-        "tunnel worker terminated, reason:",
+        "Tunnel worker terminated with reason:",
         inspect(reason)
       ]
     end)
@@ -238,14 +234,13 @@ defmodule ExAliyunOts.Tunnel.Worker do
     {channels_to_heartbeat, local_channel_ids} =
       Enum.map_reduce(local_channels, [], fn local_channel, acc ->
         [channel_id, _tunnel_id, _client_id, _channel_pid, status, version] = local_channel
-
         {
           [channel_id: channel_id, version: version, status: status],
           [channel_id | acc]
         }
       end)
 
-    Logger.info("channels_to_heartbeat: #{inspect(channels_to_heartbeat)}")
+    Logger.info("Use channels to heartbeat: #{inspect(channels_to_heartbeat)}")
 
     result =
       Client.heartbeat(
@@ -256,7 +251,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         client_id: client_id
       )
 
-    Logger.info(fn -> "heartbeat result: #{inspect(result)}" end)
+    Logger.info(fn -> "Remote heartbeat result: #{inspect(result)}" end)
 
     case result do
       {:ok, response} ->
@@ -282,18 +277,10 @@ defmodule ExAliyunOts.Tunnel.Worker do
           local_channel_ids
         )
 
-        Logger.info("~~~~~~~~~~~~~~~~~~~ heartbeat after update_channels ~~~~~~~~~~~~~~~~~")
-
         updated_meta =
           meta
           |> Map.put(:last_heartbeat_time, last_heartbeat_time)
           |> Map.put(:timer_ref, schedule_heartbeat(opts, meta.heartbeat_interval))
-
-        Logger.info(fn ->
-          [
-            "updated_meta: #{inspect(updated_meta)}"
-          ]
-        end)
 
         Registry.update_worker(tunnel_id, [
           {:meta, updated_meta}
@@ -303,7 +290,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
         Logger.info(fn ->
           [
-            "after heartbeat, current_local_channels: ",
+            "After heartbeat current_local_channels: ",
             inspect(current_local_channels)
           ]
         end)
@@ -313,12 +300,12 @@ defmodule ExAliyunOts.Tunnel.Worker do
       error ->
         case invalid_tunnel?(error) do
           true ->
-            Logger.info(fn -> "occur invalid tunnel" end)
+            Logger.info(fn -> "Invalid tunnel" end)
 
           false ->
             Logger.info(fn ->
               [
-                "occur unknown error when heartbeat ",
+                "Unknown error when heartbeat ",
                 inspect(error)
               ]
             end)
@@ -329,23 +316,19 @@ defmodule ExAliyunOts.Tunnel.Worker do
   end
 
   defp invalid_tunnel?({:error, error_msg}) do
-    Logger.error(">>>>>>> error_msg: #{inspect(error_msg)}")
-
     Logger.error(fn ->
       [
-        "invalid_tunnel? ",
+        "Get invalid_tunnel ",
         inspect(error_msg)
       ]
     end)
-
-    String.contains?(error_msg, "OTSParameterInvalid") or
-      String.contains?(error_msg, "OTSTunnelExpired")
+    String.contains?(error_msg, "OTSParameterInvalid") or String.contains?(error_msg, "OTSTunnelExpired")
   end
 
   defp invalid_tunnel?(error) do
     Logger.error(fn ->
       [
-        "invalid_tunnel? ",
+        "Get invalid_tunnel ",
         inspect(error),
         " occur unknown error"
       ]
@@ -360,14 +343,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         timer_ref = Map.get(meta, :timer_ref)
 
         if timer_ref != nil do
-          cancel_timer_result = Process.cancel_timer(timer_ref)
-
-          Logger.info(fn ->
-            [
-              "cancel_timer_result when shutdown worker: ",
-              inspect(cancel_timer_result)
-            ]
-          end)
+          Process.cancel_timer(timer_ref)
         end
 
         Registry.remove_worker(tunnel_id)
@@ -386,7 +362,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     Logger.info(fn ->
       [
-        "shutdown tunnel with tunnel_id: ",
+        "Shutdown tunnel with tunnel_id: ",
         inspect(tunnel_id),
         " client_id: ",
         inspect(client_id),
@@ -445,7 +421,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
         [_channel_id, _tunnel_id, _client_id, channel_pid, _status, _version] ->
           Logger.info(
-            "stop channel process: #{inspect(channel_pid)} for channel_id: #{
+            "Stop channel process: #{inspect(channel_pid)} for channel_id: #{
               inspect(tbr_channel_id)
             }"
           )
@@ -483,7 +459,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
       error_result ->
         Logger.error(fn ->
           [
-            "GetCheckpointer occur error: ",
+            "GetCheckpointer error: ",
             inspect(error_result)
           ]
         end)
@@ -495,7 +471,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
   defp start_channel_agent(opts) do
     stream? = Utils.stream_token?(opts[:token])
     opts = if stream?, do: Keyword.put(opts, :backoff, Backoff.new()), else: opts
-    Logger.info "start_channel_agent with opts: #{inspect opts}"
     Agent.start_link(opts)
   end
 

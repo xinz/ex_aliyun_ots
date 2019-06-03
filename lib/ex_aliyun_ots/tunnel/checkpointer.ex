@@ -15,7 +15,7 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
 
       {:error, error_msg} ->
         Logger.info(fn ->
-          "checkpoint occur error: #{inspect(error_msg)}"
+          "Checkpoint occur error: #{inspect(error_msg)}"
         end)
 
         if String.contains?(error_msg, "OTSSequenceNumberNotMatch") do
@@ -37,7 +37,7 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
 
             error ->
               Logger.error(fn ->
-                "checkpoint occur OTSSequenceNumberNotMatch error, retry get checkpoint but get error: #{
+                "Checkpoint occur OTSSequenceNumberNotMatch error, retry get checkpoint but get error: #{
                   inspect(error)
                 }"
               end)

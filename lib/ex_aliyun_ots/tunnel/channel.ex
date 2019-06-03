@@ -51,7 +51,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
   end
 
   def stop(channel) do
-    Logger.info(">>>>>> stop finished channel <<<<<<")
+    Logger.info(">>>>>> Stop finished channel <<<<<<")
     GenStateMachine.stop(channel, {:shutdown, :channel_finished})
   end
 
