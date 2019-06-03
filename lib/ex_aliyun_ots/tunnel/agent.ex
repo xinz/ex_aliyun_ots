@@ -26,7 +26,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
 
   def stop(conn) do
     if Process.alive?(conn) do
-      Logger.info("stop live agent pid: #{inspect(conn)}")
+      Logger.info("Stop live agent pid: #{inspect(conn)}")
       Agent.stop(conn, :shutdown)
     end
   end
@@ -63,7 +63,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
           if backoff != nil do
             updated_backoff =
               if stream_full_data?(length(records), size) do
-                Logger.debug(fn -> "reset backoff" end)
+                Logger.debug(fn -> "Reset backoff" end)
                 Backoff.reset()
               else
                 {next_backoff, sleep_ms} = Backoff.next_backoff_ms(backoff)
@@ -79,7 +79,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
         {:error, error_msg} ->
           Logger.error(fn ->
             [
-              "occur an error when read_records, ",
+              "Occur an error when read_records, ",
               "tunnel_id: ",
               inspect(state.tunnel_id),
               " client_id: ",
@@ -104,7 +104,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
     else
       Logger.info(fn ->
           [
-            "channel is finished, it will be closed, token: ",
+            "Channel is finished, it will be closed, token: ",
             inspect(token)
           ]
         end)
@@ -115,7 +115,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
   defp process_records({records, next_token, state}) do
     Logger.info(fn ->
       [
-        ">>> handle_records for channel_id: ",
+        ">>> Handle records for channel_id: ",
         inspect(state.channel_id),
         " client_id: ",
         inspect(state.client_id),
@@ -126,14 +126,14 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
 
     case Registry.subscriber(state.tunnel_id) do
       nil ->
-        Logger.info "not found subscriber for tunnel_id: #{inspect(state.tunnel_id)} consume records"
-        Map.put(state, :token, next_token)
+        Logger.info "Not found subscriber for tunnel_id: #{inspect(state.tunnel_id)} consume records, so will not invoke checkpoint"
+        state
 
       {_ref, subscriber_pid} ->
 
         GenServer.call(subscriber_pid, {:record_event, {records, next_token}}, :infinity)
 
-        Logger.info "start checkpointer after consume records for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}, next_token: #{inspect next_token}"
+        Logger.info "Start checkpointer after consume records for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}, next_token: #{inspect next_token}"
 
         checkpointer = %Checkpointer{
           tunnel_id: state.tunnel_id,
@@ -156,7 +156,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
             |> Checkpointer.checkpoint()
           end
 
-        Logger.info "finish process_records in agent for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}"
+        Logger.info "Finish process_records in agent for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}"
 
         state
         |> Map.put(:token, next_token)
