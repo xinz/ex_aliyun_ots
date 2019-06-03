@@ -48,7 +48,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   def stop(tunnel_id) do
     case Registry.worker(tunnel_id) do
       [_tunnel_id, _client_id, worker_pid, _meta, _subscriber] ->
-        GenServer.stop(worker_pid, {:shutdown, :manual_stop})
+        GenServer.stop(worker_pid, :shutdown)
       nil ->
         Logger.info("tunnel_id: #{inspect(tunnel_id)} is not existed.")
     end
