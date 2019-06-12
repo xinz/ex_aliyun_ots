@@ -1,4 +1,4 @@
-defmodule ExAliyunOts.CRC do
+defmodule ExAliyunOts.Old.CRC do
 
   use Bitwise
 
@@ -35,8 +35,13 @@ defmodule ExAliyunOts.CRC do
               0xde, 0xd9, 0xd0, 0xd7, 0xc2, 0xc5, 0xcc, 0xcb,
               0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3]
 
+  def crc_string(crc, bytes) do
+    binary_list = :binary.bin_to_list(bytes)
+    do_update(crc, binary_list)
+  end
+
   def crc_int8(crc, byte) do
-    :lists.nth(((crc &&& 0xff) ^^^ byte) + 1, @crc8_table)
+    Enum.at(@crc8_table, (crc &&& 0xff) ^^^ byte)
   end
 
   def crc_int32(crc, byte) do
@@ -51,17 +56,60 @@ defmodule ExAliyunOts.CRC do
     end)
   end
 
-  def crc_string(crc, bytes) do
-    do_crc_string(crc, bytes)
+  defp do_update(crc, bytes) do
+    Enum.reduce(bytes, crc, fn(byte, acc) ->
+      Enum.at(@crc8_table, (acc &&& 0xff) ^^^ byte)
+    end)
   end
+end
 
-  defp do_crc_string(crc, <<>>) do
-    crc
-  end
-  defp do_crc_string(crc, <<byte::size(8), rest::binary>>) do
-    new_crc = :lists.nth(((crc &&& 0xff) ^^^ byte) + 1, @crc8_table)
-    do_crc_string(new_crc, rest)
+
+
+defmodule Crc.Benchmark do
+  require Integer
+
+  def benchmark do
+
+    string = "dasdsADAsEQWQWEQWEDASdasdASDAsDsafW312测试汉字123312312312312312312312测试汉字123312312312312312312312测试汉字123312312312312312312312测试汉字"
+
+    Benchee.run(
+      %{
+        "old crc_int8"    => fn -> ExAliyunOts.Old.CRC.crc_int8(0, 109) end,
+        "crc_int8"        => fn -> ExAliyunOts.CRC.crc_int8(0, 109) end,
+      },
+      time: 10,
+      print: [fast_warning: false]
+    )
+    
+    Benchee.run(
+      %{
+        "old crc_int32"    => fn -> ExAliyunOts.Old.CRC.crc_int32(0, 2) end,
+        "crc_int32"        => fn -> ExAliyunOts.CRC.crc_int32(0, 2) end,
+      },
+      time: 10,
+      print: [fast_warning: false]
+    )
+
+    Benchee.run(
+      %{
+        "old crc_int64"    => fn -> ExAliyunOts.Old.CRC.crc_int64(0, 2) end,
+        "crc_int64"        => fn -> ExAliyunOts.CRC.crc_int64(0, 2) end,
+      },
+      time: 10,
+      print: [fast_warning: false]
+    )
+
+
+    Benchee.run(
+      %{
+        "old crc_string"  => fn -> ExAliyunOts.Old.CRC.crc_string(0, string) end,
+        "crc_string"      => fn -> ExAliyunOts.CRC.crc_string(0, string) end,
+      },
+      time: 10,
+      print: [fast_warning: false]
+    )
   end
 
 end
 
+Crc.Benchmark.benchmark()

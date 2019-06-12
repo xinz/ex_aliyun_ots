@@ -15,7 +15,8 @@ defmodule ExAliyunOts.Instance do
     :endpoint,
     :pool_name,
     :pool_size,
-    :pool_max_overflow
+    :pool_max_overflow,
+    :tunnel
   ]
 end
 
