@@ -35,23 +35,7 @@ defmodule ExAliyunOts.Application do
           instance
         )
 
-      tunnel = instance.tunnel
-
-      case Keyword.get(tunnel, :enabled?, false) do
-        false ->
-          [instance_child | acc]
-        true ->
-          registeries = [
-            worker(Registry, []),
-          ]
-          tunnel_child =
-            :poolboy.child_spec(
-              TunnelWorker.pool_name(instance_key),
-              config_tunnel_pool(instance_key, tunnel),
-              instance_key
-            )
-          registeries ++ [tunnel_child | [instance_child | acc]]
-      end
+      append_tunnel_pool_child_spec(instance.tunnel, instance_child, acc, instance_key)
 
     end)
   end
@@ -78,23 +62,50 @@ defmodule ExAliyunOts.Application do
     instance
     |> Map.keys()
     |> Enum.reduce(instance, fn(key, acc) ->
-      case key do
-        :tunnel ->
-          tunnel_config = Keyword.get(config, key)
-          Map.put(acc, key, [
-            enabled?: Keyword.get(tunnel_config, :enable?, false),
-            pool_size: Keyword.get(tunnel_config, :pool_size, 32),
-            pool_max_overflow: Keyword.get(tunnel_config, :pool_max_overflow, 100)
-          ])
-        _ ->
-          case Keyword.get(config, key) do
-            nil ->
-              acc
-            value ->
-              Map.put(acc, key, value)
-          end
-      end
+      do_config_instance(key, acc, config)
     end)
+  end
+
+  defp do_config_instance(key = :tunnel, instance, config) do
+    case Keyword.get(config, key) do
+      nil ->
+        instance
+      tunnel_config ->
+        Map.put(instance, key, [
+          enabled?: Keyword.get(tunnel_config, :enable?, false),
+          pool_size: Keyword.get(tunnel_config, :pool_size, 32),
+          pool_max_overflow: Keyword.get(tunnel_config, :pool_max_overflow, 100)
+        ])
+    end
+  end
+  defp do_config_instance(key, instance, config) do
+    case Keyword.get(config, key) do
+      nil ->
+        instance
+      value ->
+        Map.put(instance, key, value)
+    end
+  end
+
+  defp append_tunnel_pool_child_spec(nil, instance_child, acc, _instance_key) do
+    [instance_child | acc]
+  end
+  defp append_tunnel_pool_child_spec(tunnel, instance_child, acc, instance_key) when is_list(tunnel) do
+    case Keyword.get(tunnel, :enabled?, false) do
+      false ->
+        [instance_child | acc]
+      true ->
+        registeries = [
+          worker(Registry, []),
+        ]
+        tunnel_child =
+          :poolboy.child_spec(
+            TunnelWorker.pool_name(instance_key),
+            config_tunnel_pool(instance_key, tunnel),
+            instance_key
+          )
+        registeries ++ [tunnel_child | [instance_child | acc]]
+    end
   end
 
   defp config_tunnel_pool(instance_key, tunnel) do
@@ -106,4 +117,5 @@ defmodule ExAliyunOts.Application do
       {:strategy, :fifo}
     ]
   end
+
 end
