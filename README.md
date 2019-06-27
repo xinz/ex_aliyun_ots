@@ -47,6 +47,7 @@ config :ex_aliyun_ots,
 * 原子计数器
 * 多元索引
 * 局部事务
+* 通道服务
 
 ## Supported API
 
@@ -817,10 +818,6 @@ defmodule SequenceSample do
 
 end
 ```
-
-## TODO
-
-* Tunnel Service
 
 ## License
 
