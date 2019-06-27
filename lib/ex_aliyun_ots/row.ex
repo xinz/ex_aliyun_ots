@@ -454,10 +454,10 @@ defmodule ExAliyunOts.Client.Row do
     end
   end
 
-  defp map_return_content(request, return_type = ReturnType.pk, _return_columns) do
+  defp map_return_content(request, ReturnType.pk = return_type, _return_columns) do
     Map.put(request, :return_content, ReturnContent.new(return_type: return_type))
   end
-  defp map_return_content(request, return_type = ReturnType.after_modify, return_columns) when length(return_columns) > 0 do
+  defp map_return_content(request, ReturnType.after_modify = return_type, return_columns) when length(return_columns) > 0 do
     Map.put(request, :return_content, ReturnContent.new(return_type: return_type, return_column_names: return_columns))
   end
   defp map_return_content(request, _return_type, _return_columns) do

@@ -133,19 +133,7 @@ defmodule ExAliyunOts.PlainBuffer do
     updated_buffer = buffer ++ [byte_to_binary(@tag_row_pk)]
 
     Enum.reduce(primary_keys, {updated_buffer, row_checksum}, fn primary_keys_item, acc ->
-      case primary_keys_item do
-        {pk_name, pk_value} ->
-          primary_key_column(acc, {pk_name, pk_value})
-
-        primary_keys_item when is_list(primary_keys_item) ->
-          # nested primary_keys are used for batch operation with multiple pks
-          Enum.reduce(primary_keys_item, acc, fn {pk_name, pk_value}, inner_acc ->
-            primary_key_column(inner_acc, {pk_name, pk_value})
-          end)
-
-        _ ->
-          raise ExAliyunOts.Error, "Invalid primary_keys: #{inspect(primary_keys)}"
-      end
+      primary_key_column(acc, primary_keys_item)
     end)
   end
 
@@ -176,20 +164,7 @@ defmodule ExAliyunOts.PlainBuffer do
       columns = Map.get(grouping_columns, update_type)
 
       Enum.reduce(columns, acc, fn column, acc_inner ->
-        case column do
-          column when is_bitstring(column) ->
-            process_update_column(acc_inner, update_type, column, {nil, nil})
-
-          {column_name, column_value} ->
-            process_update_column(acc_inner, update_type, column_name, {column_value, nil})
-
-          {column_name, column_value, timestamp} ->
-            process_update_column(acc_inner, update_type, column_name, {column_value, timestamp})
-
-          _ ->
-            raise ExAliyunOts.Error,
-                  "Unsupported column when update grouping columns: #{inspect(column)}"
-        end
+        process_update_column(acc_inner, update_type, column)
       end)
     end)
   end
@@ -204,17 +179,24 @@ defmodule ExAliyunOts.PlainBuffer do
       |> process_primary_key_value(pk_value)
 
     updated_buffer =
-      updated_buffer ++ [byte_to_binary(@tag_cell_checksum)] ++ [byte_to_binary(cell_checksum)]
+      updated_buffer ++ [byte_to_binary(@tag_cell_checksum), byte_to_binary(cell_checksum)]
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {updated_buffer, row_checksum}
   end
+  defp primary_key_column({buffer, row_checksum}, primary_keys) when is_list(primary_keys) do
+    # nested primary_keys are used for batch operation with multiple pks
+    Enum.reduce(primary_keys, {buffer, row_checksum}, fn {pk_name, pk_value}, acc ->
+      primary_key_column(acc, {pk_name, pk_value})
+    end)
+  end
+  defp primary_key_column(_, primary_keys) do
+    raise ExAliyunOts.Error, "Invalid primary_keys: #{inspect(primary_keys)}"
+  end
 
   defp process_cell_name({buffer, cell_checksum}, name) do
     updated_buffer =
-      buffer ++
-        [byte_to_binary(@tag_cell_name)] ++
-        [<<String.length(name)::little-integer-size(32)>>] ++ [name]
+      buffer ++ [byte_to_binary(@tag_cell_name), <<String.length(name)::little-integer-size(32)>>, name]
 
     cell_checksum = CRC.crc_string(cell_checksum, name)
     {updated_buffer, cell_checksum}
@@ -226,22 +208,21 @@ defmodule ExAliyunOts.PlainBuffer do
     cond do
       value == PKType.inf_min() ->
         updated_buffer =
-          updated_buffer ++ [<<1::little-integer-size(32)>>] ++ [byte_to_binary(@vt_inf_min)]
+          updated_buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_inf_min)]
 
         cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_min)
         {updated_buffer, cell_checksum}
 
       value == PKType.inf_max() ->
         updated_buffer =
-          updated_buffer ++ [<<1::little-integer-size(32)>>] ++ [byte_to_binary(@vt_inf_max)]
+          updated_buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_inf_max)]
 
         cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_max)
         {updated_buffer, cell_checksum}
 
       value == PKType.auto_increment() ->
         updated_buffer =
-          updated_buffer ++
-            [<<1::little-integer-size(32)>>] ++ [byte_to_binary(@vt_auto_increment)]
+          updated_buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_auto_increment)]
 
         cell_checksum = CRC.crc_int8(cell_checksum, @vt_auto_increment)
         {updated_buffer, cell_checksum}
@@ -249,8 +230,8 @@ defmodule ExAliyunOts.PlainBuffer do
       is_integer(value) ->
         updated_buffer =
           updated_buffer ++
-            [<<1 + @little_endian_64_size::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_integer)] ++ [<<value::little-integer-size(64)>>]
+            [<<1 + @little_endian_64_size::little-integer-size(32)>>,
+             byte_to_binary(@vt_integer), <<value::little-integer-size(64)>>]
 
         cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
         {updated_buffer, cell_checksum}
@@ -261,8 +242,8 @@ defmodule ExAliyunOts.PlainBuffer do
 
         updated_buffer =
           updated_buffer ++
-            [<<prefix_length + value_size::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_string)] ++ [<<value_size::little-integer-size(32)>>] ++ [value]
+            [<<prefix_length + value_size::little-integer-size(32)>>,
+             byte_to_binary(@vt_string), <<value_size::little-integer-size(32)>>, value]
 
         cell_checksum =
           cell_checksum
@@ -278,8 +259,8 @@ defmodule ExAliyunOts.PlainBuffer do
 
         updated_buffer =
           updated_buffer ++
-            [<<prefix_length + value_size::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_blob)] ++ [<<value_size::little-integer-size(32)>>] ++ [value]
+            [<<prefix_length + value_size::little-integer-size(32)>>,
+             byte_to_binary(@vt_blob), <<value_size::little-integer-size(32)>>, value]
 
         cell_checksum =
           cell_checksum
@@ -307,7 +288,7 @@ defmodule ExAliyunOts.PlainBuffer do
       if timestamp != nil do
         updated_buffer =
           updated_buffer ++
-            [byte_to_binary(@tag_cell_timestamp)] ++ [<<timestamp::little-integer-size(64)>>]
+            [byte_to_binary(@tag_cell_timestamp), <<timestamp::little-integer-size(64)>>]
 
         cell_checksum = CRC.crc_int64(cell_checksum, timestamp)
         {updated_buffer, cell_checksum}
@@ -316,183 +297,221 @@ defmodule ExAliyunOts.PlainBuffer do
       end
 
     updated_buffer =
-      updated_buffer ++ [byte_to_binary(@tag_cell_checksum)] ++ [byte_to_binary(cell_checksum)]
+      updated_buffer ++ [byte_to_binary(@tag_cell_checksum), byte_to_binary(cell_checksum)]
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {updated_buffer, row_checksum}
   end
 
-  defp process_column_value_with_checksum({buffer, cell_checksum}, value) do
+  defp process_column_value_with_checksum({buffer, cell_checksum}, nil) do
+    {buffer, cell_checksum}
+  end
+  defp process_column_value_with_checksum({buffer, cell_checksum}, value) when is_boolean(value) do
+    updated_buffer =
+      buffer ++ [byte_to_binary(@tag_cell_value), <<2::little-integer-size(32)>>, byte_to_binary(@vt_boolean), boolean_to_integer(value)]
+
+    cell_checksum =
+      if value do
+        cell_checksum
+        |> CRC.crc_int8(@vt_boolean)
+        |> CRC.crc_int8(1)
+      else
+        cell_checksum
+        |> CRC.crc_int8(@vt_boolean)
+        |> CRC.crc_int8(0)
+      end
+
+    {updated_buffer, cell_checksum}
+  end
+  defp process_column_value_with_checksum({buffer, cell_checksum}, value) when is_integer(value) do
+    updated_buffer =
+      buffer ++
+        [byte_to_binary(@tag_cell_value), <<1 + @little_endian_64_size::little-integer-size(32)>>,
+         byte_to_binary(@vt_integer), <<value::little-integer-size(64)>>]
+
+    cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
+    {updated_buffer, cell_checksum}
+  end
+  defp process_column_value_with_checksum({buffer, cell_checksum}, value) when is_float(value) do
     updated_buffer = buffer ++ [byte_to_binary(@tag_cell_value)]
+    value_to_binary = <<value::float-little>>
+    <<long::unsigned-little-integer-64>> = value_to_binary
 
-    cond do
-      is_boolean(value) ->
-        updated_buffer =
-          updated_buffer ++
-            [<<2::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_boolean)] ++ [boolean_to_integer(value)]
+    updated_buffer =
+      updated_buffer ++
+        [<<1 + @little_endian_64_size::little-integer-size(32)>>,
+         byte_to_binary(@vt_double), value_to_binary]
 
-        cell_checksum = CRC.crc_int8(cell_checksum, @vt_boolean)
+    cell_checksum = cell_checksum |> CRC.crc_int8(@vt_double) |> CRC.crc_int64(long)
+    {updated_buffer, cell_checksum}
+  end
+  defp process_column_value_with_checksum({buffer, cell_checksum}, value) when is_binary(value) do
+    updated_buffer = buffer ++ [byte_to_binary(@tag_cell_value)]
+    prefix_length = @little_endian_32_size + 1
+    value_size = byte_size(value)
 
-        cell_checksum =
-          if value do
-            CRC.crc_int8(cell_checksum, 1)
-          else
-            CRC.crc_int8(cell_checksum, 0)
-          end
+    updated_buffer =
+      updated_buffer ++
+        [<<prefix_length + value_size::little-integer-size(32)>>,
+         byte_to_binary(@vt_string), <<value_size::little-integer-size(32)>>, value]
 
-        {updated_buffer, cell_checksum}
+    cell_checksum =
+      cell_checksum
+      |> CRC.crc_int8(@vt_string)
+      |> CRC.crc_int32(value_size)
+      |> CRC.crc_string(value)
 
-      is_integer(value) ->
-        updated_buffer =
-          updated_buffer ++
-            [<<1 + @little_endian_64_size::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_integer)] ++ [<<value::little-integer-size(64)>>]
+    {updated_buffer, cell_checksum}
+  end
+  defp process_column_value_with_checksum({buffer, cell_checksum}, value) when is_bitstring(value) do
+    updated_buffer = buffer ++ [byte_to_binary(@tag_cell_value)]
+    prefix_length = @little_endian_32_size + 1
+    value_size = byte_size(value)
 
-        cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
-        {updated_buffer, cell_checksum}
+    updated_buffer =
+      updated_buffer ++
+        [<<prefix_length + value_size::little-integer-size(32)>>,
+         byte_to_binary(@vt_blob), <<value_size::little-integer-size(32)>>, value]
 
-      is_float(value) ->
-        value_to_binary = <<value::float-little>>
-        <<long::unsigned-little-integer-64>> = value_to_binary
+    cell_checksum =
+      cell_checksum
+      |> CRC.crc_int8(@vt_blob)
+      |> CRC.crc_int32(value_size)
+      |> CRC.crc_string(value)
 
-        updated_buffer =
-          updated_buffer ++
-            [<<1 + @little_endian_64_size::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_double)] ++ [value_to_binary]
-
-        cell_checksum = cell_checksum |> CRC.crc_int8(@vt_double) |> CRC.crc_int64(long)
-        {updated_buffer, cell_checksum}
-
-      is_binary(value) ->
-        prefix_length = @little_endian_32_size + 1
-        value_size = byte_size(value)
-
-        updated_buffer =
-          updated_buffer ++
-            [<<prefix_length + value_size::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_string)] ++ [<<value_size::little-integer-size(32)>>] ++ [value]
-
-        cell_checksum =
-          cell_checksum
-          |> CRC.crc_int8(@vt_string)
-          |> CRC.crc_int32(value_size)
-          |> CRC.crc_string(value)
-
-        {updated_buffer, cell_checksum}
-
-      is_bitstring(value) ->
-        prefix_length = @little_endian_32_size + 1
-        value_size = byte_size(value)
-
-        updated_buffer =
-          updated_buffer ++
-            [<<prefix_length + value_size::little-integer-size(32)>>] ++
-            [byte_to_binary(@vt_blob)] ++ [<<value_size::little-integer-size(32)>>] ++ [value]
-
-        cell_checksum =
-          cell_checksum
-          |> CRC.crc_int8(@vt_blob)
-          |> CRC.crc_int32(value_size)
-          |> CRC.crc_string(value)
-
-        {updated_buffer, cell_checksum}
-
-      true ->
-        raise ExAliyunOts.Error, "Unsupported column for value: #{inspect(value)}"
-    end
+    {updated_buffer, cell_checksum}
+  end
+  defp process_column_value_with_checksum({_buffer, _cell_checksum}, value) do
+    raise ExAliyunOts.Error, "Unsupported column for value: #{inspect(value)}"
   end
 
+  defp process_column_value(value) when is_boolean(value) do
+    [byte_to_binary(@vt_boolean), boolean_to_integer(value)]
+  end
+  defp process_column_value(value) when is_integer(value) do
+    [byte_to_binary(@vt_integer), <<value::little-integer-size(64)>>]
+  end
+  defp process_column_value(value) when is_binary(value) do
+    value_size = byte_size(value)
+    [byte_to_binary(@vt_string), <<value_size::little-integer-size(32)>>, value]
+  end
+  defp process_column_value(value) when is_bitstring(value) do
+    value_size = byte_size(value)
+    [byte_to_binary(@vt_blob), <<value_size::little-integer-size(32)>>, value]
+  end
+  defp process_column_value(value) when is_float(value) do
+    value_to_binary = <<value::float-little>>
+    [byte_to_binary(@vt_double), value_to_binary]
+  end
   defp process_column_value(value) do
-    cond do
-      is_boolean(value) ->
-        [byte_to_binary(@vt_boolean)] ++ [boolean_to_integer(value)]
-
-      is_integer(value) ->
-        [byte_to_binary(@vt_integer)] ++ [<<value::little-integer-size(64)>>]
-
-      is_binary(value) ->
-        value_size = byte_size(value)
-        [byte_to_binary(@vt_string)] ++ [<<value_size::little-integer-size(32)>>] ++ [value]
-
-      is_bitstring(value) ->
-        value_size = byte_size(value)
-        [byte_to_binary(@vt_blob)] ++ [<<value_size::little-integer-size(32)>>] ++ [value]
-
-      is_float(value) ->
-        value_to_binary = <<value::float-little>>
-        [byte_to_binary(@vt_double)] ++ [value_to_binary]
-
-      true ->
-        raise ExAliyunOts.Error, "Unsupported column for value: #{inspect(value)}"
-    end
+    raise ExAliyunOts.Error, "Unsupported column for value: #{inspect(value)}"
   end
 
-  defp process_update_column(
+  defp process_update_column({buffer, row_checksum}, update_type, column) when is_bitstring(column) do
+    do_process_update_column({buffer, row_checksum}, update_type, column, {nil, nil})
+  end
+  defp process_update_column({buffer, row_checksum}, update_type, {column_name, column_value}) do
+    do_process_update_column({buffer, row_checksum}, update_type, column_name, {column_value, nil})
+  end
+  defp process_update_column({buffer, row_checksum}, update_type, {column_name, column_value, timestamp}) do
+    do_process_update_column({buffer, row_checksum}, update_type, column_name, {column_value, timestamp})
+  end
+  defp process_update_column({_buffer, _row_checksum}, _update_type, column) do
+    raise ExAliyunOts.Error, "Unsupported column when update grouping columns: #{inspect(column)}"
+  end
+
+  defp do_process_update_column(
          {buffer, row_checksum},
-         update_type,
+         OperationType.delete(),
          column_name,
          {column_value, timestamp}
        ) do
+    {updated_buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
+
+    updated_buffer =
+      updated_buffer ++
+        [byte_to_binary(@tag_cell_type), byte_to_binary(@op_delete_one_version)]
+
+    {updated_buffer, cell_checksum} = process_update_column_with_timestamp(updated_buffer, cell_checksum, timestamp)
+
+    cell_checksum = CRC.crc_int8(cell_checksum, @op_delete_one_version)
+
+    process_update_column_with_row_checksum(updated_buffer, cell_checksum, row_checksum)
+  end
+
+  defp do_process_update_column(
+         {buffer, row_checksum},
+         OperationType.delete_all(),
+         column_name,
+         {column_value, timestamp}
+       ) do
+    {updated_buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
+
+    updated_buffer =
+      updated_buffer ++
+        [byte_to_binary(@tag_cell_type), byte_to_binary(@op_delete_all_version)]
+
+    {updated_buffer, cell_checksum} = process_update_column_with_timestamp(updated_buffer, cell_checksum, timestamp)
+
+    cell_checksum = CRC.crc_int8(cell_checksum, @op_delete_all_version)
+
+    process_update_column_with_row_checksum(updated_buffer, cell_checksum, row_checksum)
+  end
+
+  defp do_process_update_column(
+         {buffer, row_checksum},
+         OperationType.increment(),
+         column_name,
+         {column_value, timestamp}
+       ) do
+    {updated_buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
+
+    updated_buffer =
+      updated_buffer ++ [byte_to_binary(@tag_cell_type), byte_to_binary(@op_increment)]
+
+    {updated_buffer, cell_checksum} = process_update_column_with_timestamp(updated_buffer, cell_checksum, timestamp)
+
+    cell_checksum = CRC.crc_int8(cell_checksum, @op_increment)
+
+    process_update_column_with_row_checksum(updated_buffer, cell_checksum, row_checksum)
+  end
+
+
+  defp do_process_update_column(
+         {buffer, row_checksum},
+         _update_type,
+         column_name,
+         {column_value, timestamp}
+       ) do
+    {updated_buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
+
+    {updated_buffer, cell_checksum} = process_update_column_with_timestamp(updated_buffer, cell_checksum, timestamp)
+
+    process_update_column_with_row_checksum(updated_buffer, cell_checksum, row_checksum)
+  end
+
+  defp process_update_column_with_cell(buffer, column_name, column_value) do
     cell_checksum = 0
     updated_buffer = buffer ++ [byte_to_binary(@tag_cell)]
+    {updated_buffer, cell_checksum}
+    |> process_cell_name(column_name)
+    |> process_column_value_with_checksum(column_value)
+  end
 
-    {updated_buffer, cell_checksum} =
-      process_cell_name({updated_buffer, cell_checksum}, column_name)
-
-    {updated_buffer, cell_checksum} =
-      if column_value != nil do
-        process_column_value_with_checksum({updated_buffer, cell_checksum}, column_value)
-      else
-        {updated_buffer, cell_checksum}
-      end
-
+  defp process_update_column_with_timestamp(buffer, cell_checksum, nil) do
+    {buffer, cell_checksum}
+  end
+  defp process_update_column_with_timestamp(buffer, cell_checksum, timestamp) do
     updated_buffer =
-      cond do
-        update_type == OperationType.delete() ->
-          updated_buffer ++
-            [byte_to_binary(@tag_cell_type)] ++ [byte_to_binary(@op_delete_one_version)]
+      buffer ++ [byte_to_binary(@tag_cell_timestamp), <<timestamp::little-integer-size(64)>>]
 
-        update_type == OperationType.delete_all() ->
-          updated_buffer ++
-            [byte_to_binary(@tag_cell_type)] ++ [byte_to_binary(@op_delete_all_version)]
+    cell_checksum = CRC.crc_int64(cell_checksum, timestamp)
+    {updated_buffer, cell_checksum}
+  end
 
-        update_type == OperationType.increment() ->
-          updated_buffer ++ [byte_to_binary(@tag_cell_type)] ++ [byte_to_binary(@op_increment)]
-
-        true ->
-          updated_buffer
-      end
-
-    {updated_buffer, cell_checksum} =
-      if timestamp != nil do
-        updated_buffer =
-          updated_buffer ++
-            [byte_to_binary(@tag_cell_timestamp)] ++ [<<timestamp::little-integer-size(64)>>]
-
-        cell_checksum = CRC.crc_int64(cell_checksum, timestamp)
-        {updated_buffer, cell_checksum}
-      else
-        {updated_buffer, cell_checksum}
-      end
-
-    cell_checksum =
-      cond do
-        update_type == OperationType.delete() ->
-          CRC.crc_int8(cell_checksum, @op_delete_one_version)
-
-        update_type == OperationType.delete_all() ->
-          CRC.crc_int8(cell_checksum, @op_delete_all_version)
-
-        update_type == OperationType.increment() ->
-          CRC.crc_int8(cell_checksum, @op_increment)
-
-        true ->
-          cell_checksum
-      end
-
+  defp process_update_column_with_row_checksum(buffer, cell_checksum, row_checksum) do
     updated_buffer =
-      updated_buffer ++ [byte_to_binary(@tag_cell_checksum)] ++ [byte_to_binary(cell_checksum)]
+      buffer ++ [byte_to_binary(@tag_cell_checksum), byte_to_binary(cell_checksum)]
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {updated_buffer, row_checksum}
@@ -521,7 +540,7 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_row_checksum(buffer, row_checksum) do
-    buffer ++ [byte_to_binary(@tag_row_checksum)] ++ [byte_to_binary(row_checksum)]
+    buffer ++ [byte_to_binary(@tag_row_checksum), byte_to_binary(row_checksum)]
   end
 
   defp byte_to_binary(byte) do
@@ -698,6 +717,9 @@ defmodule ExAliyunOts.PlainBuffer do
     end
   end
 
+  defp deserialize_process_primary_keys("", result) do
+    result
+  end
   defp deserialize_process_primary_keys(primary_keys, result) do
     debug(fn ->
       [
@@ -753,11 +775,7 @@ defmodule ExAliyunOts.PlainBuffer do
               ]
             end)
 
-            if other_pk != "" do
-              deserialize_process_primary_keys(other_pk, updated_result)
-            else
-              updated_result
-            end
+            deserialize_process_primary_keys(other_pk, updated_result)
 
           :nomatch ->
             primary_key_value =
@@ -829,6 +847,9 @@ defmodule ExAliyunOts.PlainBuffer do
     raise ExAliyunOts.Error, "Unexcepted value as primary value: #{inspect(rest)}"
   end
 
+  defp deserialize_process_columns("", result) do
+    result
+  end
   defp deserialize_process_columns(attribute_columns, result) do
     debug(fn ->
       [
@@ -873,11 +894,7 @@ defmodule ExAliyunOts.PlainBuffer do
                 byte_size(rest_value_and_other_columns) - next_cell_index
               )
 
-            if other_attribute_columns != "" do
-              deserialize_process_columns(other_attribute_columns, updated_result)
-            else
-              updated_result
-            end
+            deserialize_process_columns(other_attribute_columns, updated_result)
 
           :nomatch ->
             {column_value, timestamp} =

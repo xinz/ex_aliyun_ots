@@ -66,7 +66,7 @@ defmodule ExAliyunOts.Application do
     end)
   end
 
-  defp do_config_instance(key = :tunnel, instance, config) do
+  defp do_config_instance(:tunnel = key, instance, config) do
     case Keyword.get(config, key) do
       nil ->
         instance

@@ -395,7 +395,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
          channels_from_response,
          local_channel_ids
        ) do
-    Enum.map(channels_from_response, fn channel_from_heartbeat ->
+    Enum.each(channels_from_response, fn channel_from_heartbeat ->
       channel_id = channel_from_heartbeat.channel_id
 
       case Registry.channel(channel_id, tunnel_id, client_id) do

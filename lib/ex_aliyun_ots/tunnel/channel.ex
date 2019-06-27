@@ -157,7 +157,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
          channel,
          agent,
          _remote_channel,
-         _remote_channel_status = ChannelStatus.open(),
+         ChannelStatus.open() = _remote_channel_status,
          from
        ) do
     Logger.info "process readrecords and checkpoint for open channel"
@@ -168,7 +168,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
          channel,
          _agent,
          remote_channel,
-         _remote_channel_status = ChannelStatus.closing(),
+         ChannelStatus.closing() = _remote_channel_status,
          from
        ) do
     Logger.info("process channel as closing status from heartbeat")
@@ -180,7 +180,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
          channel,
          _agent,
          remote_channel,
-         _remote_channel_status = ChannelStatus.close(),
+         ChannelStatus.close() = _remote_channel_status,
          from
        ) do
     Logger.info("process channel as close status from heartbeat")

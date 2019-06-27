@@ -70,21 +70,21 @@ defmodule ExAliyunOts.Http.Middleware do
     {:error, reason}
   end
 
-  defp decode_success_response(response, decoder, _require_deserialize_row = true, _require_response_size = true) do
+  defp decode_success_response(response, decoder, true = _require_deserialize_row, true = _require_response_size) do
     body = response.body
     readable_result = make_response_row_readable(decoder.(body))
     {:ok, readable_result, byte_size(body)}
   end
-  defp decode_success_response(response, decoder, _require_deserialize_row = false, _require_response_size = true) do
+  defp decode_success_response(response, decoder, false = _require_deserialize_row, true = _require_response_size) do
     body = response.body
     readable_result = decoder.(body)
     {:ok, readable_result, byte_size(body)}
   end
-  defp decode_success_response(response, decoder, _require_deserialize_row = true, _require_response_size = false) do
+  defp decode_success_response(response, decoder, true = _require_deserialize_row, false = _require_response_size) do
     readable_result = make_response_row_readable(decoder.(response.body))
     {:ok, readable_result}
   end
-  defp decode_success_response(response, decoder, _require_deserialize_row = false, _require_response_size = false) do
+  defp decode_success_response(response, decoder, false = _require_deserialize_row, false = _require_response_size) do
     readable_result = decoder.(response.body)
     {:ok, readable_result}
   end
@@ -159,7 +159,7 @@ defmodule ExAliyunOts.Http do
       {ExAliyunOts.Http.Middleware, instance: instance, uri: "/UpdateRow", request_body: request_body, decoder: decoder, deserialize_row: true}
     ])
   end
-  def client(instance, uri = "/tunnel/readrecords", request_body, decoder) do
+  def client(instance, "/tunnel/readrecords" = uri, request_body, decoder) do
     Tesla.client([
       {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder, require_response_size: true}
     ])
