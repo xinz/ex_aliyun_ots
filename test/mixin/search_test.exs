@@ -127,8 +127,8 @@ defmodule ExAliyunOts.MixinTest.Search do
           ]
         ],
         columns_to_get: ["age", "name"]
-    assert response.total_hits == 8
-    assert length(response.rows) == 8
+    assert response.total_hits == 9
+    assert length(response.rows) == 9
   end
 
   test "wildcard query" do
@@ -147,8 +147,8 @@ defmodule ExAliyunOts.MixinTest.Search do
           ]
         ],
         columns_to_get: ColumnReturnType.all
-    assert response.total_hits == 8
-    assert length(response.rows) == 8
+    assert response.total_hits == 9
+    assert length(response.rows) == 9
   end
 
   test "range query" do
@@ -198,8 +198,8 @@ defmodule ExAliyunOts.MixinTest.Search do
           ]
         ]
 
-    assert response.total_hits == 6
-    assert length(response.rows) == 6
+    assert response.total_hits == 7
+    assert length(response.rows) == 7
 
     attr_ages = 
       Enum.map(response.rows, fn({[{_pk_key, _pk_value}], attrs}) ->
@@ -254,6 +254,37 @@ defmodule ExAliyunOts.MixinTest.Search do
 
     assert id == "a9"
     assert value == "[{\"body\":\"body1\",\"header\":\"header1\"}]"
+  end
+
+  test "exists query" do
+    index_name = "test_search_index"
+
+    # search exists_query for `comment` field
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: [
+            type: QueryType.exists,
+            field_name: "comment"
+          ]
+        ]
+    assert length(response.rows) >= 1
+
+    # seach exists_query for `comment` field as nil column
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: [
+            type: QueryType.bool,
+            must_not: [
+              [type: QueryType.exists, field_name: "comment"]
+            ]
+          ],
+          limit: 100
+        ]
+
+    assert response.next_token == nil
+    assert length(response.rows) == 10
   end
 
   test "delete search index" do

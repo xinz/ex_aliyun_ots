@@ -145,6 +145,7 @@ defmodule ExAliyunOts.Const.Search.QueryType do
   const :geo_bounding_box, :'GEO_BOUNDING_BOX_QUERY'
   const :geo_distance, :'GEO_DISTANCE_QUERY'
   const :geo_polygon, :'GEO_POLYGON_QUERY'
+  const :exists, :'EXISTS_QUERY'
 end
 
 defmodule ExAliyunOts.Const.Search.QueryOperator do

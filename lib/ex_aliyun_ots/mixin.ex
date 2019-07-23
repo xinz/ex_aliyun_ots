@@ -543,6 +543,9 @@ defmodule ExAliyunOts.Mixin do
   defp map_query_details(QueryType.nested, query) do
     map_search_options(%Search.NestedQuery{}, query)
   end
+  defp map_query_details(QueryType.exists, query) do
+    map_search_options(%Search.ExistsQuery{}, query)
+  end
   defp map_query_details(_query_type, query) do
     raise ExAliyunOts.Error, "Not supported query when map query details: #{inspect query}"
   end

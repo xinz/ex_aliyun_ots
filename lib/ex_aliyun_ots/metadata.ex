@@ -220,6 +220,11 @@ defmodule ExAliyunOts.Var.Search do
     # 例如：有一个小学生学生状态监测系统，其中存了小学生的身高，但是小学生身高一直在长，所以“身高”这个字段，采用了array的方式。然后我们查询的时候，想根据身高进行排序，就可以设置`score_mode`为`max`，这样就能得到最近的一次身高。
     defstruct path: "", query: nil, score_mode: ScoreMode.none
   end
+
+  defmodule ExistsQuery do
+    defstruct field_name: ""
+  end
+
 end
 
 # Transaction

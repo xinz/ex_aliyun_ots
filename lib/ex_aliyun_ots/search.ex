@@ -31,7 +31,8 @@ defmodule ExAliyunOts.Client.Search do
     WildcardQuery,
     RangeQuery,
     BoolQuery,
-    NestedQuery
+    NestedQuery,
+    ExistsQuery
   }
 
   alias ExAliyunOts.Http
@@ -409,6 +410,15 @@ defmodule ExAliyunOts.Client.Search do
     Query.new(
       type: QueryType.nested,
       query: NestedQuery.encode(proto_query)
+    )
+  end
+  defp prepare_query(%Search.ExistsQuery{
+           field_name: field_name
+         }) do
+    proto_query = ExistsQuery.new(field_name: field_name)
+    Query.new(
+      type: QueryType.exists,
+      query: ExistsQuery.encode(proto_query)
     )
   end
   defp prepare_query(query) do

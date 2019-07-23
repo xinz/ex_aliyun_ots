@@ -57,17 +57,27 @@ defmodule ExAliyunOtsTest.Support.Search do
       %{id: "a6", class: "class4", name: "name_a6", age: 27, score: 79.99, is_actived: false},
       %{id: "a7", class: "class1", name: "name_a7", age: 28, score: 100, is_actived: true},
       %{id: "a8", class: "class8", name: "name_a8", age: 22, score: 88.61, is_actived: true},
+      %{id: "b9", class: "class8", name: "name_b9", age: 21, score: 99, is_actived: false, comment: "comment"},
     ]
 
     Enum.map(data, fn(item) -> 
-      var_put_row = %Var.PutRow{
-        table_name: table,
-        primary_keys: [{"partition_key", item.id}],
-        attribute_columns: [{"class", item.class}, {"age", item.age}, {"name", item.name}, {"is_actived", item.is_actived}, {"score", item.score}],
-        condition: %Var.Condition{
-          row_existence: RowExistence.expect_not_exist
+      attribute_columns =
+        case Map.get(item, :comment) do
+          nil ->
+            [{"class", item.class}, {"age", item.age}, {"name", item.name}, {"is_actived", item.is_actived}, {"score", item.score}]
+          comment ->
+            [{"class", item.class}, {"age", item.age}, {"name", item.name}, {"is_actived", item.is_actived}, {"score", item.score}, {"comment", comment}]
+        end
+      var_put_row =
+        %Var.PutRow{
+          table_name: table,
+          primary_keys: [{"partition_key", item.id}],
+          attribute_columns: attribute_columns,
+          condition: %Var.Condition{
+            row_existence: RowExistence.expect_not_exist
+          }
         }
-      }
+
       {:ok, _result} = Client.put_row(instance_key, var_put_row)
     end)
 
@@ -113,6 +123,9 @@ defmodule ExAliyunOtsTest.Support.Search do
             %Search.FieldSchema{
               field_name: "is_actived",
               field_type: FieldType.boolean
+            },
+            %Search.FieldSchema{
+              field_name: "comment"
             }
           ]
         }

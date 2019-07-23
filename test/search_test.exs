@@ -238,7 +238,7 @@ defmodule ExAliyunOtsTest.Search do
     result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
-        assert length(response.rows) == 8
+        assert length(response.rows) == 9
       error ->
         Logger.error("search occur error: #{inspect error}")
     end
@@ -266,7 +266,7 @@ defmodule ExAliyunOtsTest.Search do
     result = ExAliyunOts.Client.search(@instance_key, var_request)
     case result do
       {:ok, response} ->
-        assert length(response.rows) == 8
+        assert length(response.rows) == 9
       error ->
         Logger.error("search occur error: #{inspect error}")
     end
@@ -403,6 +403,49 @@ defmodule ExAliyunOtsTest.Search do
       error ->
         Logger.error("nested query occur error: #{inspect error}")
     end
+  end
+
+  test "search - exists query" do
+    # search with a fake field (it's non-index attribute column)
+    var_request =
+      %Search.SearchRequest{
+        table_name: @table,
+        index_name: "test_search_index",
+        search_query: %Search.SearchQuery{
+          query: %Search.ExistsQuery{field_name: "fake_nonindex_field"}
+        }
+      }
+    {:ok, response} = ExAliyunOts.Client.search(@instance_key, var_request)
+    assert response.rows == []
+    assert response.is_all_succeeded == true
+
+    field_name_comment = "comment"
+
+    # search exists_query for `comment` field
+    search_query = %Search.SearchQuery{
+      query: %Search.ExistsQuery{field_name: field_name_comment}
+    }
+    var_request = Map.put(var_request, :search_query, search_query)
+    {:ok, response} = ExAliyunOts.Client.search(@instance_key, var_request)
+    assert length(response.rows) >= 1
+
+    # seach exists_query for `comment` field as nil column
+    var_request =
+      %Search.SearchRequest{
+        table_name: @table,
+        index_name: "test_search_index",
+        search_query: %Search.SearchQuery{
+          query: %Search.BoolQuery{
+            must_not: [
+              %Search.ExistsQuery{field_name: field_name_comment}
+            ]
+          },
+          limit: 100
+        }
+      }
+    {:ok, response} = ExAliyunOts.Client.search(@instance_key, var_request)
+    assert response.next_token == nil
+    assert length(response.rows) == 10
   end
 
 end
