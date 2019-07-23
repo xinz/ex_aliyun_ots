@@ -10,7 +10,7 @@ Aliyun TableStore SDK for Elixir/Erlang
 ```elixir
 def deps do
   [
-    {:ex_aliyun_ots, "~> 0.2"}
+    {:ex_aliyun_ots, "~> 0.3"}
   ]
 end
 ```
@@ -542,6 +542,7 @@ Supported SearchIndex Functions:
 * WildcardQuery
 * BoolQuery
 * NestedQuery
+* ExistsQuery
 
 Not Implemented SearchIndex Functions:
 
