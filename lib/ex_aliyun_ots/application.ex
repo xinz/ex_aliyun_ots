@@ -19,7 +19,7 @@ defmodule ExAliyunOts.Application do
   end
 
   defp instances_pool_child_spec() do
-    instances = Application.get_env(@app, :instances)
+    instances = Application.get_env(@app, :instances, [])
 
     Enum.reduce(instances, [], fn (instance_key, acc) ->
 
