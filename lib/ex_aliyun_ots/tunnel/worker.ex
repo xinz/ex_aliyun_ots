@@ -2,7 +2,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   use GenServer
 
   alias ExAliyunOts.Client
-  alias ExAliyunOts.Tunnel.{Registry, Channel, EntryWorker, Backoff, Utils}
+  alias ExAliyunOts.Tunnel.{Registry, Channel, EntryWorker, Backoff, Utils, DynamicSupervisor}
   alias ExAliyunOts.Tunnel.Channel.Agent
 
   alias ExAliyunOts.Logger
@@ -12,10 +12,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
   @min_heartbeat_interval 5
 
   # Public
-
-  def pool_name(instance_key) do
-    Module.concat([instance_key, Tunnel.Pool])
-  end
 
   def start_link(instance_key), do: GenServer.start_link(__MODULE__, instance_key, [])
 
@@ -31,17 +27,11 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
   @spec start(instance_key :: atom(), opts :: Keyword.t()) :: term()
   def start(instance_key, opts) do
+    {:ok, pid} = DynamicSupervisor.start_tunnel_worker(instance_key)
     opts = validate(opts)
     subscriber_pid = self()
-
-    :poolboy.transaction(
-      pool_name(instance_key),
-      fn worker ->
-        GenServer.cast(worker, {:start, opts, subscriber_pid})
-        worker
-      end,
-      :infinity
-    )
+    GenServer.cast(pid, {:start, opts, subscriber_pid})
+    {:ok, pid}
   end
 
   @spec stop(tunnel_id :: String.t()) :: term()

@@ -15,24 +15,24 @@ defmodule ExAliyunOts do
         execute_create_table(@instance, table, pk_keys, options)
       end
 
-      def delete_table(table, options \\ Keyword.new()) do
-        execute_delete_table(@instance, table, options)
+      def delete_table(table) do
+        execute_delete_table(@instance, table)
       end
 
-      def list_table(options \\ Keyword.new()) do
-        execute_list_table(@instance, options)
+      def list_table() do
+        execute_list_table(@instance)
       end
       
       def update_table(table, options \\ Keyword.new()) do
         execute_update_table(@instance, table, options)
       end
 
-      def describe_table(table, options \\ Keyword.new()) do
-        execute_describe_table(@instance, table, options)
+      def describe_table(table) do
+        execute_describe_table(@instance, table)
       end
 
-      def batch_get(requests, options \\ Keyword.new()) do
-        execute_batch_get(@instance, requests, options)
+      def batch_get(requests) do
+        execute_batch_get(@instance, requests)
       end
 
       def batch_write(requests, options \\ Keyword.new()) do
@@ -79,32 +79,32 @@ defmodule ExAliyunOts do
         execute_iterate_all_range(@instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options)
       end
 
-      def search(table, index_name, options \\ Keyword.new()) do
+      def search(table, index_name, options) do
         execute_search(@instance, table, index_name, options)
       end
 
-      def list_search_index(table, options \\ Keyword.new()) do
-        execute_list_search_index(@instance, table, options)
+      def list_search_index(table) do
+        execute_list_search_index(@instance, table)
       end
 
-      def delete_search_index(table, index_name, options \\ Keyword.new()) do
-        execute_delete_search_index(@instance, table, index_name, options)
+      def delete_search_index(table, index_name) do
+        execute_delete_search_index(@instance, table, index_name)
       end
 
-      def describe_search_index(table, index_name, options \\ Keyword.new()) do
-        execute_describe_search_index(@instance, table, index_name, options)
+      def describe_search_index(table, index_name) do
+        execute_describe_search_index(@instance, table, index_name)
       end
 
-      def start_local_transaction(table, partition_key, options \\ Keyword.new()) do
-        execute_start_local_transaction(@instance, table, partition_key, options)
+      def start_local_transaction(table, partition_key) do
+        execute_start_local_transaction(@instance, table, partition_key)
       end
 
-      def commit_transaction(transaction_id, options \\ Keyword.new()) do
-        execute_commit_transaction(@instance, transaction_id, options)
+      def commit_transaction(transaction_id) do
+        execute_commit_transaction(@instance, transaction_id)
       end
 
-      def abort_transaction(transaction_id, options \\ Keyword.new()) do
-        execute_abort_transaction(@instance, transaction_id, options)
+      def abort_transaction(transaction_id) do
+        execute_abort_transaction(@instance, transaction_id)
       end
 
     end

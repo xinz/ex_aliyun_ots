@@ -31,7 +31,6 @@ defmodule ExAliyunOts.Mixfile do
     [
       {:exprotobuf, "~> 1.2"},
       {:timex, "~> 3.3"},
-      {:poolboy, "~> 1.5"},
       {:retry, "~> 0.11.2"},
       {:tesla, "~> 1.2"},
       {:gen_state_machine, "~> 2.0"},

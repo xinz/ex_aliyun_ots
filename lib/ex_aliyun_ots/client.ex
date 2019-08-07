@@ -1,385 +1,170 @@
 defmodule ExAliyunOts.Client do
 
-  use GenServer
-
-  @request_timeout 60_000
-
   alias ExAliyunOts.Client.{Table, Row, Search, Transaction, Tunnel}
 
-  alias ExAliyunOts.PlainBuffer
+  alias ExAliyunOts.{PlainBuffer, Config}
 
-  import ExAliyunOts.Logger, only: [error: 1]
-
-  defstruct [instance: nil]
-
-  def start_link(instance), do: GenServer.start_link(__MODULE__, instance)
-
-  def init(instance) do
-    {:ok, %__MODULE__{instance: instance}}
-  end
-
-  def create_table(instance_key, var_create_table, options \\ [request_timeout: @request_timeout]) do
+  def create_table(instance_key, var_create_table) do
     encoded_request = Table.request_to_create_table(var_create_table)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:create_table, encoded_request}, request_timeout)
+    Table.remote_create_table(Config.get(instance_key), encoded_request)
   end
 
-  def list_table(instance_key, options \\ [request_timeout: @request_timeout]) do
+  def list_table(instance_key) do
     encoded_request = Table.request_to_list_table()
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:list_table, encoded_request}, request_timeout)
+    Table.remote_list_table(Config.get(instance_key), encoded_request)
   end
 
-  def delete_table(instance_key, table_name, options \\ [request_timeout: @request_timeout]) do
+  def delete_table(instance_key, table_name) do
     encoded_request = Table.request_to_delete_table(table_name)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:delete_table, encoded_request}, request_timeout)
+    Table.remote_delete_table(Config.get(instance_key), encoded_request)
   end
 
-  def update_table(instance_key, var_update_table, options \\ [request_timeout: @request_timeout]) do
+  def update_table(instance_key, var_update_table) do
     encoded_request = Table.request_to_update_table(var_update_table)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:update_table, encoded_request}, request_timeout)
+    Table.remote_update_table(Config.get(instance_key), encoded_request)
   end
 
-  def describe_table(instance_key, var_describe_table, options \\ [request_timeout: @request_timeout]) do
+  def describe_table(instance_key, var_describe_table) do
     encoded_request = Table.request_to_describe_table(var_describe_table)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:describe_table, encoded_request}, request_timeout)
+    Table.remote_describe_table(Config.get(instance_key), encoded_request)
   end
 
-  def put_row(instance_key, var_put_row, options \\ [request_timeout: @request_timeout]) do
+  def put_row(instance_key, var_put_row) do
     encoded_request = Row.request_to_put_row(var_put_row)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:put_row, encoded_request}, request_timeout)
+    Row.remote_put_row(Config.get(instance_key), encoded_request)
   end
 
-  def get_row(instance_key, var_get_row, options \\ [request_timeout: @request_timeout]) do
+  def get_row(instance_key, var_get_row) do
     encoded_request = Row.request_to_get_row(var_get_row)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:get_row, encoded_request}, request_timeout)
+    Row.remote_get_row(Config.get(instance_key), encoded_request)
   end
 
-  def update_row(instance_key, var_update_row, options \\ [request_timeout: @request_timeout]) do
+  def update_row(instance_key, var_update_row) do
     encoded_request = Row.request_to_update_row(var_update_row)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:update_row, encoded_request}, request_timeout)
+    Row.remote_update_row(Config.get(instance_key), encoded_request)
   end
 
-  def delete_row(instance_key, var_delete_row, options \\ [request_timeout: @request_timeout]) do
+  def delete_row(instance_key, var_delete_row) do
     encoded_request = Row.request_to_delete_row(var_delete_row)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:delete_row, encoded_request}, request_timeout)
+    Row.remote_delete_row(Config.get(instance_key), encoded_request)
   end
 
-  def get_range(instance_key, var_get_range, next_start_primary_key \\ nil, options \\ [request_timeout: @request_timeout]) do
+  def get_range(instance_key, var_get_range, next_start_primary_key \\ nil) do
     encoded_request = Row.request_to_get_range(var_get_range, next_start_primary_key)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:get_range, encoded_request}, request_timeout)
+    remote_get_range(Config.get(instance_key), encoded_request)
   end
 
-  def iterate_get_all_range(instance_key, var_get_range, options \\ [request_timeout: :infinity]) do
+  def iterate_get_all_range(instance_key, var_get_range) do
     encoded_request = Row.request_to_get_range(var_get_range)
-    request_timeout = Keyword.get(options, :request_timeout, :infinity)
-    call_transaction(instance_key, {:iterate_get_all_range, encoded_request, var_get_range}, request_timeout)
+    iterate_remote_get_range(Config.get(instance_key), encoded_request, var_get_range, nil)
   end
 
-  def batch_get_row(instance_key, vars_batch_get_row, options \\ [request_timeout: :infinity]) when is_list(vars_batch_get_row) do
+  def batch_get_row(instance_key, vars_batch_get_row) when is_list(vars_batch_get_row) do
     encoded_request = Row.request_to_batch_get_row(vars_batch_get_row)
-    request_timeout = Keyword.get(options, :request_timeout, :infinity)
-    call_transaction(instance_key, {:batch_get_row, encoded_request}, request_timeout)
+    Row.remote_batch_get_row(Config.get(instance_key), encoded_request)
   end
 
-  def batch_write_row(instance_key, var_batch_write_row, options \\ [transaction_id: nil, request_timeout: :infinity])
-  def batch_write_row(instance_key, var_batch_write_row, request_timeout)
-    when is_list(var_batch_write_row) and request_timeout == :infinity
-    when is_list(var_batch_write_row) and is_integer(request_timeout) do
-    encoded_request = Row.request_to_batch_write_row(var_batch_write_row, nil)
-    call_transaction(instance_key, {:batch_write_row, encoded_request}, request_timeout)
-  end
-  def batch_write_row(instance_key, var_batch_write_row, options)
+  def batch_write_row(instance_key, var_batch_write_row, options \\ [transaction_id: nil]) 
     when is_map(var_batch_write_row) and is_list(options)
     when is_list(var_batch_write_row) and is_list(options) do
-    request_timeout = Keyword.get(options, :request_timeout, :infinity)
     transaction_id = Keyword.get(options, :transaction_id, nil)
     encoded_request = Row.request_to_batch_write_row(var_batch_write_row, transaction_id)
-    call_transaction(instance_key, {:batch_write_row, encoded_request}, request_timeout)
+    Row.remote_batch_write_row(Config.get(instance_key), encoded_request)
   end
 
-  def create_search_index(instance_key, var_create_search_index, options \\ [request_timeout: :infinity]) do
+  def create_search_index(instance_key, var_create_search_index) do
     encoded_request = Search.request_to_create_search_index(var_create_search_index)
-    request_timeout = Keyword.get(options, :request_timeout, :infinity)
-    call_transaction(instance_key, {:create_search_index, encoded_request}, request_timeout)
+    Search.remote_create_search_index(Config.get(instance_key), encoded_request)
   end
 
-  def search(instance_key, var_search_request, options \\ [request_timeout: :infinity]) do
+  def search(instance_key, var_search_request) do
     encoded_request = Search.request_to_search(var_search_request)
-    request_timeout = Keyword.get(options, :request_timeout, :infinity)
-    call_transaction(instance_key, {:search, encoded_request}, request_timeout)
+    case Search.remote_search(Config.get(instance_key), encoded_request) do
+      {:ok, search_result_response} ->
+        {:ok, %{search_result_response | rows: decode_rows(search_result_response.rows)}}
+      error_result ->
+        error_result
+    end
   end
 
-  def delete_search_index(instance_key, var_delete_search_index, options \\ [request_timeout: @request_timeout]) do
+  def delete_search_index(instance_key, var_delete_search_index) do
     encoded_request = Search.request_to_delete_search_index(var_delete_search_index)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:delete_search_index, encoded_request}, request_timeout)
+    Search.remote_delete_search_index(Config.get(instance_key), encoded_request)
   end
 
-  def list_search_index(instance_key, table_name, options \\ [request_timeout: @request_timeout]) do
+  def list_search_index(instance_key, table_name) do
     encoded_request = Search.request_to_list_search_index(table_name)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:list_search_index, encoded_request}, request_timeout)
+    Search.remote_list_search_index(Config.get(instance_key), encoded_request)
   end
 
-  def describe_search_index(instance_key, var_describe_search_index, options \\ [request_timeout: @request_timeout]) do
+  def describe_search_index(instance_key, var_describe_search_index) do
     encoded_request = Search.request_to_describe_search_index(var_describe_search_index)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:describe_search_index, encoded_request}, request_timeout)
+    Search.remote_describe_search_index(Config.get(instance_key), encoded_request)
   end
 
-  def start_local_transaction(instance_key, var_start_local_transaction, options \\ [request_timeout: @request_timeout]) do
+  def start_local_transaction(instance_key, var_start_local_transaction) do
     encoded_request = Transaction.request_to_start_local_transaction(var_start_local_transaction)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:start_local_transaction, encoded_request}, request_timeout)
+    Transaction.remote_start_local_transaction(Config.get(instance_key), encoded_request)
   end
 
-  def commit_transaction(instance_key, transaction_id, options \\ [request_timeout: @request_timeout]) do
+  def commit_transaction(instance_key, transaction_id) do
     encoded_request = Transaction.request_to_commit_transaction(transaction_id)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:commit_transaction, encoded_request}, request_timeout)
+    Transaction.remote_commit_transaction(Config.get(instance_key), encoded_request)
   end
 
-  def abort_transaction(instance_key, transaction_id, options \\ [request_timeout: @request_timeout]) do
+  def abort_transaction(instance_key, transaction_id) do
     encoded_request = Transaction.request_to_abort_transaction(transaction_id)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:abort_transaction, encoded_request}, request_timeout)
+    Transaction.remote_abort_transaction(Config.get(instance_key), encoded_request)
   end
 
   def create_tunnel(instance_key, options) do
     encoded_request = Tunnel.request_to_create_tunnel(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:create_tunnel, encoded_request}, request_timeout)
+    Tunnel.remote_create_tunnel(Config.get(instance_key), encoded_request)
   end
 
   def delete_tunnel(instance_key, options) do
     encoded_request = Tunnel.request_to_delete_tunnel(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:delete_tunnel, encoded_request}, request_timeout)
+    Tunnel.remote_delete_tunnel(Config.get(instance_key), encoded_request)
   end
 
-  def list_tunnel(instance_key, table_name, options \\ [request_timeout: @request_timeout]) do
+  def list_tunnel(instance_key, table_name) do
     encoded_request = Tunnel.request_to_list_tunnel(table_name)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:list_tunnel, encoded_request}, request_timeout)
+    Tunnel.remote_list_tunnel(Config.get(instance_key), encoded_request)
   end
 
   def describe_tunnel(instance_key, options) do
     encoded_request = Tunnel.request_to_describe_tunnel(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:describe_tunnel, encoded_request}, request_timeout)
+    Tunnel.remote_describe_tunnel(Config.get(instance_key), encoded_request)
   end
 
   def connect_tunnel(instance_key, options) do
     encoded_request = Tunnel.request_to_connect_tunnel(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:connect_tunnel, encoded_request}, request_timeout)
+    Tunnel.remote_connect_tunnel(Config.get(instance_key), encoded_request)
   end
 
   def heartbeat(instance_key, options) do
     encoded_request = Tunnel.request_to_heartbeat(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:heartbeat, encoded_request}, request_timeout)
+    Tunnel.remote_heartbeat(Config.get(instance_key), encoded_request)
   end
 
   def shutdown_tunnel(instance_key, options) do
     encoded_request = Tunnel.request_to_shutdown(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:shutdown, encoded_request}, request_timeout)
+    Tunnel.remote_shutdown(Config.get(instance_key), encoded_request)
   end
 
   def get_checkpoint(instance_key, options) do
     encoded_request = Tunnel.request_to_get_checkpoint(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:get_checkpoint, encoded_request}, request_timeout)
+    Tunnel.remote_get_checkpoint(Config.get(instance_key), encoded_request)
   end
 
   def read_records(instance_key, options) do
     encoded_request = Tunnel.request_to_readrecords(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:read_records, encoded_request}, request_timeout)
+    Tunnel.remote_readrecords(Config.get(instance_key), encoded_request)
   end
 
   def checkpoint(instance_key, options) do
     encoded_request = Tunnel.request_to_checkpoint(options)
-    request_timeout = Keyword.get(options, :request_timeout, @request_timeout)
-    call_transaction(instance_key, {:checkpoint, encoded_request}, request_timeout)
-  end
-
-  def handle_call({:create_table, request_body}, _from, state) do
-    result = Table.remote_create_table(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:list_table, request_body}, _from, state) do
-    result = Table.remote_list_table(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:delete_table, request_body}, _from, state) do
-    result = Table.remote_delete_table(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:update_table, request_body}, _from, state) do
-    result = Table.remote_update_table(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:describe_table, request_body}, _from, state) do
-    result = Table.remote_describe_table(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:put_row, request_body}, _from, state) do
-    result = Row.remote_put_row(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:get_row, request_body}, _from, state) do
-    result = Row.remote_get_row(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:update_row, request_body}, _from, state) do
-    result = Row.remote_update_row(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:delete_row, request_body}, _from, state) do
-    result = Row.remote_delete_row(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:get_range, request_body}, _from, state) do
-    result = remote_get_range(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:iterate_get_all_range, request_body, var_get_range}, _from, state) do
-    result = iterate_remote_get_range(state.instance, request_body, var_get_range, nil)
-    {:reply, result, state}
-  end
-  def handle_call({:batch_get_row, request_body}, _from, state) do
-    result = Row.remote_batch_get_row(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:batch_write_row, request_body}, _from, state) do
-    result = Row.remote_batch_write_row(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:create_search_index, request_body}, _from, state) do
-    result = Search.remote_create_search_index(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:search, request_body}, _from, state) do
-    result = Search.remote_search(state.instance, request_body)
-    prepared =
-      case result do
-        {:ok, search_result_response} ->
-          {:ok, %{search_result_response | rows: decode_rows(search_result_response.rows)}}
-        _ ->
-          result
-      end
-    {:reply, prepared, state}
-  end
-  def handle_call({:delete_search_index, request_body}, _from, state) do
-    result = Search.remote_delete_search_index(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:list_search_index, request_body}, _from, state) do
-    result = Search.remote_list_search_index(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:describe_search_index, request_body}, _from, state) do
-    result = Search.remote_describe_search_index(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:start_local_transaction, request_body}, _from, state) do
-    result = Transaction.remote_start_local_transaction(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:commit_transaction, request_body}, _from, state) do
-    result = Transaction.remote_commit_transaction(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:abort_transaction, request_body}, _from, state) do
-    result = Transaction.remote_abort_transaction(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:create_tunnel, request_body}, _from, state) do
-    result = Tunnel.remote_create_tunnel(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:delete_tunnel, request_body}, _from, state) do
-    result = Tunnel.remote_delete_tunnel(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:list_tunnel, request_body}, _from, state) do
-    result = Tunnel.remote_list_tunnel(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:describe_tunnel, request_body}, _from, state) do
-    result = Tunnel.remote_describe_tunnel(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:connect_tunnel, request_body}, _from, state) do
-    result = Tunnel.remote_connect_tunnel(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:heartbeat, request_body}, _from, state) do
-    result = Tunnel.remote_heartbeat(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:shutdown, request_body}, _from, state) do
-    result = Tunnel.remote_shutdown(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:get_checkpoint, request_body}, _from, state) do
-    result = Tunnel.remote_get_checkpoint(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:read_records, request_body}, _from, state) do
-    result = Tunnel.remote_readrecords(state.instance, request_body)
-    {:reply, result, state}
-  end
-  def handle_call({:checkpoint, request_body}, _from, state) do
-    result = Tunnel.remote_checkpoint(state.instance, request_body)
-    {:reply, result, state}
-  end
-
-  defp call_transaction(instance_key, request, request_timeout) do
-    :poolboy.transaction(
-      instance_key,
-      (fn(worker) -> 
-        try do
-          case GenServer.call(worker, request, request_timeout) do
-            {:error, :timeout} ->
-              call_transaction(instance_key, request, request_timeout)
-            result ->
-              result
-          end
-        catch
-          :exit, {:timeout, _} ->
-            {request_operation, _request_body} = request
-            error(fn ->
-              [
-                "** ExAliyunOts occur timeout error when call ",
-                inspect(request_operation),
-                ", will retry it."
-              ]
-            end)
-            call_transaction(instance_key, request, request_timeout)
-          error ->
-            error(fn ->
-              [
-                "** ExAliyunOts occur an unexpected error: ",
-                inspect(error)
-              ]
-            end)
-            error
-        end
-      end),
-      :infinity
-    )
+    Tunnel.remote_checkpoint(Config.get(instance_key), encoded_request)
   end
 
   defp remote_get_range(instance, request_body) do
