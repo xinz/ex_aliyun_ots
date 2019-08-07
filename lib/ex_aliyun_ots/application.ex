@@ -11,11 +11,10 @@ defmodule ExAliyunOts.Application do
 
   def start(_type, _args) do
 
-    instance_keys = Application.get_env(@app, :instances, [])
-
-    enable_tunnel? = Application.get_env(@app, :enable_tunnel?, false)
-
-    children = child_spec(enable_tunnel?, instance_keys)
+    children = child_spec(
+      Application.get_env(@app, :enable_tunnel?, false),
+      Application.get_env(@app, :instances, [])
+    )
 
     Supervisor.start_link(children, [strategy: :one_for_one])
   end
