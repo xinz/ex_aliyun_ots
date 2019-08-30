@@ -613,7 +613,7 @@ defmodule ExAliyunOts.Mixin do
     quote do
       ast_expr = unquote(Macro.escape(filter_expr))
       context_binding = binding()
-      expressions_to_filter(ast_expr, context_binding)
+      ExAliyunOts.Mixin.expressions_to_filter(ast_expr, context_binding)
     end
   end
 
@@ -623,10 +623,10 @@ defmodule ExAliyunOts.Mixin do
   end
   defmacro condition(existence, filter_expr) do
     quote do
-      condition = map_condition(unquote(existence))
+      condition = ExAliyunOts.Mixin.map_condition(unquote(existence))
       ast_expr = unquote(Macro.escape(filter_expr))
       context_binding = binding()
-      column_condition = expressions_to_filter(ast_expr, context_binding)
+      column_condition = ExAliyunOts.Mixin.expressions_to_filter(ast_expr, context_binding)
       %{condition | column_condition: column_condition}
     end
   end
@@ -711,7 +711,7 @@ defmodule ExAliyunOts.Mixin do
       comparator: comparator,
       column_name: column_name,
       column_value: map_filter_column_value(column_value, binding),
-    } 
+    }
     filter_with_options = map_options(filter, options)
     %Var.Filter{
       filter_type: FilterType.single_column,
