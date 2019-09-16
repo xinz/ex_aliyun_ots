@@ -5,6 +5,8 @@
 
 Aliyun TableStore SDK for Elixir/Erlang
 
+> Tablestore is a NoSQL database service built on Alibaba Cloud’s Apsara distributed operating system that can store and access large volumes of structured data in real time.
+
 ## Installation
 
 ```elixir
@@ -255,7 +257,9 @@ defmodule Sample do
   #
   # 支持按条件过滤查询（通过使用`filter`操作）
   # 更便于理解的表达式, ">"、"<"、"=="、"and"、"or"、"()"
-  # 通过[ignore_if_missing: true]的语法，设定为true时，表示当匹配条件不满足时进行忽略该匹配逻辑；设定为false时，表示该匹配条件必须满足，否则查询结果将返回没有可匹配的结果，
+  # 针对不存在的属性列，可通过[ignore_if_missing: true]的语法进行条件过滤：
+  #    当针对某一不存在的属性列同时又设定为ignore_if_missing: true进行条件过滤，将在返回的查询结果中忽略该这一匹配分支；
+  #    当针对某一已存在的属性列，将不适用使用`ignore_if_missing: true|false`的情况，已提供的匹配条件将始终影响返回的结果，如果查询条件不满足，将不会有匹配的返回结果。
   # 通过[latest_version_only: true]的语法，如果为true，则表示只检测最新版本的值是否满足条件；如果是false，则会检测所有版本的值是否满足条件
   #
   # 可通过`filter`支持属性列上的分页读取操作（通过使用`pagination`操作），主要用于宽行读取
@@ -817,6 +821,13 @@ defmodule SequenceSample do
 
 end
 ```
+
+## References
+
+Alibaba Tablestore product official references:
+
+* [English document](https://www.alibabacloud.com/help/doc-detail/27280.htm)
+* [中文文档](https://help.aliyun.com/document_detail/27280.html)
 
 ## License
 
