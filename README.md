@@ -12,7 +12,7 @@ Aliyun TableStore SDK for Elixir/Erlang
 ```elixir
 def deps do
   [
-    {:ex_aliyun_ots, "~> 0.3"}
+    {:ex_aliyun_ots, "~> 0.4"}
   ]
 end
 ```
