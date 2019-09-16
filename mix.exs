@@ -4,8 +4,8 @@ defmodule ExAliyunOts.Mixfile do
   def project do
     [
       app: :ex_aliyun_ots,
-      version: "0.3.3",
-      elixir: "~> 1.5",
+      version: "0.4.0",
+      elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env == :prod,
       description: description(),
@@ -31,7 +31,6 @@ defmodule ExAliyunOts.Mixfile do
     [
       {:exprotobuf, "~> 1.2"},
       {:timex, "~> 3.3"},
-      {:poolboy, "~> 1.5"},
       {:retry, "~> 0.11.2"},
       {:tesla, "~> 1.2"},
       {:gen_state_machine, "~> 2.0"},

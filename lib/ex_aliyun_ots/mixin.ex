@@ -30,24 +30,24 @@ defmodule ExAliyunOts.Mixin do
         execute_create_table(instance_key, table, pk_keys, options)
       end
 
-      def delete_table(instance_key, table, options \\ Keyword.new()) do
-        execute_delete_table(instance_key, table, options)
+      def delete_table(instance_key, table) do
+        execute_delete_table(instance_key, table)
       end
 
-      def list_table(instance_key, options \\ Keyword.new()) do
-        execute_list_table(instance_key, options)
+      def list_table(instance_key) do
+        execute_list_table(instance_key)
       end
 
       def update_table(instance_key, table, options \\ Keyword.new()) do
         execute_update_table(instance_key, table, options)
       end
 
-      def describe_table(instance_key, table, options \\ Keyword.new()) do
-        execute_describe_table(instance_key, table, options)
+      def describe_table(instance_key, table) do
+        execute_describe_table(instance_key, table)
       end
 
-      def batch_get(instance_key, get_requests, options \\ Keyword.new()) do
-        execute_batch_get(instance_key, get_requests, options)
+      def batch_get(instance_key, get_requests) do
+        execute_batch_get(instance_key, get_requests)
       end
 
       def batch_write(instance_key, write_requests, options \\ Keyword.new()) do
@@ -102,28 +102,28 @@ defmodule ExAliyunOts.Mixin do
         execute_search(instance_key, table, index_name, options)
       end
 
-      def list_search_index(instance_key, table, options \\ Keyword.new()) do
-        execute_list_search_index(instance_key, table, options)
+      def list_search_index(instance_key, table) do
+        execute_list_search_index(instance_key, table)
       end
 
-      def delete_search_index(instance_key, table, index_name, options \\ Keyword.new()) do
-        execute_delete_search_index(instance_key, table, index_name, options)
+      def delete_search_index(instance_key, table, index_name) do
+        execute_delete_search_index(instance_key, table, index_name)
       end
 
-      def describe_search_index(instance_key, table, index_name, options \\ Keyword.new()) do
-        execute_describe_search_index(instance_key, table, index_name, options)
+      def describe_search_index(instance_key, table, index_name) do
+        execute_describe_search_index(instance_key, table, index_name)
       end
 
-      def start_local_transaction(instance_key, table, partition_key, options \\ Keyword.new()) do
-        execute_start_local_transaction(instance_key, table, partition_key, options)
+      def start_local_transaction(instance_key, table, partition_key) do
+        execute_start_local_transaction(instance_key, table, partition_key)
       end
 
-      def commit_transaction(instance_key, transaction_id, options \\ Keyword.new()) do
-        execute_commit_transaction(instance_key, transaction_id, options)
+      def commit_transaction(instance_key, transaction_id) do
+        execute_commit_transaction(instance_key, transaction_id)
       end
 
-      def abort_transaction(instance_key, transaction_id, options \\ Keyword.new()) do
-        execute_abort_transaction(instance_key, transaction_id, options)
+      def abort_transaction(instance_key, transaction_id) do
+        execute_abort_transaction(instance_key, transaction_id)
       end
 
     end
@@ -135,15 +135,15 @@ defmodule ExAliyunOts.Mixin do
         primary_keys: pk_keys
     }
     prepared_var = map_options(var_create_table, options)
-    Client.create_table(instance_key, prepared_var, options)
+    Client.create_table(instance_key, prepared_var)
   end
 
-  def execute_delete_table(instance_key, table, options) do
-    Client.delete_table(instance_key, table, options)
+  def execute_delete_table(instance_key, table) do
+    Client.delete_table(instance_key, table)
   end
 
-  def execute_list_table(instance_key, options) do
-    Client.list_table(instance_key, options)
+  def execute_list_table(instance_key) do
+    Client.list_table(instance_key)
   end
 
   def execute_update_table(instance_key, table, options) do
@@ -151,15 +151,15 @@ defmodule ExAliyunOts.Mixin do
       table_name: table
     }
     prepared_var = map_options(var_update_table, options)
-    Client.update_table(instance_key, prepared_var, options)
+    Client.update_table(instance_key, prepared_var)
   end
 
-  def execute_describe_table(instance_key, table, options) do
-    Client.describe_table(instance_key, table, options)
+  def execute_describe_table(instance_key, table) do
+    Client.describe_table(instance_key, table)
   end
 
-  def execute_batch_get(instance_key, get_requests, options) do
-    Client.batch_get_row(instance_key, get_requests, options)
+  def execute_batch_get(instance_key, get_requests) do
+    Client.batch_get_row(instance_key, get_requests)
   end
 
   def execute_batch_write(instance_key, write_requests, options) when is_list(write_requests) do
@@ -185,7 +185,7 @@ defmodule ExAliyunOts.Mixin do
       primary_keys: pk_keys
     }
     prepared_var = map_options(var_get_row, options)
-    Client.get_row(instance_key, prepared_var, options)
+    Client.get_row(instance_key, prepared_var)
   end
 
   def execute_get(table, pk_keys, options) do
@@ -203,7 +203,7 @@ defmodule ExAliyunOts.Mixin do
       attribute_columns: attrs,
     }
     prepared_var = map_options(var_put_row, options)
-    Client.put_row(instance_key, prepared_var, options)
+    Client.put_row(instance_key, prepared_var)
   end
 
   def execute_update_row(instance_key, table, pk_keys, options) do
@@ -216,7 +216,7 @@ defmodule ExAliyunOts.Mixin do
       |> map_options(options)
       |> Map.put(:updates, map_updates(options))
     
-    Client.update_row(instance_key, prepared_var, options)
+    Client.update_row(instance_key, prepared_var)
   end
 
   def execute_delete_row(instance_key, table, pk_keys, options) do
@@ -225,7 +225,7 @@ defmodule ExAliyunOts.Mixin do
       primary_keys: pk_keys
     }
     prepared_var = map_options(var_delete_row, options)
-    Client.delete_row(instance_key, prepared_var, options)
+    Client.delete_row(instance_key, prepared_var)
   end
 
   def execute_write_put(pk_keys, attrs, options) do
@@ -261,7 +261,7 @@ defmodule ExAliyunOts.Mixin do
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
     prepared_var = map_options(var_get_range, options)
-    Client.get_range(instance_key, prepared_var, nil, options)
+    Client.get_range(instance_key, prepared_var, nil)
   end
   def execute_get_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_binary(inclusive_start_primary_keys) do
     var_get_range = %Var.GetRange{
@@ -269,7 +269,7 @@ defmodule ExAliyunOts.Mixin do
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
     prepared_var = map_options(var_get_range, options)
-    Client.get_range(instance_key, prepared_var, inclusive_start_primary_keys, options)
+    Client.get_range(instance_key, prepared_var, inclusive_start_primary_keys)
   end
 
   def execute_iterate_all_range(instance_key, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) do
@@ -279,7 +279,7 @@ defmodule ExAliyunOts.Mixin do
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
     prepared_var = map_options(var_iterate_all_range, options)
-    Client.iterate_get_all_range(instance_key, prepared_var, options)
+    Client.iterate_get_all_range(instance_key, prepared_var)
   end
 
   def execute_pagination(offset, limit) do
@@ -295,43 +295,43 @@ defmodule ExAliyunOts.Mixin do
       index_name: index_name
     }
     prepared_var = map_search_options(var_search_request, options)
-    Client.search(instance_key, prepared_var, options)
+    Client.search(instance_key, prepared_var)
   end
 
-  def execute_list_search_index(instance_key, table, options) do
-    Client.list_search_index(instance_key, table, options)
+  def execute_list_search_index(instance_key, table) do
+    Client.list_search_index(instance_key, table)
   end
 
-  def execute_delete_search_index(instance_key, table, index_name, options) do
+  def execute_delete_search_index(instance_key, table, index_name) do
     var_delete_request = %Var.Search.DeleteSearchIndexRequest{
       table_name: table,
       index_name: index_name
     }
-    Client.delete_search_index(instance_key, var_delete_request, options)
+    Client.delete_search_index(instance_key, var_delete_request)
   end
 
-  def execute_describe_search_index(instance_key, table, index_name, options) do
+  def execute_describe_search_index(instance_key, table, index_name) do
     var_describe_request = %Var.Search.DescribeSearchIndexRequest{
       table_name: table,
       index_name: index_name
     }
-    Client.describe_search_index(instance_key, var_describe_request, options)
+    Client.describe_search_index(instance_key, var_describe_request)
   end
 
-  def execute_start_local_transaction(instance_key, table, partition_key, options) do
+  def execute_start_local_transaction(instance_key, table, partition_key) do
     var_start_local_transaction = %Var.Transaction.StartLocalTransactionRequest{
       table_name: table,
       partition_key: partition_key
     }
-    Client.start_local_transaction(instance_key, var_start_local_transaction, options)
+    Client.start_local_transaction(instance_key, var_start_local_transaction)
   end
 
-  def execute_commit_transaction(instance_key, transaction_id, options) do
-    Client.commit_transaction(instance_key, transaction_id, options)
+  def execute_commit_transaction(instance_key, transaction_id) do
+    Client.commit_transaction(instance_key, transaction_id)
   end
 
-  def execute_abort_transaction(instance_key, transaction_id, options) do
-    Client.abort_transaction(instance_key, transaction_id, options)
+  def execute_abort_transaction(instance_key, transaction_id) do
+    Client.abort_transaction(instance_key, transaction_id)
   end
 
   defp map_options(var, nil) do
@@ -613,7 +613,7 @@ defmodule ExAliyunOts.Mixin do
     quote do
       ast_expr = unquote(Macro.escape(filter_expr))
       context_binding = binding()
-      expressions_to_filter(ast_expr, context_binding)
+      ExAliyunOts.Mixin.expressions_to_filter(ast_expr, context_binding)
     end
   end
 
@@ -623,10 +623,10 @@ defmodule ExAliyunOts.Mixin do
   end
   defmacro condition(existence, filter_expr) do
     quote do
-      condition = map_condition(unquote(existence))
+      condition = ExAliyunOts.Mixin.map_condition(unquote(existence))
       ast_expr = unquote(Macro.escape(filter_expr))
       context_binding = binding()
-      column_condition = expressions_to_filter(ast_expr, context_binding)
+      column_condition = ExAliyunOts.Mixin.expressions_to_filter(ast_expr, context_binding)
       %{condition | column_condition: column_condition}
     end
   end
@@ -711,7 +711,7 @@ defmodule ExAliyunOts.Mixin do
       comparator: comparator,
       column_name: column_name,
       column_value: map_filter_column_value(column_value, binding),
-    } 
+    }
     filter_with_options = map_options(filter, options)
     %Var.Filter{
       filter_type: FilterType.single_column,
