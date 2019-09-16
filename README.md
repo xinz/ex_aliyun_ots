@@ -37,6 +37,10 @@ config :ex_aliyun_ots,
 * `debug`，配置是否打开debug logger，默认值为false
 * `enable_tunnel?`，配置是否在`Application`启动时也加载`Tunnel`所需要的`Supervisor`及`Registry`，默认值为false
 
+## Ecto Adapter
+
+我们根据Ecto的Adapter规范要求实现[Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore)，使用它可集成更加统一、灵活的方式处理数据。
+
 ## Supported Functions
 
 * 表格存储的表操作
