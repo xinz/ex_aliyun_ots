@@ -31,8 +31,7 @@ defmodule ExAliyunOts.Mixfile do
     [
       {:exprotobuf, "~> 1.2"},
       {:timex, "~> 3.3"},
-      {:retry, "~> 0.11.2"},
-      {:tesla, "~> 1.2"},
+      {:tesla, "~> 1.3"},
       {:gen_state_machine, "~> 2.0"},
       {:ex_doc, "~> 0.20", only: :dev, runtime: false},
       {:credo, "~> 1.0", only: :dev, runtime: false},
