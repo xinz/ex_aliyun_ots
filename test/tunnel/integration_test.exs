@@ -31,7 +31,6 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
   
     def create_table(table_name) do
       create_table table_name, [{"id", PKType.integer}]
-      Process.sleep(3_000)
     end
 
     def write(number \\ Integration.test_rows) do
@@ -106,8 +105,6 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
     end)
 
     Logger.info ">>>> self(): #{inspect self()}"
-
-    Process.sleep(6_000)
 
     tunnels = %{
       @tunnel_name1 => [tunnel_id: tunnel_id1],

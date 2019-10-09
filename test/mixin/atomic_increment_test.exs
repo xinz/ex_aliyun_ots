@@ -15,8 +15,6 @@ defmodule ExAliyunOts.MixinTest.AtomicIncrement do
 
     assert create_table_result == :ok
 
-    Process.sleep(3_000)
-
     {:ok, response} = 
       update_row table_name, [{"key1", 1}],
         put: [{"attr1", "put_attr1"}],

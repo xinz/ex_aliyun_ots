@@ -70,14 +70,14 @@ defmodule ExAliyunOts.PlainBuffer do
     # validation
     for {key, value} <- attribute_columns do
       if key not in OperationType.updates_supported() do
-        raise ExAliyunOts.Error,
+        raise ExAliyunOts.RuntimeError,
               "Unsupported update type: #{inspect(key)}, in attribute_columns: #{
                 inspect(attribute_columns)
               }"
       end
 
       if not is_list(value) do
-        raise ExAliyunOts.Error,
+        raise ExAliyunOts.RuntimeError,
               "Unsupported update value: #{inspect(value)} to key: #{inspect(key)}, expect value as list"
       end
     end
@@ -149,7 +149,7 @@ defmodule ExAliyunOts.PlainBuffer do
           process_column(acc, column_name, column_value)
 
         _ ->
-          raise ExAliyunOts.Error, "Invalid column: #{inspect(column)} is not a tuple"
+          raise ExAliyunOts.RuntimeError, "Invalid column: #{inspect(column)} is not a tuple"
       end
     end)
   end
@@ -191,7 +191,7 @@ defmodule ExAliyunOts.PlainBuffer do
     end)
   end
   defp primary_key_column(_, primary_keys) do
-    raise ExAliyunOts.Error, "Invalid primary_keys: #{inspect(primary_keys)}"
+    raise ExAliyunOts.RuntimeError, "Invalid primary_keys: #{inspect(primary_keys)}"
   end
 
   defp process_cell_name({buffer, cell_checksum}, name) do
@@ -271,7 +271,7 @@ defmodule ExAliyunOts.PlainBuffer do
         {updated_buffer, cell_checksum}
 
       true ->
-        raise ExAliyunOts.Error, "Unsupported primary key for value: #{inspect(value)}"
+        raise ExAliyunOts.RuntimeError, "Unsupported primary key for value: #{inspect(value)}"
     end
   end
 
@@ -382,7 +382,7 @@ defmodule ExAliyunOts.PlainBuffer do
     {updated_buffer, cell_checksum}
   end
   defp process_column_value_with_checksum({_buffer, _cell_checksum}, value) do
-    raise ExAliyunOts.Error, "Unsupported column for value: #{inspect(value)}"
+    raise ExAliyunOts.RuntimeError, "Unsupported column for value: #{inspect(value)}"
   end
 
   defp process_column_value(value) when is_boolean(value) do
@@ -404,7 +404,7 @@ defmodule ExAliyunOts.PlainBuffer do
     [byte_to_binary(@vt_double), value_to_binary]
   end
   defp process_column_value(value) do
-    raise ExAliyunOts.Error, "Unsupported column for value: #{inspect(value)}"
+    raise ExAliyunOts.RuntimeError, "Unsupported column for value: #{inspect(value)}"
   end
 
   defp process_update_column({buffer, row_checksum}, update_type, column) when is_bitstring(column) do
@@ -417,7 +417,7 @@ defmodule ExAliyunOts.PlainBuffer do
     do_process_update_column({buffer, row_checksum}, update_type, column_name, {column_value, timestamp})
   end
   defp process_update_column({_buffer, _row_checksum}, _update_type, column) do
-    raise ExAliyunOts.Error, "Unsupported column when update grouping columns: #{inspect(column)}"
+    raise ExAliyunOts.RuntimeError, "Unsupported column when update grouping columns: #{inspect(column)}"
   end
 
   defp do_process_update_column(
@@ -560,7 +560,7 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp deserialize_filter_header(invalid_row) do
-    raise ExAliyunOts.Error, "Invalid row to deserialize, #{inspect(invalid_row)}"
+    raise ExAliyunOts.RuntimeError, "Invalid row to deserialize, #{inspect(invalid_row)}"
   end
 
   defp deserialize_process_row(row_values) do
@@ -679,7 +679,7 @@ defmodule ExAliyunOts.PlainBuffer do
             primary_keys_binary_rest
 
           _ ->
-            raise ExAliyunOts.Error,
+            raise ExAliyunOts.RuntimeError,
                   "Unexcepted row data when processing primary_keys: #{
                     inspect(primary_keys_binary, limit: :infinity)
                   }"
@@ -814,7 +814,7 @@ defmodule ExAliyunOts.PlainBuffer do
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
            <<@vt_integer::integer>>, (<<rest::binary>>)>>
        ) do
-    raise ExAliyunOts.Error, "Unexcepted integer value as primary value: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Unexcepted integer value as primary value: #{inspect(rest)}"
   end
 
   defp deserialize_process_primary_key_value(
@@ -838,13 +838,13 @@ defmodule ExAliyunOts.PlainBuffer do
          <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
            (<<rest::binary>>)>>
        ) do
-    raise ExAliyunOts.Error, "Unexcepted string value as primary value: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Unexcepted string value as primary value: #{inspect(rest)}"
   end
 
   defp deserialize_process_primary_key_value(
          <<(<<@tag_cell_value::integer>>), (<<rest::binary>>)>>
        ) do
-    raise ExAliyunOts.Error, "Unexcepted value as primary value: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Unexcepted value as primary value: #{inspect(rest)}"
   end
 
   defp deserialize_process_columns("", result) do
@@ -953,7 +953,7 @@ defmodule ExAliyunOts.PlainBuffer do
          <<(<<@tag_cell_value::integer>>), <<2::little-integer-size(32)>>,
            <<@vt_boolean::integer>>, (<<rest::binary>>)>>
        ) do
-    raise ExAliyunOts.Error, "Invalid boolean value as: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Invalid boolean value as: #{inspect(rest)}"
   end
 
   defp deserialize_process_column_value_with_checksum(
@@ -976,7 +976,7 @@ defmodule ExAliyunOts.PlainBuffer do
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
            <<@vt_integer::integer>>, (<<rest::binary>>)>>
        ) do
-    raise ExAliyunOts.Error, "Invalid integer value as: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Invalid integer value as: #{inspect(rest)}"
   end
 
   defp deserialize_process_column_value_with_checksum(
@@ -998,7 +998,7 @@ defmodule ExAliyunOts.PlainBuffer do
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
            <<@vt_double::integer>>, (<<rest::binary>>)>>
        ) do
-    raise ExAliyunOts.Error, "Invalid float value as: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Invalid float value as: #{inspect(rest)}"
   end
 
   defp deserialize_process_column_value_with_checksum(
@@ -1023,7 +1023,7 @@ defmodule ExAliyunOts.PlainBuffer do
          <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
            <<@vt_string::integer>>, rest::binary>>
        ) do
-    raise ExAliyunOts.Error, "Unexcepted string value as: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Unexcepted string value as: #{inspect(rest)}"
   end
 
   defp deserialize_process_column_value_with_checksum(
@@ -1048,13 +1048,13 @@ defmodule ExAliyunOts.PlainBuffer do
          <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
            <<@vt_blob::integer>>, rest::binary>>
        ) do
-    raise ExAliyunOts.Error, "Unexcepted string value as: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Unexcepted string value as: #{inspect(rest)}"
   end
 
   defp deserialize_process_column_value_with_checksum(
          <<(<<@tag_cell_value::integer>>), rest::binary>>
        ) do
-    raise ExAliyunOts.Error, "Unexcepted value as: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError, "Unexcepted value as: #{inspect(rest)}"
   end
 
   def calculate_tag_cell_index(values) do

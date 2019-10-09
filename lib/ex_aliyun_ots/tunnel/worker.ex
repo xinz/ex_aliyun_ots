@@ -100,7 +100,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
             {:stop, {:shutdown, :start_error}, state}
         end
       false ->
-        raise ExAliyunOts.Error, "Tunnel worker #{inspect(worker_pid)} has already been exitsed."
+        raise ExAliyunOts.RuntimeError, "Tunnel worker #{inspect(worker_pid)} has already been exitsed."
     end
   end
 
@@ -177,19 +177,19 @@ defmodule ExAliyunOts.Tunnel.Worker do
     tunnel_id = opts[:tunnel_id]
 
     if heartbeat_interval < @min_heartbeat_interval do
-      raise ExAliyunOts.Error,
+      raise ExAliyunOts.RuntimeError,
             "Invalid parameter, heartbeat_interval should be >= #{@min_heartbeat_interval} seconds."
     end
 
     if heartbeat_timeout <= heartbeat_interval do
-      raise ExAliyunOts.Error,
+      raise ExAliyunOts.RuntimeError,
             "Invalid parameter, heartbeat_timeout should be > heartbeat_interval(#{
               heartbeat_interval
             } seconds)."
     end
 
     if tunnel_id == nil do
-      raise ExAliyunOts.Error, "Invalid parameter, tunnel_id is required"
+      raise ExAliyunOts.RuntimeError, "Invalid parameter, tunnel_id is required"
     end
 
     [
@@ -213,7 +213,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     last_heartbeat_time = meta.last_heartbeat_time
 
     if DateTime.diff(now, last_heartbeat_time) > meta.heartbeat_timeout do
-      raise ExAliyunOts.Error,
+      raise ExAliyunOts.RuntimeError,
             "Tunnel client heartbeat timeout, last_heartbeat_time: #{inspect(last_heartbeat_time)}"
     end
 

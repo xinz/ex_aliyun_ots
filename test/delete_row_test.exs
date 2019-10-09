@@ -20,7 +20,6 @@ defmodule ExAliyunOtsTest.DeleteRow do
     }
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
-    Process.sleep(5_000)
   
     condition = %Var.Condition{
       row_existence: RowExistence.expect_not_exist
@@ -59,8 +58,8 @@ defmodule ExAliyunOtsTest.DeleteRow do
       condition: condition_exist
     }
     delete_row_result = ExAliyunOts.Client.delete_row(@instance_key, var_delete_row_not_exist)
-    assert {:error, err_message} = delete_row_result
-    assert String.contains?(err_message, "Condition check failed") == true
+    assert {:error, error} = delete_row_result
+    assert error.code == "OTSConditionCheckFail"
 
     # ignore the not existed case
     var_delete_row_not_exist = %ExAliyunOts.Var.DeleteRow{

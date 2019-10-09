@@ -26,9 +26,6 @@ defmodule ExAliyunOtsTest.Filter do
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
-    Logger.info "waiting for table created..."
-    Process.sleep(5_000)
-
     # test SingleColumnValueFilter
     # `ignore_if_missing`: false, if the filter is not matched/existed, we will get error message `OTSConditionCheckFailCondition check failed` and prevent the corresponding update.
     # `ignore_if_missing`: true, if the filter is not matched/existed, we will ignore this filter condition, and make the corresponding update continuing happened.
@@ -56,8 +53,8 @@ defmodule ExAliyunOtsTest.Filter do
       condition: condition,
       return_type: ReturnType.pk
     }
-    result = ExAliyunOts.Client.update_row(@instance_key, var_update_row)
-    assert result == {:error, "OTSConditionCheckFailCondition check failed."}
+    {:error, error} = ExAliyunOts.Client.update_row(@instance_key, var_update_row)
+    assert error.code == "OTSConditionCheckFail"
 
     id = "2"
     filter = %{filter | filter: %{filter.filter | ignore_if_missing: true}}

@@ -22,8 +22,6 @@ defmodule ExAliyunOtsTest.GetRange do
     result = Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
-    Process.sleep(3_000)
-
     condition = %Var.Condition{
       row_existence: RowExistence.ignore
     }

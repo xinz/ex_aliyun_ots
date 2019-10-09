@@ -42,11 +42,11 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
                 }"
               end)
 
-              raise ExAliyunOts.Error,
+              raise ExAliyunOts.RuntimeError,
                     "GetCheckpoint occur error: #{inspect(error)} while retry checkpoint."
           end
         else
-          raise ExAliyunOts.Error, "Checkpoint occur error_msg: #{inspect(error_msg)}."
+          raise ExAliyunOts.RuntimeError, "Checkpoint occur error_msg: #{inspect(error_msg)}."
         end
     end
   end

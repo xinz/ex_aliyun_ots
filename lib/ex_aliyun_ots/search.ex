@@ -183,7 +183,7 @@ defmodule ExAliyunOts.Client.Search do
     <<@variant_type_boolean, 0>>
   end
   defp term_to_bytes(term) do
-    raise ExAliyunOts.Error, "invalid type of term: #{inspect term}, please use string/integer/float/boolean."
+    raise ExAliyunOts.RuntimeError, "invalid type of term: #{inspect term}, please use string/integer/float/boolean."
   end
 
   defp iterate_all_field_schemas(var_field_schema) do
@@ -192,7 +192,7 @@ defmodule ExAliyunOts.Client.Search do
     size_sub_field_schemas = length(sub_field_schemas)
 
     if field_type == FieldType.nested() and (size_sub_field_schemas == 0 and size_sub_field_schemas > 25) do
-      raise ExAliyunOts.Error, "Invalid nested type field schema with : #{size_sub_field_schemas} sub field schemas, the valid range size of sub field schemas is [1, 25]"
+      raise ExAliyunOts.RuntimeError, "Invalid nested type field schema with : #{size_sub_field_schemas} sub field schemas, the valid range size of sub field schemas is [1, 25]"
     end
 
     proto_field_schema =
@@ -209,7 +209,7 @@ defmodule ExAliyunOts.Client.Search do
         prepared_sub_field_schemas =
           Enum.map(sub_field_schemas, fn sub_field_schema ->
             if sub_field_schema.field_type == FieldType.nested() do
-              raise ExAliyunOts.Error, "Mapping depth in the nested attribute column only supports one level, cannot nest the nested type of field schema as the sub field schemas"
+              raise ExAliyunOts.RuntimeError, "Mapping depth in the nested attribute column only supports one level, cannot nest the nested type of field schema as the sub field schemas"
             else
               iterate_all_field_schemas(sub_field_schema)
             end
@@ -244,7 +244,7 @@ defmodule ExAliyunOts.Client.Search do
 
   defp prepare_sorter(%Search.FieldSort{field_name: field_name, order: order}) do
     if order not in [SortOrder.asc(), SortOrder.desc()] do
-      raise ExAliyunOts.Error, "Invalid sort order: #{inspect(order)}"
+      raise ExAliyunOts.RuntimeError, "Invalid sort order: #{inspect(order)}"
     end
     Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order))
   end
@@ -348,9 +348,9 @@ defmodule ExAliyunOts.Client.Search do
     # if both of them are not nil, we should set "`from` <= `to`" as expected.
     cond do
       from == nil and to == nil ->
-        raise ExAliyunOts.Error, "No `from` or `to` specified for range query"
+        raise ExAliyunOts.RuntimeError, "No `from` or `to` specified for range query"
       from != nil and to != nil and from > to ->
-        raise ExAliyunOts.Error, "Require `from` value should be less than or equal to `to` value"
+        raise ExAliyunOts.RuntimeError, "Require `from` value should be less than or equal to `to` value"
       true ->
         :ok
     end
@@ -383,9 +383,9 @@ defmodule ExAliyunOts.Client.Search do
           minimum_should_match == nil ->
             1
           not is_integer(minimum_should_match) ->
-            raise ExAliyunOts.Error, "Invalid minimum_should_match: #{inspect minimum_should_match}, should be integer"
+            raise ExAliyunOts.RuntimeError, "Invalid minimum_should_match: #{inspect minimum_should_match}, should be integer"
           minimum_should_match > should_queries_size ->
-            raise ExAliyunOts.Error, "Invalid minimum_should_match: #{inspect minimum_should_match}, should be less than or equal to the size of should queries (size: #{inspect minimum_should_match})"
+            raise ExAliyunOts.RuntimeError, "Invalid minimum_should_match: #{inspect minimum_should_match}, should be less than or equal to the size of should queries (size: #{inspect minimum_should_match})"
           true ->
             minimum_should_match
         end
@@ -404,7 +404,7 @@ defmodule ExAliyunOts.Client.Search do
            query: query,
            score_mode: score_mode
          }) do
-    if score_mode not in valid_score_modes(), do: raise ExAliyunOts.Error, "Invalid score_mode: #{inspect score_mode}"
+    if score_mode not in valid_score_modes(), do: raise ExAliyunOts.RuntimeError, "Invalid score_mode: #{inspect score_mode}"
     proto_inner_query = prepare_query(query)
     proto_query = NestedQuery.new(path: path, query: proto_inner_query, score_mode: score_mode)
     Query.new(
@@ -422,7 +422,7 @@ defmodule ExAliyunOts.Client.Search do
     )
   end
   defp prepare_query(query) do
-    raise ExAliyunOts.Error, "Not supported query: #{inspect query}"
+    raise ExAliyunOts.RuntimeError, "Not supported query: #{inspect query}"
   end
 
   defp valid_score_modes() do

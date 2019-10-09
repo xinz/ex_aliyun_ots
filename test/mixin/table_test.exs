@@ -24,8 +24,6 @@ defmodule ExAliyunOts.MixinTest.Table do
 
     assert create_table_result == :ok
 
-    Process.sleep(30_000)
-
     {:ok, list_tables_result} = list_table()
 
     assert length(list_tables_result.table_names) > 0

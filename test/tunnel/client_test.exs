@@ -19,7 +19,6 @@ defmodule ExAliyunOtsTest.Tunnel do
 
     def create_table(table_name) do
       create_table table_name, [{"id", PKType.integer}]
-      Process.sleep(3_000)
     end
 
     def write(table_name, pk, attrs) do

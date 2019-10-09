@@ -15,15 +15,18 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   test "create table and then delete it" do
     cur_timestamp = Timex.to_unix(Timex.now())
     table_name = "test_table_tmp_#{cur_timestamp}"
+
     var_create_table = %Var.CreateTable{
       table_name: table_name,
       primary_keys: [{"partition_key", PKType.string}, {"default_id", PKType.integer, PKType.auto_increment}, {"order_id", PKType.string}],
       time_to_live: 86_400
     }
+
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
-    {:error, error_msg} = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
-    assert String.contains?(error_msg, "Requested table already exists") == true
+    {:error, error} = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
+
+    assert error.message == "Requested table already exists."
 
     result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
@@ -38,9 +41,6 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     }
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
-
-    Logger.info "waiting for table created..."
-    Process.sleep(5_000)
 
     partition_key = "c3be8617-10d7-422b-8f80-58603d1603d6"
     order_id = "order2"

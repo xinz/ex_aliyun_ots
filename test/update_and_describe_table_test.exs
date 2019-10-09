@@ -22,7 +22,6 @@ defmodule ExAliyunOtsTest.UpdateAndDescribeTable do
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
-    Process.sleep(30_000)
     stream = %Var.StreamSpec{
       is_enabled: true,
       expiration_time: 1

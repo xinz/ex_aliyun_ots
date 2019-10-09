@@ -5,11 +5,10 @@ defmodule ExAliyunOts.Sequence do
   require PKType
 
   use ExAliyunOts.Mixin
-  use Retry
 
   @primary_key_name "name"
+
   @value_column "value"
-  @retry_delay_max 3_000 # 3 second
 
   import ExAliyunOts.Logger, only: [info: 1, error: 1]
 
@@ -22,21 +21,14 @@ defmodule ExAliyunOts.Sequence do
   end
 
   def next_value(instance_name, var_get_seq_next) do
-    result = retry_while with: exponential_backoff() |> randomize() |> cap(@retry_delay_max) do
-      case generate_next_value(instance_name, var_get_seq_next) do
-        res = {:error, _error} ->
-          {:cont, res}
-        res ->
-          {:halt, res}
-      end
-    end
+    value = generate_next_value(instance_name, var_get_seq_next)
     info(fn ->
       [
-        "finally return next_value: ",
-        inspect(result)
+        "** ExAliyunOts.Sequence return next_value: ",
+        inspect(value)
       ]
     end)
-    result
+    value
   end
 
   def delete(instance_name, sequence_name) do
@@ -67,9 +59,9 @@ defmodule ExAliyunOts.Sequence do
   defp return_value({:error, error}) do
     error(fn ->
       [
-        "** ExAliyunOts: generate the next value when update occur error: ",
+        "** ExAliyunOts generate the next value when update occur error: ",
         inspect(error),
-        ", will retry it."
+        ", may retry it."
       ]
     end)
     {:error, error}

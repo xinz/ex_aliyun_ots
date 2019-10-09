@@ -95,7 +95,6 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
 
           if stream_channel_expired?(error_msg) do
             # The tunnel has a 7-day life cycle, if there's an active connect-read-check loop, the tunnel will not expire.
-            # raise ExAliyunOts.Error, "#{error_msg}. The current tunnel is expired, please renew one tunnel to use it."
             {:tunnel_expired, state}
           else
             {nil, state}

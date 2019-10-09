@@ -36,7 +36,7 @@ defmodule ExAliyunOts.Client.Table do
             PrimaryKeySchema.new(name: key_name, type: key_type, option: opt_auto_inc)
 
           _ ->
-            raise ExAliyunOts.Error, "Invalid primary_key #{inspect(primary_key)}"
+            raise ExAliyunOts.RuntimeError, "Invalid primary_key #{inspect(primary_key)}"
         end
       end)
 
@@ -179,7 +179,7 @@ defmodule ExAliyunOts.Client.Table do
   end
 
   defp throughput_to_cu(read, write) do
-    raise ExAliyunOts.Error,
+    raise ExAliyunOts.RuntimeError,
           "Invalid throughput setting, at least set an integer for read or write, but setting read: #{
             inspect(read)
           }, write: #{inspect(write)}"
@@ -210,7 +210,7 @@ defmodule ExAliyunOts.Client.Table do
   end
 
   defp put_stream_spec(_request, spec) do
-    raise ExAliyunOts.Error,
+    raise ExAliyunOts.RuntimeError,
           "Invalid stream_spec #{inspect(spec)}, is_enabled should be boolean and expiration_time should be an integer and in (1, 24)"
   end
 end

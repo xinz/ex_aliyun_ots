@@ -21,7 +21,6 @@ defmodule ExAliyunOtsTest.AtomicIncrement do
     }
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
-    Process.sleep(6_000)
 
     condition = %Var.Condition{
       row_existence: RowExistence.ignore

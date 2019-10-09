@@ -22,7 +22,7 @@ defmodule ExAliyunOts.Client.Row do
   def request_to_put_row(var_put_row) do
     %Var.Condition{row_existence: row_existence, column_condition: column_condition} = var_put_row.condition
     if row_existence not in RowExistence.supported do
-      raise ExAliyunOts.Error, "Invalid row_existence: #{inspect row_existence}"
+      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect row_existence}"
     end
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
@@ -97,7 +97,7 @@ defmodule ExAliyunOts.Client.Row do
     serialized_row = PlainBuffer.serialize_for_update_row(var_update_row.primary_keys, var_update_row.updates)
     %Var.Condition{row_existence: row_existence, column_condition: column_condition} = var_update_row.condition
     if row_existence not in RowExistence.supported do
-      raise ExAliyunOts.Error, "Invalid row_existence: #{inspect row_existence}"
+      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect row_existence}"
     end
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
@@ -131,7 +131,7 @@ defmodule ExAliyunOts.Client.Row do
     serialized_primary_keys = PlainBuffer.serialize_for_delete_row(var_delete_row.primary_keys)
     %Var.Condition{row_existence: row_existence, column_condition: column_condition} = var_delete_row.condition
     if row_existence not in RowExistence.supported do
-      raise ExAliyunOts.Error, "Invalid row_existence: #{inspect row_existence}"
+      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect row_existence}"
     end
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
@@ -252,13 +252,13 @@ defmodule ExAliyunOts.Client.Row do
       if is_list(primary_keys_query_group) do
         PlainBuffer.serialize_primary_keys(primary_keys_query_group)
       else
-        raise ExAliyunOts.Error, "Invalid primary_keys group #{inspect primary_keys_query_group}, expect it as list"
+        raise ExAliyunOts.RuntimeError, "Invalid primary_keys group #{inspect primary_keys_query_group}, expect it as list"
       end
     end, timeout: :infinity)
     |> Enum.map(fn({:ok, bytes_primary_keys}) -> bytes_primary_keys end)
   end
   defp pks_to_batch_get_row(primary_keys) do
-    raise ExAliyunOts.Error, "Invalid primary_keys #{inspect primary_keys}, expect it as list"
+    raise ExAliyunOts.RuntimeError, "Invalid primary_keys #{inspect primary_keys}, expect it as list"
   end
 
   def remote_batch_get_row(instance, request_body) do
@@ -309,7 +309,7 @@ defmodule ExAliyunOts.Client.Row do
 
   defp map_table_in_batch_write_row_request(var_batch_write_row) do
     rows = var_batch_write_row.rows
-    if length(rows) > @batch_write_limit_per_request, do: raise ExAliyunOts.Error, "The number of rows in BatchWriteRow exceeds the maximun #{@batch_write_limit_per_request} limit"
+    if length(rows) > @batch_write_limit_per_request, do: raise ExAliyunOts.RuntimeError, "The number of rows in BatchWriteRow exceeds the maximun #{@batch_write_limit_per_request} limit"
     stream = Task.async_stream(var_batch_write_row.rows, fn(var_row_in_request) ->
       do_request_to_batch_write_row(var_row_in_request)
     end, timeout: :infinity)
@@ -324,7 +324,7 @@ defmodule ExAliyunOts.Client.Row do
   defp do_request_to_batch_write_row(var_row_in_request) do
     %Var.Condition{row_existence: row_existence, column_condition: column_condition} = var_row_in_request.condition
     if row_existence not in RowExistence.supported do
-      raise ExAliyunOts.Error, "Invalid row_existence: #{inspect row_existence}"
+      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect row_existence}"
     end
     column_condition = filter_to_bytes(column_condition)
     proto_condition = Condition.new(row_existence: row_existence, column_condition: column_condition)
@@ -338,7 +338,7 @@ defmodule ExAliyunOts.Client.Row do
         OperationType.delete ->
           PlainBuffer.serialize_for_delete_row(var_row_in_request.primary_keys)
         _ ->
-          raise ExAliyunOts.Error, "Invalid OperationType: #{inspect type}, please ensure the operation type of BatchWriteRow as [UPDATE, PUT, DELETE]"
+          raise ExAliyunOts.RuntimeError, "Invalid OperationType: #{inspect type}, please ensure the operation type of BatchWriteRow as [UPDATE, PUT, DELETE]"
       end
 
     [type: var_row_in_request.type, row_change: serialized_row, condition: proto_condition]
@@ -392,7 +392,7 @@ defmodule ExAliyunOts.Client.Row do
     Filter.encode(Filter.new(type: filter_type, filter: encoded_filter))
   end
   defp filter_to_bytes(%Var.Filter{filter: invalid_filter}) do
-    raise ExAliyunOts.Error, "Not supported filter: #{inspect invalid_filter}"
+    raise ExAliyunOts.RuntimeError, "Not supported filter: #{inspect invalid_filter}"
   end
 
   defp filter_to_protobuf(%Var.Filter{filter: filter, filter_type: filter_type}, is_sub_filter \\ false) do
@@ -402,7 +402,7 @@ defmodule ExAliyunOts.Client.Row do
           Enum.map(filter.sub_filters, fn(sub_filter) ->
             filter_to_protobuf(sub_filter, true)
           end)
-        if prepared_sub_filters == [], do: raise ExAliyunOts.Error, "Invalid filter for CompositeColumnValueFilter: #{inspect filter}"
+        if prepared_sub_filters == [], do: raise ExAliyunOts.RuntimeError, "Invalid filter for CompositeColumnValueFilter: #{inspect filter}"
         proto_filter = CompositeColumnValueFilter.new(combinator: filter.combinator, sub_filters: prepared_sub_filters)
         if is_sub_filter do
           Filter.new(type: filter_type, filter: CompositeColumnValueFilter.encode(proto_filter))
@@ -441,7 +441,7 @@ defmodule ExAliyunOts.Client.Row do
       is_integer(specific_time) ->
         TimeRange.new(specific_time: specific_time)
       true ->
-        raise ExAliyunOts.Error, "Invalid time_range, start_time: #{inspect start_time}, end_time: #{inspect end_time}, specific: #{inspect specific_time}"
+        raise ExAliyunOts.RuntimeError, "Invalid time_range, start_time: #{inspect start_time}, end_time: #{inspect end_time}, specific: #{inspect specific_time}"
     end
   end
 

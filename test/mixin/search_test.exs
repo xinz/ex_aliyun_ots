@@ -304,7 +304,6 @@ defmodule ExAliyunOts.MixinTest.Search do
     {result, _response} = Client.create_search_index(@instance_key, var_request)
     assert result == :ok
 
-    Process.sleep(3_000)
     {result, _response} = delete_search_index(@table, index_name)
     assert result == :ok
   end

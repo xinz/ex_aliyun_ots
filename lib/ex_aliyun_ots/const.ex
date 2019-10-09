@@ -41,6 +41,29 @@ defmodule ExAliyunOts.Constants do
 
 end
 
+defmodule ExAliyunOts.Const.ErrorType do
+  import ExAliyunOts.Constants
+
+  const :ots_client_unknown, "OTSClientUnknownError"
+
+  #
+  # Will retry when occur the following errors:
+  # 
+  # reference: https://help.aliyun.com/document_detail/27300.html
+  # 
+  const :row_operation_conflict, "OTSRowOperationConflict"
+  const :not_enough_capacity_unit, "OTSNotEnoughCapacityUnit"
+  const :table_not_ready, "OTSTableNotReady"
+  const :partition_unavailable, "OTSPartitionUnavailable"
+  const :server_busy, "OTSServerBusy"
+  const :storage_server_busy, "OTSStorageServerBusy"
+  const :quota_exhausted, "OTSQuotaExhausted"
+  const :storage_timeout, "OTSTimeout"
+  const :server_unavailable, "OTSServerUnavailable"
+  const :internal_server_error, "OTSInternalServerError"
+  const :too_frequent_reserved_throughput_adjustment, "OTSTooFrequentReservedThroughputAdjustment"
+end
+
 defmodule ExAliyunOts.Const.OperationType do
   import ExAliyunOts.Constants
 
@@ -219,3 +242,4 @@ defmodule ExAliyunOts.Const.Search.SortType do
   const :score, :score
   const :pk, :pk
 end
+

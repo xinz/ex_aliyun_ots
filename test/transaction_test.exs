@@ -36,6 +36,23 @@ defmodule ExAliyunOtsTest.Transaction do
         condition: condition,
       }
       Client.delete_row(@instance_key, var_delete_row2)
+
+      for index <- 1..3 do
+        var_delete_range = %Var.DeleteRow{
+          table_name: @table_range,
+          primary_keys: [{"key", "key1"}, {"key2", index}],
+          condition: condition
+        }
+        Client.delete_row(@instance_key, var_delete_range)
+      end
+
+      var_delete_range = %Var.DeleteRow{
+        table_name: @table_range,
+        primary_keys: [{"key", "key2"}, {"key2", 1}],
+        condition: condition
+      }
+      Client.delete_row(@instance_key, var_delete_range)
+
     end)
 
     :ok
@@ -70,9 +87,9 @@ defmodule ExAliyunOtsTest.Transaction do
       attribute_columns: [{"attr1", "1"}],
       condition: condition
     }
-    {:error, message} = Client.put_row(@instance_key, var_put_row)
-    Logger.info "put row after it's locked with other operation, result: #{inspect message}"
-    assert String.contains?(message, "OTSRowOperationConflict,Data is being modified by the other request") == true
+    {:error, error} = Client.put_row(@instance_key, var_put_row)
+    Logger.info "put row after it's locked with other operation, result: #{inspect error}"
+    assert error.code == "OTSRowOperationConflict"
 
     updated_var_put_row = Map.put(var_put_row, :transaction_id, transaction_id)
 
@@ -154,9 +171,10 @@ defmodule ExAliyunOtsTest.Transaction do
       },
       condition: condition
     }
-    {:error, message} = Client.update_row(@instance_key, var_update_row)
-    Logger.info "update row after it's locked in other operation, result: #{inspect message}"
-    assert String.contains?(message, "OTSRowOperationConflict,Data is being modified by the other request") == true
+    {:error, error} = Client.update_row(@instance_key, var_update_row)
+    Logger.info "update row after it's locked in other operation, result: #{inspect error}"
+
+    assert error.code == "OTSRowOperationConflict" and error.message == "Data is being modified by the other request."
 
     updated_var_update_row = Map.put(var_update_row, :transaction_id, transaction_id)
     Client.update_row(@instance_key, updated_var_update_row)
@@ -205,9 +223,9 @@ defmodule ExAliyunOtsTest.Transaction do
       primary_keys: [partition_key],
       condition: condition,
     }
-    {:error, message} = Client.delete_row(@instance_key, var_delete_row)
-    Logger.info "delete row after it's locked in other operation, result: #{inspect message}"
-    assert String.contains?(message, "OTSRowOperationConflict,Data is being modified by the other request") == true
+    {:error, error} = Client.delete_row(@instance_key, var_delete_row)
+    Logger.info "delete row after it's locked in other operation, result: #{inspect error}"
+    assert error.code == "OTSRowOperationConflict"
 
     updated_var_delete_row = Map.put(var_delete_row, :transaction_id, transaction_id)
     Client.delete_row(@instance_key, updated_var_delete_row)
@@ -305,7 +323,7 @@ defmodule ExAliyunOtsTest.Transaction do
     {:ok, response} = Client.get_row(@instance_key, var_get_row)
     assert response.row != nil
 
-    {:error, message} = Client.update_row(@instance_key, %Var.UpdateRow{
+    {:error, error} = Client.update_row(@instance_key, %Var.UpdateRow{
       table_name: @table,
       primary_keys: [partition_key],
       updates: %{
@@ -315,7 +333,7 @@ defmodule ExAliyunOtsTest.Transaction do
         row_existence: RowExistence.ignore
       }
     })
-    assert String.contains?(message, "OTSRowOperationConflict,Data is being modified by the other request") == true
+    assert error.code == "OTSRowOperationConflict"
 
     Client.abort_transaction(@instance_key, transaction_id)
   end
@@ -346,16 +364,17 @@ defmodule ExAliyunOtsTest.Transaction do
       limit: 3,
       transaction_id: "fake_transaction_id"
     }
-    {:error, message} = Client.get_range(@instance_key, var_get_range)
-    assert String.contains?(message, "OTSParameterInvalidTransactionID is invalid") == true
+    {:error, error} = Client.get_range(@instance_key, var_get_range)
+    assert error.code == "OTSParameterInvalid"
 
     var_get_range = Map.put(var_get_range, :transaction_id, transaction_id)
 
-    {:error, message} = Client.get_range(@instance_key, var_get_range)
-    assert String.contains?(message, "OTSDataOutOfRangeMData out of scope of transaction") == true
+    {:error, error} = Client.get_range(@instance_key, var_get_range)
+
+    assert error.code == "OTSDataOutOfRange"
+    assert error.message == "Data out of scope of transaction. Transaction PartKey:key1. Data PartKey:key2"
 
     Client.abort_transaction(@instance_key, transaction_id)
-
   end
 
   test "get range with transaction_id and batch write update" do
@@ -432,7 +451,7 @@ defmodule ExAliyunOtsTest.Transaction do
 
     Enum.map(response.tables, fn(table_response) -> 
       Enum.map(table_response.rows, fn(row_response) ->
-        assert String.contains?(row_response.error.message, "Data is being modified by the other request") == true
+        assert row_response.error.code == "OTSRowOperationConflict"
       end)
     end)
 

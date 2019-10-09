@@ -34,7 +34,6 @@ defmodule ExAliyunOtsTest.BatchGetRow do
     assert result == :ok
 
     table_not_existed = "test_table_batch_get_row_ne_#{cur_timestamp}"
-    Process.sleep(3_000)
 
     condition = %Var.Condition{
       row_existence: RowExistence.expect_not_exist
@@ -77,7 +76,9 @@ defmodule ExAliyunOtsTest.BatchGetRow do
       }
     ]
 
-    {:error, "OTSParameterInvalidRequest table not exist"} = Client.batch_get_row(@instance_key, requests_with_not_existed_tables)
+    {:error, error} = Client.batch_get_row(@instance_key, requests_with_not_existed_tables)
+
+    assert error.code == "OTSParameterInvalid"
 
     requests = [
       %Var.GetRow{

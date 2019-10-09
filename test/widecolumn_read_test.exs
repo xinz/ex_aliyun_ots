@@ -16,8 +16,6 @@ defmodule ExAliyunOtsTest.WideColumnRead do
 
     assert create_table_result == :ok
 
-    Process.sleep(3_000)
-
     {:ok, _putrow_response} =
       put_row @instance_key, table_name, [{"key", "1"}],
         [{"bcol", "bc"}, {"ecol", "ec"}, {"dcol", "dc"}, {"acol", "ac"}, {"fcol", "fc"},

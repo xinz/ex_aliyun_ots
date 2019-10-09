@@ -21,8 +21,6 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     assert create_table1_result == :ok
     assert create_table2_result == :ok
 
-    Process.sleep(3_000)
-
     var_name = "1"
     {:ok, response} =
       get_row table_name1, [{"key1", cur_timestamp}, {"key2", "#{cur_timestamp}"}],

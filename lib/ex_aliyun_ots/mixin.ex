@@ -446,7 +446,7 @@ defmodule ExAliyunOts.Mixin do
     ReturnType.after_modify
   end
   defp map_return_type(invalid_return_type) do
-    raise ExAliyunOts.Error, "invalid return_type: #{inspect invalid_return_type}"
+    raise ExAliyunOts.RuntimeError, "invalid return_type: #{inspect invalid_return_type}"
   end
 
   defp map_operation_type(:'DELETE') do
@@ -474,7 +474,7 @@ defmodule ExAliyunOts.Mixin do
     OperationType.increment
   end
   defp map_operation_type(invalid_operation_type) do
-    raise ExAliyunOts.Error, "invalid operation_type: #{inspect invalid_operation_type}"
+    raise ExAliyunOts.RuntimeError, "invalid operation_type: #{inspect invalid_operation_type}"
   end
 
   defp map_direction(:'FORWARD') do
@@ -490,11 +490,11 @@ defmodule ExAliyunOts.Mixin do
     Direction.backward
   end
   defp map_direction(invalid_direction) do
-    raise ExAliyunOts.Error, "invalid direction: #{inspect invalid_direction}"
+    raise ExAliyunOts.RuntimeError, "invalid direction: #{inspect invalid_direction}"
   end
 
   defp map_search_query(search_query) when is_list(search_query) do
-    if not Keyword.keyword?(search_query), do: raise ExAliyunOts.Error, "input query: #{inspect search_query} required to be keyword"
+    if not Keyword.keyword?(search_query), do: raise ExAliyunOts.RuntimeError, "input query: #{inspect search_query} required to be keyword"
 
     {query, rest_search_query_options} = Keyword.pop(search_query, :query, Keyword.new())
 
@@ -510,7 +510,7 @@ defmodule ExAliyunOts.Mixin do
     map_query_details(query_type, query)
   end
   defp map_query_details(query) do
-    raise ExAliyunOts.Error, "Input invalid query to map query details: #{inspect query}"
+    raise ExAliyunOts.RuntimeError, "Input invalid query to map query details: #{inspect query}"
   end
 
   defp map_query_details(QueryType.match, query) do
@@ -547,7 +547,7 @@ defmodule ExAliyunOts.Mixin do
     map_search_options(%Search.ExistsQuery{}, query)
   end
   defp map_query_details(_query_type, query) do
-    raise ExAliyunOts.Error, "Not supported query when map query details: #{inspect query}"
+    raise ExAliyunOts.RuntimeError, "Not supported query when map query details: #{inspect query}"
   end
 
   defp map_columns_to_get(value) when is_list(value) do
@@ -562,7 +562,7 @@ defmodule ExAliyunOts.Mixin do
          ColumnReturnType.none(),
          ColumnReturnType.specified()
        ],
-       do: raise(ExAliyunOts.Error, "invalid return_type: #{inspect return_type} in columns_to_get")
+       do: raise(ExAliyunOts.RuntimeError, "invalid return_type: #{inspect return_type} in columns_to_get")
 
     %Search.ColumnsToGet{
       return_type: return_type,
@@ -580,7 +580,7 @@ defmodule ExAliyunOts.Mixin do
     }
   end
   defp map_columns_to_get(value) do
-    raise ExAliyunOts.Error, "invalid columns_to_get for search: #{inspect value}"
+    raise ExAliyunOts.RuntimeError, "invalid columns_to_get for search: #{inspect value}"
   end
 
   defp map_search_sort(nil) do
@@ -593,7 +593,7 @@ defmodule ExAliyunOts.Mixin do
         SortType.field ->
           map_search_options(%Search.FieldSort{}, rest_sorter_options)
         _ ->
-          raise ExAliyunOts.Error, "invalid sorter: #{inspect sorter}"
+          raise ExAliyunOts.RuntimeError, "invalid sorter: #{inspect sorter}"
       end
     end)
   end
@@ -702,7 +702,7 @@ defmodule ExAliyunOts.Mixin do
     }
   end
   def map_condition(existence) do
-    raise ExAliyunOts.Error, "invalid existence: #{inspect existence} in condition"
+    raise ExAliyunOts.RuntimeError, "invalid existence: #{inspect existence} in condition"
   end
 
   defp prepare_single_column_value_filter(comparator, column_name, column_value, binding) do
@@ -727,7 +727,7 @@ defmodule ExAliyunOts.Mixin do
         {options, _} = Code.eval_string(options_str)
         {column_name, options}
       _ ->
-        raise ExAliyunOts.Error, "filter expression: #{inspect column_content}"
+        raise ExAliyunOts.RuntimeError, "filter expression: #{inspect column_content}"
     end
   end
 
@@ -735,7 +735,7 @@ defmodule ExAliyunOts.Mixin do
     {column_value_bound_var, _, _} = column_value
     prepared = Keyword.get(binding, column_value_bound_var)
     if prepared == nil do
-      raise ExAliyunOts.Error, "not found variables `#{column_value_bound_var}` in binding context, please check variables references in filter."
+      raise ExAliyunOts.RuntimeError, "not found variables `#{column_value_bound_var}` in binding context, please check variables references in filter."
     else
       prepared
     end

@@ -7,32 +7,36 @@ defmodule ExAliyunOtsTest.Sequence do
   alias ExAliyunOts.Var
   alias ExAliyunOts.Sequence
 
-  test "next value" do
-    sequence_name = "test_sequence"
+  @sequence_name "test_sequence"
+
+  setup_all do
     var_new = %Var.NewSequence{
-      name: sequence_name
+      name: @sequence_name
     }
     result = Sequence.create(@instance_key, var_new)
     assert result == :ok
-    Process.sleep(3_000)
 
-    concurrency_size = 10
+    on_exit(fn ->
+      del_result = Sequence.delete_event(@instance_key, @sequence_name, "default")
+      assert {:ok, _delete_response} = del_result
+
+      result = Sequence.delete(@instance_key, @sequence_name)
+      assert result == :ok
+    end)
+  end
+
+  test "next value" do
+    concurrency_size = 30
     stream = Task.async_stream(1..concurrency_size, fn(_index) -> 
       var_next = %Var.GetSequenceNextValue{
-        name: sequence_name,
+        name: @sequence_name,
       }
       Sequence.next_value(@instance_key, var_next)
-    end, timeout: :infinity, max_concurrency: concurrency_size)
+    end, timeout: :infinity)
 
     result = Enum.map(stream, fn({:ok, item}) -> item end) |> MapSet.new()
     assert MapSet.size(result) == concurrency_size
     assert Enum.sort(result) == Enum.map(1..concurrency_size, fn(item) -> item end)
-
-    del_result = Sequence.delete_event(@instance_key, sequence_name, "default")
-    assert {:ok, _delete_response} = del_result
-
-    result = Sequence.delete(@instance_key, sequence_name)
-    assert result == :ok
   end
 
 end

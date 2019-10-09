@@ -28,12 +28,12 @@ defmodule ExAliyunOts.MixinTest.Transaction do
     {:ok, response} = start_local_transaction(@table, partition_key)
     transaction_id = response.transaction_id
 
-    {:error, message} =
+    {:error, error} =
       put_row @table, [partition_key],
         [{"attr1", "1"}],
         condition: condition(:ignore)
 
-    assert String.contains?(message, "OTSRowOperationConflict,Data is being modified by the other request") == true
+    assert error.code == "OTSRowOperationConflict"
 
     {:ok, _response} =
       put_row @table, [partition_key],
@@ -74,13 +74,13 @@ defmodule ExAliyunOts.MixinTest.Transaction do
     {:ok, response} = start_local_transaction(@table, partition_key)
     transaction_id = response.transaction_id
 
-    {:error, message} =
+    {:error, error} =
       update_row @table, [partition_key],
         put: [{"new_attr1", "a1"}],
         delete_all: ["level", "size"],
         condition: condition(:ignore)
 
-    assert String.contains?(message, "OTSRowOperationConflict,Data is being modified by the other request") == true
+    assert error.code == "OTSRowOperationConflict"
 
     {:ok, _response} =
       update_row @table, [partition_key],
@@ -107,10 +107,10 @@ defmodule ExAliyunOts.MixinTest.Transaction do
     {:ok, response} = start_local_transaction(@table, partition_key)
     transaction_id = response.transaction_id
 
-    {:error, message} =
+    {:error, error} =
       delete_row @table, [partition_key], condition: condition(:ignore)
 
-    assert String.contains?(message, "OTSRowOperationConflict,Data is being modified by the other request") == true
+    assert error.code == "OTSRowOperationConflict"
 
     {:ok, _response} =
       delete_row @table, [partition_key],
@@ -169,12 +169,12 @@ defmodule ExAliyunOts.MixinTest.Transaction do
 
     {:ok, _response} = get_row @table, [partition_key], transaction_id: transaction_id
 
-    {:error, message} =
+    {:error, error} =
       update_row @table, [partition_key],
         put: [{"attr_1_v2", "attr_1_v2"}],
         condition: condition(:ignore)
 
-    assert String.contains?(message, "OTSRowOperationConflict,Data is being modified by the other request") == true
+    assert error.code == "OTSRowOperationConflict"
 
     abort_transaction(transaction_id)
   end
@@ -220,7 +220,7 @@ defmodule ExAliyunOts.MixinTest.Transaction do
 
     Enum.map(response.tables, fn(table_response) ->
       Enum.map(table_response.rows, fn(row_response) ->
-        assert String.contains?(row_response.error.message, "Data is being modified by the other request") == true
+        assert row_response.error.code == "OTSRowOperationConflict"
       end)
     end)
 

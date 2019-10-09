@@ -20,7 +20,7 @@ defmodule ExAliyunOts.Application do
   end
 
   defp child_spec(_enable_tunnel, []) do
-    raise ExAliyunOts.Error, "Not found any instances configuration"
+    raise ExAliyunOts.RuntimeError, "Not found any instances configuration"
   end
   defp child_spec(_enable_tunnel = true, instance_keys) do
     [

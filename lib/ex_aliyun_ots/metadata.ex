@@ -1,9 +1,9 @@
-defmodule ExAliyunOts.Error do
+defmodule ExAliyunOts.RuntimeError do
   defexception [:message, :error_code]
 
   def exception(value) do
     msg = "Error: #{inspect value}"
-    %ExAliyunOts.Error{message: msg}
+    %__MODULE__{message: msg}
   end
 end
 
@@ -18,6 +18,10 @@ end
 
 defmodule ExAliyunOts.HTTPRequest do
   defstruct instance: nil, uri: "", body: nil, method: "POST"
+end
+
+defmodule ExAliyunOts.Error do
+  defstruct code: nil, message: "", request_id: nil, http_status_code: nil, datetime: nil
 end
 
 defmodule ExAliyunOts.Var.TimeRange do

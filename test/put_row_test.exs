@@ -20,7 +20,6 @@ defmodule ExAliyunOtsTest.PutRow do
     }
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
-    Process.sleep(10_000)
   
     condition = %Var.Condition{
       row_existence: RowExistence.expect_not_exist
