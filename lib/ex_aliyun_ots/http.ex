@@ -76,7 +76,14 @@ defmodule ExAliyunOts.Http.Middleware do
          _require_deserialize_row,
          _require_response_size
        ) do
-    {:error, reason}
+
+    error = %Error{
+      code: ErrorType.ots_client_unknown(),
+      message: reason,
+      http_status_code: 400
+    }
+
+    {:error, error}
   end
 
   defp decode_success_response(
@@ -321,6 +328,18 @@ defmodule ExAliyunOts.Http do
     true
   end
 
+  defp match_should_retry?({:error, %Error{code: ErrorType.ots_client_unknown(), message: reason} = error}) when is_atom(reason) do
+    error(fn ->
+      [
+        "** ExAliyunOts occur an unknown error: ",
+        inspect(error),
+        ", will retry it."
+      ]
+    end)
+
+    true
+  end
+
   defp match_should_retry?({:error, %Error{} = error}) do
     error(fn ->
       [
@@ -330,18 +349,6 @@ defmodule ExAliyunOts.Http do
     end)
 
     false
-  end
-
-  defp match_should_retry?({:error, reason}) do
-    error(fn ->
-      [
-        "** ExAliyunOts occur an error with reason: ",
-        inspect(reason),
-        ", will retry it."
-      ]
-    end)
-
-    true
   end
 
   defp match_should_retry?({:ok, _}) do
