@@ -659,7 +659,7 @@ defmodule ExAliyunOts.PlainBuffer do
         ?\n,
         "matched_index:\n",
         ?\n,
-        matched_index,
+        inspect(matched_index),
         "row_data_parts:\n"
         | inspect(row_data_parts, limit: :infinity)
       ]
