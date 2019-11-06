@@ -10,6 +10,8 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   alias __MODULE__.Agent
 
+  @type channel :: %ExAliyunOts.TableStoreTunnel.Channel{}
+
   def start_link(channel_id, tunnel_id, client_id, status, version, agent) do
     GenStateMachine.start_link(
       __MODULE__,
@@ -44,7 +46,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
   @spec update(
           channel :: pid(),
-          remote_channel :: %ExAliyunOts.TableStoreTunnel.Channel{}
+          remote_channel :: channel()
         ) :: :ok
   def update(channel, remote_channel) do
     GenStateMachine.call(channel, {:update, remote_channel})
