@@ -41,33 +41,11 @@ defmodule ExAliyunOts.Utils do
   end
 
   def attrs_to_row(attrs) when is_list(attrs) do
-    Enum.reduce(attrs, [], fn
-      {key, value}, acc when is_atom(key) ->
-        acc ++ [{Atom.to_string(key), value_to_attribute_column(value)}]
-
-      {key, value}, acc when is_bitstring(key) ->
-        acc ++ [{key, value_to_attribute_column(value)}]
-
-      _, acc ->
-        acc
-    end)
+    Enum.reduce(attrs, [], &assemble_attribute_column/2)
   end
 
   def attrs_to_row(attrs) when is_map(attrs) do
-    Map.keys(attrs)
-    |> Enum.sort()
-    |> Enum.reduce([], fn
-      key, acc when is_atom(key) ->
-        value = attrs |> Map.get(key) |> value_to_attribute_column()
-        acc ++ [{Atom.to_string(key), value}]
-
-      key, acc when is_bitstring(key) ->
-        value = attrs |> Map.get(key) |> value_to_attribute_column()
-        acc ++ [{key, value}]
-
-      _, acc ->
-        acc
-    end)
+    Enum.reduce(attrs, [], &assemble_attribute_column/2)
   end
 
   def attrs_to_row(attrs) do
@@ -86,14 +64,23 @@ defmodule ExAliyunOts.Utils do
     end)
   end
 
-  defp value_to_attribute_column(nil) do
-    ""
-  end
   defp value_to_attribute_column(value) when is_map(value) or is_list(value) do
     Jason.encode!(value)
   end
   defp value_to_attribute_column(value) do
     value
+  end
+
+  defp assemble_attribute_column({key, value}, acc) when is_atom(key) do
+    value = value_to_attribute_column(value)
+    if value == nil, do: acc, else: acc ++ [{Atom.to_string(key), value}]
+  end
+  defp assemble_attribute_column({key, value}, acc) when is_bitstring(key) do
+    value = value_to_attribute_column(value)
+    if value == nil, do: acc, else: acc ++ [{key, value}]
+  end
+  defp assemble_attribute_column(_, acc) do
+    acc
   end
 
 end
