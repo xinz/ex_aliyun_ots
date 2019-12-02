@@ -28,6 +28,22 @@ defmodule ExAliyunOts.MixinTest.CRUD do
         filter: filter(("name[ignore_if_missing: true, latest_version_only: true]" == var_name and "age" > 1) or ("class" == "1"))
     assert response.row == nil 
 
+    {:ok, put_row_response} =
+      put_row table_name1, [{"key1", 0}, {"key2", "0"}],
+        [{"attr1", 2}, {"attr2", "attrname_1"}],
+        condition: condition(:expect_not_exist),
+        return_type: :pk
+
+    assert put_row_response.row != nil
+
+    {:ok, put_row_response} =
+      put_row table_name1, [{"key1", 0}, {"key2", "0"}],
+        [{"attr1", 2}, {"attr2", "attrname_1"}],
+        condition: condition(:expect_exist),
+        return_type: :pk
+
+    assert put_row_response.row != nil
+
     for id <- 1..5 do
       {:ok, put_row_response} =
         put_row table_name1, [{"key1", id}, {"key2", "#{id}"}],

@@ -52,6 +52,7 @@ config :ex_aliyun_ots,
 * 多元索引
 * 局部事务
 * 通道服务
+* Timeline模型
 
 ## Supported API
 
@@ -226,8 +227,14 @@ defmodule Sample do
     instance: MyInstance
   
   #
-  # `RowExistence` options: 
-  #   :ignore | :expect_not_exist | :expect_exist
+  # `condition`，数据插入前是否进行存在性检查，可选项：
+  #   `:ignore`，表示不做行存在性检查
+  #   `:expect_not_exist`，表示期望主键对应的行不存在
+  #   `:expect_exist`，表示期望的主键对应的行存在
+  #   如果当前的主键中含有自增列时：
+  #     如果预期该行主键已经存在，只能使用`:expect_exist`才能成功插入（覆盖）数据行；
+  #     如果预期该行主键不存在，只能使用`:ignore`才能成功插入该数据行。
+  #
   #
   # 可选设定项:
   # `transaction_id`，更新操作使用局部事务
@@ -236,13 +243,13 @@ defmodule Sample do
     put_row "table_name",
       [{"key1", "id1"}],
       [{"name", "name1"}, {"age", 20}],
-      condition: condition(RowExistence.expect_not_exist),
+      condition: condition(:expect_not_exist),
       return_type: :pk
 
     put_row "table_name",
       [{"key1", "id1"}],
       [{"name", "name1"}, {"age", 20}],
-      condition: condition(RowExistence.expect_not_exist),
+      condition: condition(:expect_not_exist),
       transaction_id: "transaction_id"
       return_type: :pk
   end
@@ -319,10 +326,14 @@ defmodule Sample do
   #   当针对原子计数操作时，可通过设定`return_type`为`ReturnType.after_modify`，同时指定返回进行原子计数操作的属性列名（`return_columns`），
   #   可通过这种方式获取原子计数操作之后的属性列的值。 注意：`return_type` 设定为 after_modify，以及设定`return_columns`仅适用于原子计数操作。
   #
-  # `condition`，在数据更新前是否进行存在性检查
+  # `condition`，在数据更新前是否进行存在性检查，可选项：
   #   `:expect_exist`，表示期望行存在；
   #   `:ignore`，表示不做行存在性检查；
   #   同时支持在condition()进行条件查询，见`filter`操作。
+  #   如果当前的主键中含有自增列时：
+  #     如果预期该行主键已经存在，只能使用`:expect_exist`才能成功更新数据行；
+  #     如果预期该行主键不存在，只能使用`:ignore`才能成功更新该数据行。
+  #
   #
   # 可选设定项
   # `transaction_id`，更新操作使用局部事务
@@ -367,7 +378,13 @@ defmodule Sample do
     instance: MyInstance
   
   #
-  # 删除行操作支持按条件筛选，通过condition()。
+  # `condition`，数据插入前是否进行存在性检查，可选项：
+  #   `:expect_exist`，表示期望的主键对应的行存在；
+  #   `:ignore`，表示不做行存在性检查；
+  #   同时支持在condition()进行条件查询，见`filter`操作。
+  #   如果当前的主键中含有自增列时：
+  #     如果预期该行主键已经存在，可以使用`:expect_exist`或`:ignore`成功删除该数据行。
+  #
   #
   # 可选设定项
   #   `transaction_id`，删除操作使用局部事务
