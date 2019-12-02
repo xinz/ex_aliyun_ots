@@ -340,6 +340,11 @@ defmodule ExAliyunOts.Http do
     true
   end
 
+  defp match_should_retry?({:error, %Error{code: "OTSConditionCheckFail"}}) do
+    # Do not log error for this use case.
+    false
+  end
+
   defp match_should_retry?({:error, %Error{} = error}) do
     error(fn ->
       [
