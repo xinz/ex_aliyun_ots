@@ -287,6 +287,104 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 10
   end
 
+  test "array keyword query" do
+    index_name = "test_search_index"
+
+    # Data Source
+    #
+    # "a1" => ["1", "2", "3"]
+    # "a2" => ["2", "3"]
+    # "a3" => ["4", "1"]
+    # "a4" => ["4"]
+    #
+
+    # contains "1" and "2" both
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: [
+            type: QueryType.bool,
+            must: [
+              [type: QueryType.term, field_name: "tags", term: "1"],
+              [type: QueryType.term, field_name: "tags", term: "2"],
+            ]
+          ]
+        ]
+
+    # response.rows as "a1"
+    assert length(response.rows) == 1
+
+    # contains "1" or "2"
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: [
+            type: QueryType.terms, field_name: "tags", terms: ["1", "2"],
+          ]
+        ]
+
+    # response.rows as "a1", "a2", "a3"
+    assert length(response.rows) == 3
+
+    # contains "1"
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: [
+            type: QueryType.term,
+            field_name: "tags", 
+            term: "1"
+          ]
+        ]
+
+    # response.rows as "a1", "a3"
+    assert length(response.rows) == 2
+
+    # contains ("2" or "4") or "1"
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: [
+            type: QueryType.bool,
+            should: [
+              [type: QueryType.terms, field_name: "tags", terms: ["2", "4"]],
+              [type: QueryType.terms, field_name: "tags", terms: ["1"]]
+            ]
+          ]
+        ]
+
+    # response.rows as "a1", "a2", "a3", "a4"
+    assert length(response.rows) == 4
+
+    # contains ("2" and "3" both) or ("4" and "1" both)
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: [
+            type: QueryType.bool,
+            should: [
+              [
+                type: QueryType.bool,
+                must: [
+                  [type: QueryType.term, field_name: "tags", term: "2"],
+                  [type: QueryType.term, field_name: "tags", term: "3"],
+                ]
+              ],
+              [
+                type: QueryType.bool,
+                must: [
+                  [type: QueryType.term, field_name: "tags", term: "4"],
+                  [type: QueryType.term, field_name: "tags", term: "1"],
+                ]
+              ]
+            ]
+          ]
+        ]
+
+    # response.rows as "a1", "a2", "a3"
+    assert length(response.rows) == 3
+  end
+
   test "delete search index" do
     index_name = "tmp_search_index1"
     var_request =
@@ -307,4 +405,5 @@ defmodule ExAliyunOts.MixinTest.Search do
     {result, _response} = delete_search_index(@table, index_name)
     assert result == :ok
   end
+
 end

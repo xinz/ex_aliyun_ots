@@ -49,10 +49,10 @@ defmodule ExAliyunOtsTest.Support.Search do
   defp inseart_test_data(instance_key, table) do
 
     data = [
-      %{id: "a1", class: "class1", name: "name_a1", age: 20, score: 99.71, is_actived: true},
-      %{id: "a2", class: "class1", name: "name_a2", age: 28, score: 100, is_actived: false},
-      %{id: "a3", class: "class2", name: "name_a3", age: 32, score: 66.78, is_actived: true},
-      %{id: "a4", class: "class3", name: "name_a4", age: 24, score: 41.01, is_actived: true},
+      %{id: "a1", class: "class1", name: "name_a1", age: 20, score: 99.71, is_actived: true, tags: Jason.encode!(["1", "2", "3"])},
+      %{id: "a2", class: "class1", name: "name_a2", age: 28, score: 100, is_actived: false, tags: Jason.encode!(["2", "3"])},
+      %{id: "a3", class: "class2", name: "name_a3", age: 32, score: 66.78, is_actived: true, tags: Jason.encode!(["4", "1"])},
+      %{id: "a4", class: "class3", name: "name_a4", age: 24, score: 41.01, is_actived: true, tags: Jason.encode!(["4"])},
       %{id: "a5", class: "class2", name: "name_a5", age: 26, score: 89, is_actived: true},
       %{id: "a6", class: "class4", name: "name_a6", age: 27, score: 79.99, is_actived: false},
       %{id: "a7", class: "class1", name: "name_a7", age: 28, score: 100, is_actived: true},
@@ -61,13 +61,7 @@ defmodule ExAliyunOtsTest.Support.Search do
     ]
 
     Enum.map(data, fn(item) -> 
-      attribute_columns =
-        case Map.get(item, :comment) do
-          nil ->
-            [{"class", item.class}, {"age", item.age}, {"name", item.name}, {"is_actived", item.is_actived}, {"score", item.score}]
-          comment ->
-            [{"class", item.class}, {"age", item.age}, {"name", item.name}, {"is_actived", item.is_actived}, {"score", item.score}, {"comment", comment}]
-        end
+      attribute_columns = ExAliyunOts.Utils.attrs_to_row(item)
       var_put_row =
         %Var.PutRow{
           table_name: table,
@@ -126,6 +120,10 @@ defmodule ExAliyunOtsTest.Support.Search do
             },
             %Search.FieldSchema{
               field_name: "comment"
+            },
+            %Search.FieldSchema{
+              field_name: "tags",
+              is_array: true
             }
           ]
         }
