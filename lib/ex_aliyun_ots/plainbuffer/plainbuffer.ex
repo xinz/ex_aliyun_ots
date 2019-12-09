@@ -204,75 +204,58 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp process_primary_key_value({buffer, cell_checksum}, value) do
     updated_buffer = buffer ++ [byte_to_binary(@tag_cell_value)]
+    do_process_primary_key_value({updated_buffer, cell_checksum}, value)
+  end
 
-    cond do
-      value == PKType.inf_min() ->
-        updated_buffer =
-          updated_buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_inf_min)]
+  defp do_process_primary_key_value({buffer, cell_checksum}, value) when value == PKType.inf_min() do
+    updated_buffer = buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_inf_min)]
+    cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_min)
+    {updated_buffer, cell_checksum}
+  end
+  defp do_process_primary_key_value({buffer, cell_checksum}, value) when value == PKType.inf_max() do
+    updated_buffer = buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_inf_max)]
+    cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_max)
+    {updated_buffer, cell_checksum}
+  end
+  defp do_process_primary_key_value({buffer, cell_checksum}, value) when value == PKType.auto_increment() do
+    updated_buffer = buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_auto_increment)]
+    cell_checksum = CRC.crc_int8(cell_checksum, @vt_auto_increment)
+    {updated_buffer, cell_checksum}
+  end
+  defp do_process_primary_key_value({buffer, cell_checksum}, value) when is_integer(value) do
+    updated_buffer = buffer ++ [<<1 + @little_endian_64_size::little-integer-size(32)>>, byte_to_binary(@vt_integer), <<value::little-integer-size(64)>>]
+    cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
+    {updated_buffer, cell_checksum}
+  end
+  defp do_process_primary_key_value({buffer, cell_checksum}, value) when is_binary(value) do
+    prefix_length = @little_endian_32_size + 1
+    value_size = byte_size(value)
+    updated_buffer = buffer ++ [<<prefix_length + value_size::little-integer-size(32)>>, byte_to_binary(@vt_string), <<value_size::little-integer-size(32)>>, value]
 
-        cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_min)
-        {updated_buffer, cell_checksum}
+    cell_checksum =
+      cell_checksum
+      |> CRC.crc_int8(@vt_string)
+      |> CRC.crc_int32(value_size)
+      |> CRC.crc_string(value)
 
-      value == PKType.inf_max() ->
-        updated_buffer =
-          updated_buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_inf_max)]
+    {updated_buffer, cell_checksum}
+  end
+  defp do_process_primary_key_value({buffer, cell_checksum}, value) when is_bitstring(value) do
+    prefix_length = @little_endian_32_size + 1
+    value_size = byte_size(value)
 
-        cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_max)
-        {updated_buffer, cell_checksum}
+    updated_buffer = buffer ++ [<<prefix_length + value_size::little-integer-size(32)>>, byte_to_binary(@vt_blob), <<value_size::little-integer-size(32)>>, value]
 
-      value == PKType.auto_increment() ->
-        updated_buffer =
-          updated_buffer ++ [<<1::little-integer-size(32)>>, byte_to_binary(@vt_auto_increment)]
+    cell_checksum =
+      cell_checksum
+      |> CRC.crc_int8(@vt_blob)
+      |> CRC.crc_int32(value_size)
+      |> CRC.crc_string(value)
 
-        cell_checksum = CRC.crc_int8(cell_checksum, @vt_auto_increment)
-        {updated_buffer, cell_checksum}
-
-      is_integer(value) ->
-        updated_buffer =
-          updated_buffer ++
-            [<<1 + @little_endian_64_size::little-integer-size(32)>>,
-             byte_to_binary(@vt_integer), <<value::little-integer-size(64)>>]
-
-        cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
-        {updated_buffer, cell_checksum}
-
-      is_binary(value) ->
-        prefix_length = @little_endian_32_size + 1
-        value_size = byte_size(value)
-
-        updated_buffer =
-          updated_buffer ++
-            [<<prefix_length + value_size::little-integer-size(32)>>,
-             byte_to_binary(@vt_string), <<value_size::little-integer-size(32)>>, value]
-
-        cell_checksum =
-          cell_checksum
-          |> CRC.crc_int8(@vt_string)
-          |> CRC.crc_int32(value_size)
-          |> CRC.crc_string(value)
-
-        {updated_buffer, cell_checksum}
-
-      is_bitstring(value) ->
-        prefix_length = @little_endian_32_size + 1
-        value_size = byte_size(value)
-
-        updated_buffer =
-          updated_buffer ++
-            [<<prefix_length + value_size::little-integer-size(32)>>,
-             byte_to_binary(@vt_blob), <<value_size::little-integer-size(32)>>, value]
-
-        cell_checksum =
-          cell_checksum
-          |> CRC.crc_int8(@vt_blob)
-          |> CRC.crc_int32(value_size)
-          |> CRC.crc_string(value)
-
-        {updated_buffer, cell_checksum}
-
-      true ->
-        raise ExAliyunOts.RuntimeError, "Unsupported primary key for value: #{inspect(value)}"
-    end
+    {updated_buffer, cell_checksum}
+  end
+  defp do_process_primary_key_value(_, value) do
+    raise ExAliyunOts.RuntimeError, "Unsupported primary key for value: #{inspect(value)}"
   end
 
   defp process_column({buffer, row_checksum}, column_name, column_value, timestamp \\ nil) do
@@ -720,7 +703,7 @@ defmodule ExAliyunOts.PlainBuffer do
   defp deserialize_process_primary_keys("", result) do
     result
   end
-  defp deserialize_process_primary_keys(primary_keys, result) do
+  defp deserialize_process_primary_keys(<<(<<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>), rest::binary>> = primary_keys, result) do
     debug(fn ->
       [
         "\n** deserializing primary_keys, prepared result:\n",
@@ -731,69 +714,76 @@ defmodule ExAliyunOts.PlainBuffer do
       ]
     end)
 
-    case primary_keys do
-      <<(<<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>), rest::binary>> ->
-        <<primary_key_size::little-integer-size(32), rest::binary>> = rest
-        primary_key_name = binary_part(rest, 0, primary_key_size)
+    <<primary_key_size::little-integer-size(32), rest::binary>> = rest
+    primary_key_name = binary_part(rest, 0, primary_key_size)
 
-        rest_primary_key_value_and_other_pk =
-          binary_part(rest, primary_key_size, byte_size(rest) - primary_key_size)
+    rest_primary_key_value_and_other_pk =
+      binary_part(rest, primary_key_size, byte_size(rest) - primary_key_size)
+
+    debug(fn ->
+      [
+        "\nget primary_key_name:\s",
+        inspect(primary_key_name),
+        ?\n,
+        "rest_primary_key_value_and_other_pk:\s"
+        | inspect(rest_primary_key_value_and_other_pk, limit: :infinity)
+      ]
+    end)
+
+    case calculate_tag_cell_index(rest_primary_key_value_and_other_pk) do
+      next_cell_index when is_integer(next_cell_index) ->
+        value_binary = binary_part(rest_primary_key_value_and_other_pk, 0, next_cell_index)
+        primary_key_value = deserialize_process_primary_key_value(value_binary)
+        updated_result = result ++ [{primary_key_name, primary_key_value}]
+
+        other_pk =
+          binary_part(
+            rest_primary_key_value_and_other_pk,
+            next_cell_index,
+            byte_size(rest_primary_key_value_and_other_pk) - next_cell_index
+          )
 
         debug(fn ->
           [
-            "\nget primary_key_name:\s",
-            inspect(primary_key_name),
+            "\nfind next_cell_index:\s",
+            next_cell_index,
             ?\n,
-            "rest_primary_key_value_and_other_pk:\s"
-            | inspect(rest_primary_key_value_and_other_pk, limit: :infinity)
+            "get primary_key_value:\s",
+            inspect(primary_key_value),
+            ?\n,
+            "rest to be deserialized data:\s"
+            | inspect(other_pk, limit: :infinity)
           ]
         end)
 
-        case calculate_tag_cell_index(rest_primary_key_value_and_other_pk) do
-          next_cell_index when is_integer(next_cell_index) ->
-            value_binary = binary_part(rest_primary_key_value_and_other_pk, 0, next_cell_index)
-            primary_key_value = deserialize_process_primary_key_value(value_binary)
-            updated_result = result ++ [{primary_key_name, primary_key_value}]
+        deserialize_process_primary_keys(other_pk, updated_result)
 
-            other_pk =
-              binary_part(
-                rest_primary_key_value_and_other_pk,
-                next_cell_index,
-                byte_size(rest_primary_key_value_and_other_pk) - next_cell_index
-              )
+      :nomatch ->
+        primary_key_value =
+          deserialize_process_primary_key_value(rest_primary_key_value_and_other_pk)
 
-            debug(fn ->
-              [
-                "\nfind next_cell_index:\s",
-                next_cell_index,
-                ?\n,
-                "get primary_key_value:\s",
-                inspect(primary_key_value),
-                ?\n,
-                "rest to be deserialized data:\s"
-                | inspect(other_pk, limit: :infinity)
-              ]
-            end)
+        debug(fn ->
+          [
+            "\nno more cells to deserialized, primary_key_value:\n",
+            inspect(primary_key_value)
+          ]
+        end)
 
-            deserialize_process_primary_keys(other_pk, updated_result)
-
-          :nomatch ->
-            primary_key_value =
-              deserialize_process_primary_key_value(rest_primary_key_value_and_other_pk)
-
-            debug(fn ->
-              [
-                "\nno more cells to deserialized, primary_key_value:\n",
-                inspect(primary_key_value)
-              ]
-            end)
-
-            result ++ [{primary_key_name, primary_key_value}]
-        end
-
-      _ ->
-        result
+        result ++ [{primary_key_name, primary_key_value}]
     end
+
+  end
+  defp deserialize_process_primary_keys(primary_keys, result) do
+    debug(fn ->
+      [
+        "\n** deserializing primary_keys, prepared result:\n",
+        inspect(result),
+        ?\n,
+        "pk data:\s"
+        | inspect(primary_keys, limit: :infinity)
+      ]
+    end)
+    result
   end
 
   defp deserialize_process_primary_key_value(
@@ -918,18 +908,14 @@ defmodule ExAliyunOts.PlainBuffer do
     end
   end
 
-  defp deserialize_process_column_value_timestamp(timestamp_binary) do
-    case timestamp_binary do
-      <<(<<@tag_cell_timestamp::integer>>), (<<timestamp::little-integer-size(64)>>)>> ->
-        timestamp
-
-      <<(<<@tag_cell_timestamp::integer>>), <<timestamp::little-integer-size(64)>>,
-        _rest::binary>> ->
-        timestamp
-
-      _ ->
-        nil
-    end
+  defp deserialize_process_column_value_timestamp(<<(<<@tag_cell_timestamp::integer>>), (<<timestamp::little-integer-size(64)>>)>>) do
+    timestamp
+  end
+  defp deserialize_process_column_value_timestamp(<<(<<@tag_cell_timestamp::integer>>), <<timestamp::little-integer-size(64)>>, _rest::binary>>) do
+    timestamp
+  end
+  defp deserialize_process_column_value_timestamp(_) do
+    nil
   end
 
   defp deserialize_process_column_value_with_checksum(
