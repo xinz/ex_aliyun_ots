@@ -92,13 +92,17 @@ defmodule ExAliyunOts.Protocol do
 
   defp headers_to_str(headers) do
     headers
-    |> Enum.filter(fn({header_key, _header_value}) ->
-      downcase = String.downcase(header_key)
-      String.starts_with?(downcase, "x-ots-") and downcase != "x-ots-signature"
+    |> Enum.reduce([], fn({header_key, header_value}, acc) ->
+      downcase_header_key = String.downcase(header_key)
+      if String.starts_with?(downcase_header_key, "x-ots-") and downcase_header_key != "x-ots-signature" do
+        [{downcase_header_key, header_value} | acc]
+      else
+        acc
+      end
     end)
     |> Enum.sort(fn({k1, _v1}, {k2, _v2}) -> k1 <= k2 end)
     |> Enum.map(fn({header_key, header_value}) -> 
-      "#{String.downcase(header_key)}:#{String.trim(header_value)}"
+      "#{header_key}:#{String.trim(header_value)}"
     end)
     |> Enum.join("\n")
   end
