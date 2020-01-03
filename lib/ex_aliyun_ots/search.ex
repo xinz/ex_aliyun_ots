@@ -8,6 +8,7 @@ defmodule ExAliyunOts.Client.Search do
     FieldSort,
     Sorter,
     Sort,
+    Collapse,
     CreateSearchIndexRequest,
     CreateSearchIndexResponse,
     DeleteSearchIndexRequest,
@@ -97,13 +98,14 @@ defmodule ExAliyunOts.Client.Search do
       }) do
     proto_search_query =
       SearchQuery.new(
-          offset: search_query.offset,
-          limit: search_query.limit,
-          query: prepare_query(search_query.query),
-          sort: prepare_sort(search_query.sort),
-          get_total_count: search_query.get_total_count,
-          token: search_query.token
-        )
+        offset: search_query.offset,
+        limit: search_query.limit,
+        query: prepare_query(search_query.query),
+        sort: prepare_sort(search_query.sort),
+        collapse: prepare_collapse(search_query.collapse),
+        get_total_count: search_query.get_total_count,
+        token: search_query.token
+      )
     proto_columns_to_get =
       ColumnsToGet.new(
         return_type: return_type,
@@ -256,6 +258,16 @@ defmodule ExAliyunOts.Client.Search do
         " sorter is not implemented yet."
       ]
     end)
+    nil
+  end
+
+  defp prepare_collapse("") do
+    nil
+  end
+  defp prepare_collapse(field_name) when is_bitstring(field_name) do
+    Collapse.new(field_name: field_name)
+  end
+  defp prepare_collapse(_field_name) do
     nil
   end
 

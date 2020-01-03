@@ -176,6 +176,38 @@ defmodule ExAliyunOts.MixinTest.Search do
         pk_value
       end)
     assert primary_keys == ["a3", "a6"]
+
+    # range_query with collapse
+    query = [
+      type: QueryType.range,
+      field_name: "age",
+      from: 20,
+      to: 32,
+      include_upper: true,
+      include_lower: true
+    ]
+
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: query,
+          collapse: "class"
+        ]
+
+    assert length(response.rows) == 5
+    assert response.total_hits == 9
+
+    # input invalid `collapse` as list will be ignored,
+    # only string as field name are allowed.
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: query,
+          collapse: ["class"]
+        ]
+
+    assert length(response.rows) == 9
+    assert response.total_hits == 9
   end
 
   test "bool query with must/must_not" do

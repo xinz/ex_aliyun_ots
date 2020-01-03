@@ -124,6 +124,9 @@ defmodule ExAliyunOtsTest.Support.Search do
             %Search.FieldSchema{
               field_name: "tags",
               is_array: true
+            },
+            %Search.FieldSchema{
+              field_name: "class"
             }
           ]
         }
