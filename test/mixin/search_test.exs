@@ -198,7 +198,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert response.total_hits == 9
 
     # input invalid `collapse` as list will be ignored,
-    # only string as field name are allowed.
+    # only string as field name is allowed.
     {:ok, response} =
       search @table, index_name,
         search_query: [
