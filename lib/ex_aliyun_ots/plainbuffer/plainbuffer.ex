@@ -166,7 +166,9 @@ defmodule ExAliyunOts.PlainBuffer do
       |> process_cell_name(pk_name)
       |> process_primary_key_value(pk_value)
 
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring, byte_to_binary(cell_checksum)::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring,
+        byte_to_binary(cell_checksum)::bitstring>>
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {buffer, row_checksum}
@@ -184,7 +186,9 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_cell_name({buffer, cell_checksum}, name) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_name)::bitstring, <<String.length(name)::little-integer-size(32)>>, name::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_name)::bitstring,
+        <<String.length(name)::little-integer-size(32)>>, name::bitstring>>
 
     cell_checksum = CRC.crc_string(cell_checksum, name)
     {buffer, cell_checksum}
@@ -197,27 +201,38 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
        when value == PKType.inf_min() do
-    buffer = <<buffer::bitstring, <<1::little-integer-size(32)>>, byte_to_binary(@vt_inf_min)::bitstring>>
+    buffer =
+      <<buffer::bitstring, <<1::little-integer-size(32)>>,
+        byte_to_binary(@vt_inf_min)::bitstring>>
+
     cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_min)
     {buffer, cell_checksum}
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
        when value == PKType.inf_max() do
-    buffer = <<buffer::bitstring, <<1::little-integer-size(32)>>, byte_to_binary(@vt_inf_max)::bitstring>>
+    buffer =
+      <<buffer::bitstring, <<1::little-integer-size(32)>>,
+        byte_to_binary(@vt_inf_max)::bitstring>>
+
     cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_max)
     {buffer, cell_checksum}
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
        when value == PKType.auto_increment() do
-    buffer = <<buffer::bitstring, <<1::little-integer-size(32)>>, byte_to_binary(@vt_auto_increment)::bitstring>>
+    buffer =
+      <<buffer::bitstring, <<1::little-integer-size(32)>>,
+        byte_to_binary(@vt_auto_increment)::bitstring>>
+
     cell_checksum = CRC.crc_int8(cell_checksum, @vt_auto_increment)
     {buffer, cell_checksum}
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value) when is_integer(value) do
-    buffer = <<buffer::bitstring, <<1 + @little_endian_64_size::little-integer-size(32)>>, byte_to_binary(@vt_integer)::bitstring, (<<value::little-integer-size(64)>>)>>
+    buffer =
+      <<buffer::bitstring, <<1 + @little_endian_64_size::little-integer-size(32)>>,
+        byte_to_binary(@vt_integer)::bitstring, (<<value::little-integer-size(64)>>)>>
 
     cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
     {buffer, cell_checksum}
@@ -227,7 +242,10 @@ defmodule ExAliyunOts.PlainBuffer do
     prefix_length = @little_endian_32_size + 1
     value_size = byte_size(value)
 
-    buffer = <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>, byte_to_binary(@vt_string)::bitstring, <<value_size::little-integer-size(32)>>, value::bitstring>>
+    buffer =
+      <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>,
+        byte_to_binary(@vt_string)::bitstring, <<value_size::little-integer-size(32)>>,
+        value::bitstring>>
 
     cell_checksum =
       cell_checksum
@@ -242,7 +260,10 @@ defmodule ExAliyunOts.PlainBuffer do
     prefix_length = @little_endian_32_size + 1
     value_size = byte_size(value)
 
-    buffer = <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>, byte_to_binary(@vt_blob)::bitstring, <<value_size::little-integer-size(32)>>, value::bitstring>>
+    buffer =
+      <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>,
+        byte_to_binary(@vt_blob)::bitstring, <<value_size::little-integer-size(32)>>,
+        value::bitstring>>
 
     cell_checksum =
       cell_checksum
@@ -266,12 +287,16 @@ defmodule ExAliyunOts.PlainBuffer do
       |> process_cell_name(column_name)
       |> process_column_value_with_checksum(column_value)
 
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring, byte_to_binary(cell_checksum)::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring,
+        byte_to_binary(cell_checksum)::bitstring>>
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {buffer, row_checksum}
   end
-  defp process_column({column_name, column_value, timestamp}, {buffer, row_checksum}) when timestamp != nil do
+
+  defp process_column({column_name, column_value, timestamp}, {buffer, row_checksum})
+       when timestamp != nil do
     cell_checksum = 0
     buffer = <<buffer::bitstring, byte_to_binary(@tag_cell)::bitstring>>
 
@@ -279,16 +304,21 @@ defmodule ExAliyunOts.PlainBuffer do
       {buffer, cell_checksum}
       |> process_cell_name(column_name)
       |> process_column_value_with_checksum(column_value)
-    
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_timestamp)::bitstring, (<<timestamp::little-integer-size(64)>>)>>
+
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_timestamp)::bitstring,
+        (<<timestamp::little-integer-size(64)>>)>>
 
     cell_checksum = CRC.crc_int64(cell_checksum, timestamp)
 
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring, byte_to_binary(cell_checksum)::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring,
+        byte_to_binary(cell_checksum)::bitstring>>
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {buffer, row_checksum}
   end
+
   defp process_column(column, _) do
     raise ExAliyunOts.RuntimeError, "Invalid column: #{inspect(column)} is not a tuple"
   end
@@ -299,7 +329,10 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp process_column_value_with_checksum({buffer, cell_checksum}, value)
        when is_boolean(value) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring, <<2::little-integer-size(32)>>, byte_to_binary(@vt_boolean)::bitstring, boolean_to_integer(value)::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring,
+        <<2::little-integer-size(32)>>, byte_to_binary(@vt_boolean)::bitstring,
+        boolean_to_integer(value)::bitstring>>
 
     cell_checksum =
       if value do
@@ -317,7 +350,10 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp process_column_value_with_checksum({buffer, cell_checksum}, value)
        when is_integer(value) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring, <<1 + @little_endian_64_size::little-integer-size(32)>>, byte_to_binary(@vt_integer)::bitstring, (<<value::little-integer-size(64)>>)>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring,
+        <<1 + @little_endian_64_size::little-integer-size(32)>>,
+        byte_to_binary(@vt_integer)::bitstring, (<<value::little-integer-size(64)>>)>>
 
     cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
     {buffer, cell_checksum}
@@ -328,7 +364,9 @@ defmodule ExAliyunOts.PlainBuffer do
     value_to_binary = <<value::float-little>>
     <<long::unsigned-little-integer-64>> = value_to_binary
 
-    buffer = <<buffer::bitstring, <<1 + @little_endian_64_size::little-integer-size(32)>>, byte_to_binary(@vt_double)::bitstring, value_to_binary::bitstring>>
+    buffer =
+      <<buffer::bitstring, <<1 + @little_endian_64_size::little-integer-size(32)>>,
+        byte_to_binary(@vt_double)::bitstring, value_to_binary::bitstring>>
 
     cell_checksum = cell_checksum |> CRC.crc_int8(@vt_double) |> CRC.crc_int64(long)
     {buffer, cell_checksum}
@@ -339,7 +377,10 @@ defmodule ExAliyunOts.PlainBuffer do
     prefix_length = @little_endian_32_size + 1
     value_size = byte_size(value)
 
-    buffer = <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>, byte_to_binary(@vt_string)::bitstring, <<value_size::little-integer-size(32)>>, value::bitstring>>
+    buffer =
+      <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>,
+        byte_to_binary(@vt_string)::bitstring, <<value_size::little-integer-size(32)>>,
+        value::bitstring>>
 
     cell_checksum =
       cell_checksum
@@ -356,7 +397,10 @@ defmodule ExAliyunOts.PlainBuffer do
     prefix_length = @little_endian_32_size + 1
     value_size = byte_size(value)
 
-    buffer = <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>, byte_to_binary(@vt_blob)::bitstring, <<value_size::little-integer-size(32)>>, value::bitstring>>
+    buffer =
+      <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>,
+        byte_to_binary(@vt_blob)::bitstring, <<value_size::little-integer-size(32)>>,
+        value::bitstring>>
 
     cell_checksum =
       cell_checksum
@@ -436,10 +480,11 @@ defmodule ExAliyunOts.PlainBuffer do
          column_name,
          {column_value, timestamp}
        ) do
-    {buffer, cell_checksum} =
-      process_update_column_with_cell(buffer, column_name, column_value)
+    {buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
 
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring, byte_to_binary(@op_delete_one_version)::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring,
+        byte_to_binary(@op_delete_one_version)::bitstring>>
 
     {buffer, cell_checksum} =
       process_update_column_with_timestamp(buffer, cell_checksum, timestamp)
@@ -455,10 +500,11 @@ defmodule ExAliyunOts.PlainBuffer do
          column_name,
          {column_value, timestamp}
        ) do
-    {buffer, cell_checksum} =
-      process_update_column_with_cell(buffer, column_name, column_value)
+    {buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
 
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring, byte_to_binary(@op_delete_all_version)::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring,
+        byte_to_binary(@op_delete_all_version)::bitstring>>
 
     {buffer, cell_checksum} =
       process_update_column_with_timestamp(buffer, cell_checksum, timestamp)
@@ -474,10 +520,11 @@ defmodule ExAliyunOts.PlainBuffer do
          column_name,
          {column_value, timestamp}
        ) do
-    {buffer, cell_checksum} =
-      process_update_column_with_cell(buffer, column_name, column_value)
+    {buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
 
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring, byte_to_binary(@op_increment)::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring,
+        byte_to_binary(@op_increment)::bitstring>>
 
     {buffer, cell_checksum} =
       process_update_column_with_timestamp(buffer, cell_checksum, timestamp)
@@ -493,8 +540,7 @@ defmodule ExAliyunOts.PlainBuffer do
          column_name,
          {column_value, timestamp}
        ) do
-    {buffer, cell_checksum} =
-      process_update_column_with_cell(buffer, column_name, column_value)
+    {buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
 
     {buffer, cell_checksum} =
       process_update_column_with_timestamp(buffer, cell_checksum, timestamp)
@@ -516,14 +562,18 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_update_column_with_timestamp(buffer, cell_checksum, timestamp) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_timestamp)::bitstring, (<<timestamp::little-integer-size(64)>>)>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_timestamp)::bitstring,
+        (<<timestamp::little-integer-size(64)>>)>>
 
     cell_checksum = CRC.crc_int64(cell_checksum, timestamp)
     {buffer, cell_checksum}
   end
 
   defp process_update_column_with_row_checksum(buffer, cell_checksum, row_checksum) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring, byte_to_binary(cell_checksum)::bitstring>>
+    buffer =
+      <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring,
+        byte_to_binary(cell_checksum)::bitstring>>
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {buffer, row_checksum}
@@ -552,7 +602,8 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_row_checksum(buffer, row_checksum) do
-    <<buffer::bitstring, byte_to_binary(@tag_row_checksum)::bitstring, byte_to_binary(row_checksum)::bitstring>>
+    <<buffer::bitstring, byte_to_binary(@tag_row_checksum)::bitstring,
+      byte_to_binary(row_checksum)::bitstring>>
   end
 
   defp byte_to_binary(byte) do
@@ -601,7 +652,10 @@ defmodule ExAliyunOts.PlainBuffer do
             else
               %{
                 acc
-                | tidied: [<<acc.to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>> | acc.tidied],
+                | tidied: [
+                    <<acc.to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>>
+                    | acc.tidied
+                  ],
                   to_be_merged: <<>>
               }
             end
@@ -610,7 +664,11 @@ defmodule ExAliyunOts.PlainBuffer do
             if acc.to_be_merged == <<>> do
               Map.put(acc, :to_be_merged, <<acc.to_be_merged::bitstring, row::bitstring>>)
             else
-              Map.put(acc, :to_be_merged, <<acc.to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>>)
+              Map.put(
+                acc,
+                :to_be_merged,
+                <<acc.to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>>
+              )
             end
         end
       end)
@@ -626,7 +684,8 @@ defmodule ExAliyunOts.PlainBuffer do
     |> Enum.reverse()
     |> Task.async_stream(
       fn row_values ->
-        {primary_keys, attribute_columns} = deserialize_row_data(<<@pk_tag_marker, row_values::bitstring>>)
+        {primary_keys, attribute_columns} =
+          deserialize_row_data(<<@pk_tag_marker, row_values::bitstring>>)
 
         debug(fn ->
           [
@@ -678,7 +737,9 @@ defmodule ExAliyunOts.PlainBuffer do
 
       attribute_columns_binary =
         <<@tag_cell::integer, @tag_cell_name::integer,
-          (row_data_parts |> Enum.slice((matched_index + 1)..-1) |> Enum.join(@row_data_marker))::bitstring>>
+          row_data_parts
+          |> Enum.slice((matched_index + 1)..-1)
+          |> Enum.join(@row_data_marker)::bitstring>>
 
       primary_keys_binary =
         case primary_keys_binary do
@@ -1082,7 +1143,8 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   def calculate_tag_cell_index(values) do
-    splited = :binary.split(values, <<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>, [:global])
+    splited =
+      :binary.split(values, <<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>, [:global])
 
     index =
       Enum.find_index(splited, fn item ->
