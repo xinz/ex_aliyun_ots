@@ -631,47 +631,10 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp slice_rows(rows) do
-    rows_list = :binary.split(rows, @pk_tag_marker, [:global])
-
     checked_rows =
-      Enum.reduce(Enum.slice(rows_list, 1..-1), %{checked: [], to_be_merged: <<>>}, fn row, acc ->
-        debug(fn ->
-          [
-            "\nsplited data:\s",
-            inspect(row, limit: :infinity),
-            ?\n,
-            "to_be_merged:\s"
-            | inspect(acc.to_be_merged)
-          ]
-        end)
-
-        case :binary.at(row, byte_size(row) - 2) do
-          @tag_row_checksum ->
-            if acc.to_be_merged == <<>> do
-              Map.put(acc, :checked, [<<row::bitstring>> | acc.checked])
-            else
-              %{
-                acc
-                | checked: [
-                    <<acc.to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>>
-                    | acc.checked
-                  ],
-                  to_be_merged: <<>>
-              }
-            end
-
-          _ ->
-            if acc.to_be_merged == <<>> do
-              Map.put(acc, :to_be_merged, <<acc.to_be_merged::bitstring, row::bitstring>>)
-            else
-              Map.put(
-                acc,
-                :to_be_merged,
-                <<acc.to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>>
-              )
-            end
-        end
-      end)
+      rows
+      |> :binary.split(@pk_tag_marker, [:global])
+      |> Enum.reduce(%{checked: [], to_be_merged: <<>>}, &do_slice_rows/2)
 
     debug(fn ->
       [
@@ -683,6 +646,41 @@ defmodule ExAliyunOts.PlainBuffer do
     checked_rows.checked
     |> Enum.reverse()
     |> Enum.map(&deserialize_raw_rows/1)
+  end
+
+  defp do_slice_rows(<<>>, prepared) do
+    prepared
+  end
+  defp do_slice_rows(row_binary, prepared) do
+    debug(fn ->
+      [
+        "\nsplited data:\s",
+        inspect(row_binary, limit: :infinity),
+        ?\n,
+        "to_be_merged:\s"
+        | inspect(prepared.to_be_merged)
+      ]
+    end)
+
+    row_binary
+    |> :binary.part(byte_size(row_binary) - 2, 1)
+    |> do_slice_row_binary(row_binary, prepared)
+  end
+
+  defp do_slice_row_binary(<<@tag_row_checksum::integer>>, row, %{to_be_merged: <<>>, checked: checked} = prepared) do
+    Map.put(prepared, :checked, [row | checked])
+  end
+  defp do_slice_row_binary(<<@tag_row_checksum::integer>>, row, %{to_be_merged: to_be_merged, checked: checked} = prepared) do
+    checked_row = <<to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>>
+    prepared
+    |> Map.put(:checked, [checked_row | checked])
+    |> Map.put(:to_be_merged, <<>>)
+  end
+  defp do_slice_row_binary(_, row, %{to_be_merged: <<>>} = prepared) do
+    Map.put(prepared, :to_be_merged, row)
+  end
+  defp do_slice_row_binary(_, row, %{to_be_merged: to_be_merged} = prepared) do
+    Map.put(prepared, :to_be_merged, <<to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>>)
   end
 
   defp deserialize_raw_rows(row_values) do
