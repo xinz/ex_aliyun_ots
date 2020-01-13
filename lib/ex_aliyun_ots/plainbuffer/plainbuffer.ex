@@ -634,7 +634,7 @@ defmodule ExAliyunOts.PlainBuffer do
     rows_list = :binary.split(rows, @pk_tag_marker, [:global])
 
     checked_rows =
-      Enum.reduce(Enum.slice(rows_list, 1..-1), %{tidied: [], to_be_merged: <<>>}, fn row, acc ->
+      Enum.reduce(Enum.slice(rows_list, 1..-1), %{checked: [], to_be_merged: <<>>}, fn row, acc ->
         debug(fn ->
           [
             "\nsplited data:\s",
@@ -648,13 +648,13 @@ defmodule ExAliyunOts.PlainBuffer do
         case :binary.at(row, byte_size(row) - 2) do
           @tag_row_checksum ->
             if acc.to_be_merged == <<>> do
-              Map.put(acc, :tidied, [<<row::bitstring>> | acc.tidied])
+              Map.put(acc, :checked, [<<row::bitstring>> | acc.checked])
             else
               %{
                 acc
-                | tidied: [
+                | checked: [
                     <<acc.to_be_merged::bitstring, @pk_tag_marker::bitstring, row::bitstring>>
-                    | acc.tidied
+                    | acc.checked
                   ],
                   to_be_merged: <<>>
               }
@@ -680,30 +680,23 @@ defmodule ExAliyunOts.PlainBuffer do
       ]
     end)
 
-    checked_rows.tidied
+    checked_rows.checked
     |> Enum.reverse()
-    |> Task.async_stream(
-      fn row_values ->
-        {primary_keys, attribute_columns} =
-          deserialize_row_data(<<@pk_tag_marker, row_values::bitstring>>)
+    |> Enum.map(&deserialize_raw_rows/1)
+  end
 
-        debug(fn ->
-          [
-            "\nprimary_keys:\s",
-            inspect(primary_keys),
-            ?\n,
-            "attribute_columns:\s",
-            inspect(attribute_columns)
-          ]
-        end)
-
-        [{primary_keys, attribute_columns}]
-      end,
-      timeout: :infinity
-    )
-    |> Enum.reduce([], fn {:ok, prepared_row}, acc ->
-      acc ++ prepared_row
+  defp deserialize_raw_rows(row_values) do
+    {primary_keys, attribute_columns} = deserialize_row_data(<<@pk_tag_marker, row_values::bitstring>>)
+    debug(fn ->
+      [
+        "\nprimary_keys:\s",
+        inspect(primary_keys),
+        ?\n,
+        "attribute_columns:\s",
+        inspect(attribute_columns)
+      ]
     end)
+    {primary_keys, attribute_columns}
   end
 
   defp deserialize_row_data(values) do
