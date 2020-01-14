@@ -90,7 +90,7 @@ defmodule ExAliyunOtsTest.PlainBuffer do
     assert index == 28
     mock = <<3, 4, 5, 0, 0, 0, 118, 97, 108, 117, 101, 5, 9, 0, 0, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0, 7, 235, 57, 242, 24, 95, 1, 0, 0, 10, 178, 9, 94, 1>>
     index = PlainBuffer.calculate_tag_cell_index(mock)
-    assert index == :nomatch
+    assert index == nil
     mock = <<3, 4, 5, 0, 0, 0, 118, 97, 108, 117, 101, 5, 9, 0, 0, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0, 7, 235, 57, 242, 24, 95, 1, 0, 0, 10, 178, 9, 94, 1, 10, 1, 3, 4>>
     index = PlainBuffer.calculate_tag_cell_index(mock)
     assert index == 41
