@@ -4,7 +4,7 @@ defmodule ExAliyunOts.Mixin do
   alias ExAliyunOts.Var.Search
   alias ExAliyunOts.Client
 
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction, Search.QueryType, Search.ColumnReturnType, Search.SortType}
+  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction, Search.QueryType, Search.ColumnReturnType, Search.SortType, Search.AggregationType, Search.GroupByType, Search.SortOrder}
 
   require PKType
   require OperationType
@@ -17,6 +17,9 @@ defmodule ExAliyunOts.Mixin do
   require QueryType
   require ColumnReturnType
   require SortType
+  require AggregationType
+  require GroupByType
+  require SortOrder
 
   @regex_filter_options ~r/^(.+?)(\[.+?\])$/
 
@@ -386,25 +389,41 @@ defmodule ExAliyunOts.Mixin do
   defp do_map_search_options(:sort = key, value, var) do
     Map.put(var, key, map_search_sort(value))
   end
-  defp do_map_search_options(:must = key, value, var) do
-    # for BoolQuery
+  defp do_map_search_options(:must = key, value, var) when is_list(value) do
+    # for BoolQuery within `must` items list
     queries = Enum.map(value, fn(query) -> map_query_details(query) end)
     Map.put(var, key, queries)
   end
-  defp do_map_search_options(:must_not = key, value, var) do
-    # for BoolQuery
+  defp do_map_search_options(:must = key, value, var) when is_map(value) do
+    # for BoolQuery within a single `must` item
+    Map.put(var, key, [value])
+  end
+  defp do_map_search_options(:must_not = key, value, var) when is_list(value) do
+    # for BoolQuery within `must_not` items list
     queries = Enum.map(value, fn(query) -> map_query_details(query) end)
     Map.put(var, key, queries)
   end
-  defp do_map_search_options(:filter = key, value, var) do
-    # for BoolQuery
+  defp do_map_search_options(:must_not = key, value, var) when is_map(value) do
+    # for BoolQuery within a single `must_not` item
+    Map.put(var, key, [value])
+  end
+  defp do_map_search_options(:filter = key, value, var) when is_list(value) do
+    # for BoolQuery within `filters` items list
     queries = Enum.map(value, fn(query) -> map_query_details(query) end)
     Map.put(var, key, queries)
   end
-  defp do_map_search_options(:should = key, value, var) do
-    # for BoolQuery
+  defp do_map_search_options(:filters = key, value, var) when is_map(value) do
+    # for BoolQuery within a single `filters` item
+    Map.put(var, key, [value])
+  end
+  defp do_map_search_options(:should = key, value, var) when is_list(value) do
+    # for BoolQuery within `should` items list
     queries = Enum.map(value, fn(query) -> map_query_details(query) end)
     Map.put(var, key, queries)
+  end
+  defp do_map_search_options(:should = key, value, var) when is_map(value) do
+    # for BoolQuery within a single `should` item
+    Map.put(var, key, [value])
   end
   defp do_map_search_options(:query = key, value, var) do
     # for NestedQuery
@@ -505,9 +524,15 @@ defmodule ExAliyunOts.Mixin do
     Map.put(search_query, :query, var_query)
   end
 
+  defp map_query_details([query]) when is_map(query) do
+    query
+  end
   defp map_query_details(query) when is_list(query) do
     query_type = Keyword.get(query, :type)
     map_query_details(query_type, query)
+  end
+  defp map_query_details(query) when is_map(query) do
+    query
   end
   defp map_query_details(query) do
     raise ExAliyunOts.RuntimeError, "Input invalid query to map query details: #{inspect query}"
@@ -607,6 +632,191 @@ defmodule ExAliyunOts.Mixin do
         acc
       end
     end)
+  end
+
+  def agg_min(agg_name, field_name, opts \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.min,
+      name: agg_name,
+      field_name: field_name,
+      missing: Keyword.get(opts, :missing)
+    }
+  end
+
+  def agg_max(agg_name, field_name, opts \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.max,
+      name: agg_name,
+      field_name: field_name,
+      missing: Keyword.get(opts, :missing)
+    }
+  end
+
+  def agg_avg(agg_name, field_name, opts \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.avg,
+      name: agg_name,
+      field_name: field_name,
+      missing: Keyword.get(opts, :missing)
+    }
+  end
+
+  def agg_distinct_count(agg_name, field_name, opts \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.distinct_count,
+      name: agg_name,
+      field_name: field_name,
+      missing: Keyword.get(opts, :missing)
+    }
+  end
+
+  def agg_sum(agg_name, field_name, opts \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.sum,
+      name: agg_name,
+      field_name: field_name,
+      missing: Keyword.get(opts, :missing)
+    }
+  end
+
+  def agg_count(agg_name, field_name) do
+    %Search.Aggregation{
+      type: AggregationType.count,
+      name: agg_name,
+      field_name: field_name,
+    }
+  end
+
+  def group_by_field(group_name, field_name, opts \\ []) do
+    %Search.GroupByField{
+      name: group_name,
+      field_name: field_name,
+      size: Keyword.get(opts, :size),
+      sub_aggs: Keyword.get(opts, :sub_aggs),
+      sub_group_bys: Keyword.get(opts, :sub_group_bys),
+      sort: Keyword.get(opts, :sort)
+    }
+  end
+
+  def group_by_range(group_name, field_name, opts \\ []) do
+    %Search.GroupByRange{
+      name: group_name,
+      field_name: field_name,
+      sub_aggs: Keyword.get(opts, :sub_aggs),
+      sub_group_bys: Keyword.get(opts, :sub_group_bys),
+      ranges: Keyword.get(opts, :ranges)
+    }
+  end
+
+  def group_by_filter(group_name, filters, opts \\ []) when is_list(filters) do
+    %Search.GroupByFilter{
+      name: group_name,
+      filters: filters,
+      sub_aggs: Keyword.get(opts, :sub_aggs),
+      sub_group_bys: Keyword.get(opts, :sub_group_bys)
+    }
+  end
+
+  def group_key_sort(order)
+      when order == SortOrder.desc
+      when order == :desc do
+    %Search.GroupKeySort{order: SortOrder.desc}
+  end
+  def group_key_sort(order)
+      when order == SortOrder.asc
+      when order == :asc do
+    %Search.GroupKeySort{order: SortOrder.asc}
+  end
+  def group_key_sort(invalid) do
+    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+  end
+
+  def row_count_sort(order)
+      when order == SortOrder.desc
+      when order == :desc do
+    %Search.RowCountSort{order: SortOrder.desc}
+  end
+  def row_count_sort(order)
+      when order == SortOrder.asc
+      when order == :asc do
+    %Search.RowCountSort{order: SortOrder.asc}
+  end
+  def row_count_sort(invalid) do
+    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+  end
+
+  def sub_agg_sort(sub_agg_name, _)
+      when is_bitstring(sub_agg_name) == false
+      when sub_agg_name == "" do
+    raise ExAliyunOts.RuntimeError, "require sub_agg_name as a string, but input \"#{inspect sub_agg_name}\""
+  end
+  def sub_agg_sort(sub_agg_name, order)
+      when order == SortOrder.desc
+      when order == :desc do
+    %Search.SubAggSort{sub_agg_name: sub_agg_name, order: SortOrder.desc}
+  end
+  def sub_agg_sort(sub_agg_name, order)
+      when is_bitstring(sub_agg_name) and order == SortOrder.asc
+      when is_bitstring(sub_agg_name) and order == :asc do
+    %Search.SubAggSort{sub_agg_name: sub_agg_name}
+  end
+  def sub_agg_sort(_sub_agg_name, invalid) do
+    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+  end
+
+  def match_query(field_name, text, opts \\ []) do
+    %Search.MatchQuery{
+      field_name: field_name,
+      text: text,
+      minimum_should_match: Keyword.get(opts, :minimum_should_match, 1),
+    }
+  end
+
+  def match_all_query() do
+    %Search.MatchAllQuery{}
+  end
+
+  def match_phrase_query(field_name, text) do
+    %Search.MatchPhraseQuery{field_name: field_name, text: text}
+  end
+
+  def term_query(field_name, term) do
+    %Search.TermQuery{field_name: field_name, term: term}
+  end
+
+  def terms_query(field_name, terms) when is_list(terms) do
+    %Search.TermsQuery{field_name: field_name, terms: terms}
+  end
+
+  def prefix_query(field_name, prefix) do
+    %Search.PrefixQuery{field_name: field_name, prefix: prefix}
+  end
+
+  def range_query(field_name, opts \\ []) do
+    %Search.RangeQuery{
+      field_name: field_name,
+      from: Keyword.get(opts, :from),
+      to: Keyword.get(opts, :to),
+      include_lower: Keyword.get(opts, :include_lower, true),
+      include_upper: Keyword.get(opts, :include_upper, true)
+    }
+  end
+
+  def wildcard_query(field_name, value) do
+    %Search.WildcardQuery{field_name: field_name, value: value}
+  end
+
+  def bool_query(opts) do
+    map_search_options(%Search.BoolQuery{}, opts)
+  end
+
+  def nested_query(path, query, opts \\ []) do
+    opts = Keyword.merge(opts, [path: path, query: query])
+    map_search_options(%Search.NestedQuery{}, opts)
+  end
+
+  def exists_query(field_name) do
+    %Search.ExistsQuery{field_name: field_name}
   end
 
   defmacro filter(filter_expr) do

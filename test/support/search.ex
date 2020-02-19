@@ -10,12 +10,39 @@ defmodule ExAliyunOtsTest.Support.Search do
   require RowExistence
   require FieldType
 
-  def initialize(instance_key, table, index_names) do
+  def init(instance_key, table, index_names, opts \\ []) do
+    initialize(instance_key, table, index_names)
+
+    table_group_by = Keyword.get(opts, :table_group_by) 
+    index_group_by = Keyword.get(opts, :index_group_by)
+    if table_group_by != nil and index_group_by != nil do
+      initialize_group_by(instance_key, table_group_by, index_group_by)
+    end
+
+    sleep()
+  end
+
+  defp initialize(instance_key, table, index_names) do
     create_table(instance_key, table)
 
     create_index(instance_key, table, index_names)
 
-    inseart_test_data(instance_key, table)
+    insert_test_data(instance_key, table)
+  end
+
+  defp initialize_group_by(instance_key, table, index_name) do
+
+    create_table_for_group_by(instance_key, table)
+
+    create_search_index_for_gourp_by(instance_key, table, index_name)
+
+    insert_group_by_test_data(instance_key, table)
+  end
+
+  defp sleep() do
+    sleep = 25_000
+    Logger.info "waiting #{sleep} ms for indexing..."
+    Process.sleep(sleep)
   end
 
   def clean(instance_key, table, useless_index_names) do
@@ -27,7 +54,17 @@ defmodule ExAliyunOtsTest.Support.Search do
       {:ok, _response} = Client.delete_search_index(instance_key, var_request)
     end)
     ExAliyunOts.Client.delete_table(instance_key, table)
-    Logger.info "clean search_indexes and delete table"
+    Logger.info "clean search_indexes and delete `#{table}` table"
+  end
+
+  def clean_group_by(instance_key, table, index_name) do
+    var_request = %Search.DeleteSearchIndexRequest{
+      table_name: table,
+      index_name: index_name
+    }
+    {:ok, _response} = Client.delete_search_index(instance_key, var_request)
+    ExAliyunOts.Client.delete_table(instance_key, table)
+    Logger.info "clean search_indexes and delete `#{table}` table"
   end
 
   defp create_table(instance_key, table) do
@@ -35,9 +72,23 @@ defmodule ExAliyunOtsTest.Support.Search do
       table_name: table,
       primary_keys: [{"partition_key", PKType.string}],
     }
-    :ok = Client.create_table(instance_key, var_create_table)
-    Logger.info "initialized table"
-    Process.sleep(5_000)
+    Client.create_table(instance_key, var_create_table)
+
+    sleep = 5_000
+    Logger.info "initialized table, waiting for #{sleep} ms"
+    Process.sleep(sleep)
+  end
+
+  defp create_table_for_group_by(instance_key, table) do
+    var_create_table = %Var.CreateTable{
+      table_name: table,
+      primary_keys: [{"partition_key", PKType.string}]
+    }
+    Client.create_table(instance_key, var_create_table)
+
+    sleep = 5_000
+    Logger.info "initialized group_by table, waiting for #{sleep} ms"
+    Process.sleep(sleep)
   end
 
   defp create_index(instance_key, table, [index1, index2]) do
@@ -46,17 +97,17 @@ defmodule ExAliyunOtsTest.Support.Search do
     Process.sleep(5_000)
   end
 
-  defp inseart_test_data(instance_key, table) do
+  defp insert_test_data(instance_key, table) do
 
     data = [
-      %{id: "a1", class: "class1", name: "name_a1", age: 20, score: 99.71, is_actived: true, tags: Jason.encode!(["1", "2", "3"])},
+      %{id: "a1", class: "class1", name: "name_a1", age: 20, score: 99.71, is_actived: true, tags: Jason.encode!(["1", "2", "3"]), place: 10},
       %{id: "a2", class: "class1", name: "name_a2", age: 28, score: 100, is_actived: false, tags: Jason.encode!(["2", "3"])},
-      %{id: "a3", class: "class2", name: "name_a3", age: 32, score: 66.78, is_actived: true, tags: Jason.encode!(["4", "1"])},
-      %{id: "a4", class: "class3", name: "name_a4", age: 24, score: 41.01, is_actived: true, tags: Jason.encode!(["4"])},
-      %{id: "a5", class: "class2", name: "name_a5", age: 26, score: 89, is_actived: true},
+      %{id: "a3", class: "class2", name: "name_a3", age: 32, score: 66.78, is_actived: true, tags: Jason.encode!(["4", "1"]), place: 4},
+      %{id: "a4", class: "class3", name: "name_a4", age: 24, score: 41.01, is_actived: true, tags: Jason.encode!(["4"]), place: 20},
+      %{id: "a5", class: "class2", name: "name_a5", age: 26, score: 89, is_actived: true, place: 3},
       %{id: "a6", class: "class4", name: "name_a6", age: 27, score: 79.99, is_actived: false},
       %{id: "a7", class: "class1", name: "name_a7", age: 28, score: 100, is_actived: true},
-      %{id: "a8", class: "class8", name: "name_a8", age: 22, score: 88.61, is_actived: true},
+      %{id: "a8", class: "class8", name: "name_a8", age: 22, score: 88.61, is_actived: true, place: 8},
       %{id: "b9", class: "class8", name: "name_b9", age: 21, score: 99, is_actived: false, comment: "comment"},
     ]
 
@@ -91,8 +142,35 @@ defmodule ExAliyunOtsTest.Support.Search do
       {:ok, _result} = Client.put_row(instance_key, var_put_row)
     end)
 
-    Logger.info "waiting for indexing..."
-    Process.sleep(25_000)
+  end
+
+  defp insert_group_by_test_data(instance_key, table) do
+    data = [
+      %{id: "1", type: "type1", price: 100.0, is_actived: true, number: 10, name: "product-001"},
+      %{id: "2", type: "type1", price: 32.05, is_actived: true, number: 100, name: "product-002"},
+      %{id: "3", type: "type1", price: 56.15, is_actived: true, number: 3, name: "product-003"},
+      %{id: "4", type: "type2", price: 89.99, is_actived: true, number: 32, name: "product-004"},
+      %{id: "5", type: "type2", price: 9.99, is_actived: false, number: 5, name: "product-005"},
+      %{id: "6", type: "type2", price: 28.99, is_actived: true, number: 15, name: "product-006"},
+      %{id: "7", type: "type2", price: 128.99, is_actived: true, number: 1, name: "product-007"},
+      %{id: "8", type: "type3", price: 18.0, is_actived: true, number: 10, name: "product-008"},
+      %{id: "9", type: "type3", price: 9.99, is_actived: true, number: 10, name: "product-009"},
+    ]
+
+    Enum.map(data, fn(item) ->
+      attribute_columns = ExAliyunOts.Utils.attrs_to_row(item)
+      row =
+        %Var.PutRow{
+          table_name: table,
+          primary_keys: [{"partition_key", item.id}],
+          attribute_columns: attribute_columns,
+          condition: %Var.Condition{
+            row_existence: RowExistence.expect_not_exist
+          }
+        }
+
+      {:ok, _result} = Client.put_row(instance_key, row)
+    end)
   end
 
   defp create_search_index(instance_key, table, index_name) do
@@ -127,12 +205,48 @@ defmodule ExAliyunOtsTest.Support.Search do
             },
             %Search.FieldSchema{
               field_name: "class"
+            },
+            %Search.FieldSchema{
+              field_name: "place",
+              field_type: FieldType.long
             }
           ]
         }
       }
     result = Client.create_search_index(instance_key, var_request)
     Logger.info "create_search_index: #{inspect result}"
+  end
+
+  defp create_search_index_for_gourp_by(instance_key, table, index_name) do
+    var_request =
+      %Search.CreateSearchIndexRequest{
+        table_name: table,
+        index_name: index_name,
+        index_schema: %Search.IndexSchema{
+          field_schemas: [
+            %Search.FieldSchema{
+              field_name: "type"
+            },
+            %Search.FieldSchema{
+              field_name: "price",
+              field_type: FieldType.double
+            },
+            %Search.FieldSchema{
+              field_name: "is_actived",
+              field_type: FieldType.boolean
+            },
+            %Search.FieldSchema{
+              field_name: "number",
+              field_type: FieldType.long
+            },
+            %Search.FieldSchema{
+              field_name: "name"
+            }
+          ]
+        }
+      }
+    result = Client.create_search_index(instance_key, var_request)
+    Logger.info "create_search_index for group_by test: #{inspect result}"
   end
 
   defp create_search_index2(instance_key, table, index_name) do

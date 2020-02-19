@@ -168,7 +168,7 @@ defmodule ExAliyunOts.Var.Search do
   end
 
   defmodule SearchQuery do
-    defstruct offset: 0, limit: 10, query: nil, collapse: nil, sort: nil, get_total_count: true, token: nil
+    defstruct offset: 0, limit: nil, query: nil, collapse: nil, sort: nil, get_total_count: true, token: nil, aggs: nil, group_bys: nil
   end
 
   defmodule SearchRequest do
@@ -225,6 +225,43 @@ defmodule ExAliyunOts.Var.Search do
     defstruct field_name: ""
   end
 
+  defmodule Aggregation do
+    defstruct field_name: "", type: nil, name: nil, missing: nil
+  end
+
+  defmodule GroupByField do
+    defstruct name: nil, field_name: "", size: nil, sub_group_bys: nil, sub_aggs: nil, sort: nil
+  end
+
+  defmodule GroupByRange do
+    defstruct name: nil, field_name: "", sub_group_bys: nil, sub_aggs: nil, ranges: nil
+  end
+
+  defmodule GroupByFilter do
+    defstruct name: nil, filters: nil, sub_group_bys: nil, sub_aggs: nil
+  end
+
+  defmodule GroupByGeoDistance do
+    defstruct name: nil, field_name: "", origin: nil, sub_group_bys: nil, sub_aggs: nil, ranges: nil
+  end
+
+  defmodule GroupKeySort do
+    alias ExAliyunOts.Const.Search.SortOrder
+    require SortOrder
+    defstruct order: SortOrder.asc
+  end
+
+  defmodule RowCountSort do
+    alias ExAliyunOts.Const.Search.SortOrder
+    require SortOrder
+    defstruct order: SortOrder.asc
+  end
+
+  defmodule SubAggSort do
+    alias ExAliyunOts.Const.Search.SortOrder
+    require SortOrder
+    defstruct order: SortOrder.desc, sub_agg_name: nil
+  end
 end
 
 # Transaction

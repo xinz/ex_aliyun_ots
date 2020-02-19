@@ -22,7 +22,7 @@ defmodule ExAliyunOtsTest.Search do
   setup_all do
     Application.ensure_all_started(:ex_aliyun_ots)
 
-    TestSupportSearch.initialize(@instance_key, @table, @indexes)
+    TestSupportSearch.init(@instance_key, @table, @indexes)
 
     on_exit(fn ->
       TestSupportSearch.clean(@instance_key, @table, @indexes)

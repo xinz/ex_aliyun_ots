@@ -33,18 +33,56 @@ defmodule ExAliyunOts.Client.Search do
     RangeQuery,
     BoolQuery,
     NestedQuery,
-    ExistsQuery
+    ExistsQuery,
+    Aggregation,
+    Aggregations,
+    AvgAggregation,
+    MaxAggregation,
+    MinAggregation,
+    SumAggregation,
+    CountAggregation,
+    DistinctCountAggregation,
+    AggregationsResult,
+    AvgAggregationResult,
+    DistinctCountAggregationResult,
+    MaxAggregationResult,
+    MinAggregationResult,
+    SumAggregationResult,
+    CountAggregationResult,
+    GroupBys,
+    GroupBy,
+    GroupByField,
+    GroupByRange,
+    GroupByFilter,
+    #GroupByGeoDistance,
+    GroupBysResult,
+    GroupByFilterResult,
+    GroupByFilterResultItem,
+    #GroupByGeoDistanceResult,
+    #GroupByGeoDistanceResultItem,
+    GroupByRangeResult,
+    GroupByRangeResultItem,
+    GroupByFieldResult,
+    GroupByFieldResultItem,
+    GroupBySort,
+    GroupBySorter,
+    GroupKeySort,
+    RowCountSort,
+    SubAggSort,
+    Range
   }
 
   alias ExAliyunOts.Http
   alias ExAliyunOts.Var.Search
-  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, ScoreMode}
+  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, ScoreMode, AggregationType, GroupByType}
 
   import ExAliyunOts.Logger, only: [error: 1]
   require FieldType
   require SortOrder
   require QueryType
   require ScoreMode
+  require AggregationType
+  require GroupByType
 
   @variant_type_integer 0x0
   @variant_type_double 0x1
@@ -103,6 +141,8 @@ defmodule ExAliyunOts.Client.Search do
         query: prepare_query(search_query.query),
         sort: prepare_sort(search_query.sort),
         collapse: prepare_collapse(search_query.collapse),
+        aggs: prepare_aggs(search_query.aggs),
+        group_bys: prepare_group_bys(search_query.group_bys),
         get_total_count: search_query.get_total_count,
         token: search_query.token
       )
@@ -124,7 +164,7 @@ defmodule ExAliyunOts.Client.Search do
   def remote_search(instance, request_body) do
     result =
       instance
-      |> Http.client("/Search", request_body, &SearchResponse.decode/1)
+      |> Http.client("/Search", request_body, &decode_search_response/1)
       |> Http.post()
     result
   end
@@ -186,6 +226,19 @@ defmodule ExAliyunOts.Client.Search do
   end
   defp term_to_bytes(term) do
     raise ExAliyunOts.RuntimeError, "invalid type of term: #{inspect term}, please use string/integer/float/boolean."
+  end
+
+  defp agg_missing_to_bytes(nil) do
+    nil
+  end
+  defp agg_missing_to_bytes(missing) when is_integer(missing) do
+    term_to_bytes(missing)
+  end
+  defp agg_missing_to_bytes(missing) when is_float(missing) do
+    term_to_bytes(missing)
+  end
+  defp agg_missing_to_bytes(missing) do
+    raise ExAliyunOts.RuntimeError, "invalid missing value of aggregation: #{inspect missing}, please use integer or float for it."
   end
 
   defp iterate_all_field_schemas(var_field_schema) do
@@ -269,6 +322,153 @@ defmodule ExAliyunOts.Client.Search do
   end
   defp prepare_collapse(_field_name) do
     nil
+  end
+
+  defp prepare_aggs(nil), do: nil
+  defp prepare_aggs([]), do: nil
+  defp prepare_aggs(aggs) when is_list(aggs) do
+    map_aggs(aggs, [])
+  end
+
+  defp map_aggs(nil, []), do: nil
+  defp map_aggs([], []), do: nil
+  defp map_aggs([], result) do
+    Aggregations.new(aggs: Enum.reverse(result))
+  end
+  defp map_aggs([agg | rest], result) do
+    agg = map_agg(agg)
+    map_aggs(rest, [agg | result])
+  end
+
+  defp map_agg(%{type: type} = agg) when type == AggregationType.min do
+    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
+    |> MinAggregation.new()
+    |> MinAggregation.encode()
+    |> to_aggregation(agg.name, type)
+  end
+  defp map_agg(%{type: type} = agg) when type == AggregationType.max do
+    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
+    |> MaxAggregation.new()
+    |> MaxAggregation.encode()
+    |> to_aggregation(agg.name, type)
+  end
+  defp map_agg(%{type: type} = agg) when type == AggregationType.avg do
+    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
+    |> AvgAggregation.new()
+    |> AvgAggregation.encode()
+    |> to_aggregation(agg.name, type)
+  end
+  defp map_agg(%{type: type} = agg) when type == AggregationType.distinct_count do
+    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
+    |> DistinctCountAggregation.new()
+    |> DistinctCountAggregation.encode()
+    |> to_aggregation(agg.name, type)
+  end
+  defp map_agg(%{type: type} = agg) when type == AggregationType.sum do
+    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
+    |> SumAggregation.new()
+    |> SumAggregation.encode()
+    |> to_aggregation(agg.name, type)
+  end
+  defp map_agg(%{type: type} = agg) when type == AggregationType.count do
+    [field_name: agg.field_name]
+    |> CountAggregation.new()
+    |> CountAggregation.encode()
+    |> to_aggregation(agg.name, type)
+  end
+
+  defp to_aggregation(body, name, type) do
+    Aggregation.new([body: body, name: name, type: type])
+  end
+
+  defp prepare_group_bys(nil), do: nil
+  defp prepare_group_bys([]), do: nil
+  defp prepare_group_bys(group_bys) when is_list(group_bys) do
+    map_group_bys(group_bys, [])
+  end
+
+  defp map_group_bys(nil, []), do: nil
+  defp map_group_bys([], []), do: nil
+  defp map_group_bys([], result) do
+    GroupBys.new(group_bys: Enum.reverse(result))
+  end
+  defp map_group_bys([group_by | rest], result) do
+    group_by = map_group_by(group_by)
+    map_group_bys(rest, [group_by | result])
+  end
+
+  defp map_group_by(%Search.GroupByField{name: name, field_name: field_name, size: size, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, sort: sort}) do
+    sub_group_bys = map_group_bys(sub_group_bys, [])
+    sub_aggs = map_aggs(sub_aggs, [])
+    sort = map_group_by_sort(sort, [])
+    [field_name: field_name, size: size, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, sort: sort]
+    |> GroupByField.new()
+    |> GroupByField.encode()
+    |> to_group_by(name, GroupByType.field)
+  end
+  defp map_group_by(%Search.GroupByRange{name: name, field_name: field_name, ranges: ranges, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs}) when is_list(ranges) do
+    sub_group_bys = map_group_bys(sub_group_bys, [])
+    sub_aggs = map_aggs(sub_aggs, [])
+    ranges = map_group_by_ranges(ranges, [])
+    [field_name: field_name, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, ranges: ranges]
+    |> GroupByRange.new()
+    |> GroupByRange.encode()
+    |> to_group_by(name, GroupByType.range)
+  end
+  defp map_group_by(%Search.GroupByFilter{name: name, filters: filters, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs}) when is_list(filters) do
+    sub_group_bys = map_group_bys(sub_group_bys, [])
+    sub_aggs = map_aggs(sub_aggs, [])
+    filters = map_group_by_filters(filters, [])
+    [filters: filters, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs]
+    |> GroupByFilter.new()
+    |> GroupByFilter.encode()
+    |> to_group_by(name, GroupByType.filter)
+  end
+
+  defp to_group_by(body, name, type) do
+    GroupBy.new([body: body, name: name, type: type])
+  end
+
+  defp map_group_by_sort(nil, []), do: nil
+  defp map_group_by_sort([], []), do: nil
+  defp map_group_by_sort([], result) do
+    GroupBySort.new(sorters: Enum.reverse(result))
+  end
+  defp map_group_by_sort([sorter | rest], result) do
+    sorter = map_group_by_sorter(sorter)
+    map_group_by_sort(rest, [sorter | result])
+  end
+
+  defp map_group_by_sorter(%Search.GroupKeySort{order: order}) do
+    GroupBySorter.new(group_key_sort: GroupKeySort.new(order: order))
+  end
+  defp map_group_by_sorter(%Search.RowCountSort{order: order}) do
+    GroupBySorter.new(row_count_sort: RowCountSort.new(order: order))
+  end
+  defp map_group_by_sorter(%Search.SubAggSort{sub_agg_name: sub_agg_name, order: order}) do
+    GroupBySorter.new(
+      sub_agg_sort: SubAggSort.new([sub_agg_name: sub_agg_name, order: order])
+    )
+  end
+
+  defp map_group_by_ranges(nil, []), do: nil
+  defp map_group_by_ranges([], []), do: nil
+  defp map_group_by_ranges([], result) do
+    Enum.reverse(result)
+  end
+  defp map_group_by_ranges([{from, to} | rest], result) do
+    range = Range.new(from: from, to: to)
+    map_group_by_ranges(rest, [range | result])
+  end
+
+  defp map_group_by_filters(nil, []), do: nil
+  defp map_group_by_filters([], []), do: nil
+  defp map_group_by_filters([], result) do
+    Enum.reverse(result)
+  end
+  defp map_group_by_filters([query | rest], result) do
+    query = prepare_query(query)
+    map_group_by_filters(rest, [query | result])
   end
 
   defp prepare_index_setting(setting) do
@@ -440,4 +640,127 @@ defmodule ExAliyunOts.Client.Search do
   defp valid_score_modes() do
     [ScoreMode.none, ScoreMode.avg, ScoreMode.max, ScoreMode.total, ScoreMode.min]
   end
+
+  defp decode_search_response(response_body) do
+    response_body
+    |> SearchResponse.decode()
+    |> Map.update(:aggs, nil, &decode_aggs/1)
+    |> Map.update(:group_bys, nil, &decode_group_bys/1)
+  end
+
+  defp decode_aggs(nil), do: nil
+  defp decode_aggs(aggs) do
+    result = AggregationsResult.decode(aggs)
+    Enum.reduce(result.agg_results, %{}, &decode_agg/2)
+  end
+
+  defp decode_agg(%{type: AggregationType.avg, name: name, agg_result: agg_result}, agg_results) do
+    decoded = AvgAggregationResult.decode(agg_result)
+    sort_map_results_by_type(agg_results, :avg, name, decoded.value)
+  end
+  defp decode_agg(%{type: AggregationType.max, name: name, agg_result: agg_result}, agg_results) do
+    decoded = MaxAggregationResult.decode(agg_result)
+    sort_map_results_by_type(agg_results, :max, name, decoded.value)
+  end
+  defp decode_agg(%{type: AggregationType.min, name: name, agg_result: agg_result}, agg_results) do
+    decoded = MinAggregationResult.decode(agg_result)
+    sort_map_results_by_type(agg_results, :min, name, decoded.value)
+  end
+  defp decode_agg(%{type: AggregationType.sum, name: name, agg_result: agg_result}, agg_results) do
+    decoded = SumAggregationResult.decode(agg_result)
+    sort_map_results_by_type(agg_results, :sum, name, decoded.value)
+  end
+  defp decode_agg(%{type: AggregationType.count, name: name, agg_result: agg_result}, agg_results) do
+    decoded = CountAggregationResult.decode(agg_result)
+    sort_map_results_by_type(agg_results, :count, name, decoded.value)
+  end
+  defp decode_agg(%{type: AggregationType.distinct_count, name: name, agg_result: agg_result}, agg_results) do
+    decoded = DistinctCountAggregationResult.decode(agg_result)
+    sort_map_results_by_type(agg_results, :distinct_count, name, decoded.value)
+  end
+
+  defp decode_group_bys(nil), do: nil
+  defp decode_group_bys(group_bys) do
+    result = GroupBysResult.decode(group_bys)
+    Enum.reduce(result.group_by_results, %{}, &decode_group_by/2)
+  end
+
+  defp decode_group_by(%{type: GroupByType.field, name: name, group_by_result: group_by_result}, map_results) do
+    result = GroupByFieldResult.decode(group_by_result)
+    items = decode_sub_details(result.group_by_field_result_items, [])
+    sort_map_results_by_type(map_results, :by_field, name, items)
+  end
+  defp decode_group_by(%{type: GroupByType.range, name: name, group_by_result: group_by_result}, map_results) do
+    result = GroupByRangeResult.decode(group_by_result)
+    items = decode_sub_details(result.group_by_range_result_items, [])
+    sort_map_results_by_type(map_results, :by_range, name, items)
+  end
+  defp decode_group_by(%{type: GroupByType.filter, name: name, group_by_result: group_by_result}, map_results) do
+    result = GroupByFilterResult.decode(group_by_result)
+    items = decode_sub_details(result.group_by_filter_result_items, [])
+    sort_map_results_by_type(map_results, :by_filter, name, items)
+  end
+
+  defp decode_sub_details([], prepared) do
+    Enum.reverse(prepared)
+  end
+  defp decode_sub_details([%GroupByFieldResultItem{sub_aggs_result: sub_aggs_result, sub_group_bys_result: sub_group_bys_result} = item | rest], prepared) do
+
+    sub_aggs = decode_sub_aggs(sub_aggs_result)
+    sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
+
+    prepared_item = %{
+      key: item.key,
+      row_count: item.row_count,
+      sub_aggs: sub_aggs,
+      sub_group_bys: sub_group_bys
+    }
+    decode_sub_details(rest, [prepared_item | prepared])
+  end
+  defp decode_sub_details([%GroupByRangeResultItem{sub_aggs_result: sub_aggs_result, sub_group_bys_result: sub_group_bys_result} = item | rest], prepared) do
+
+    sub_aggs = decode_sub_aggs(sub_aggs_result)
+    sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
+
+    prepared_item = %{
+      from: item.from,
+      to: item.to,
+      row_count: item.row_count,
+      sub_aggs: sub_aggs,
+      sub_group_bys: sub_group_bys
+    }
+    decode_sub_details(rest, [prepared_item | prepared])
+  end
+  defp decode_sub_details([%GroupByFilterResultItem{sub_aggs_result: sub_aggs_result, sub_group_bys_result: sub_group_bys_result} = item | rest], prepared) do
+
+    sub_aggs = decode_sub_aggs(sub_aggs_result)
+    sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
+
+    prepared_item = %{
+      row_count: item.row_count,
+      sub_aggs: sub_aggs,
+      sub_group_bys: sub_group_bys
+    }
+    decode_sub_details(rest, [prepared_item | prepared])
+  end
+
+  defp decode_sub_aggs(nil), do: nil
+  defp decode_sub_aggs(sub_aggs_result) do
+    Enum.reduce(sub_aggs_result.agg_results, %{}, &decode_agg/2)
+  end
+
+  defp decode_sub_group_bys(nil), do: nil
+  defp decode_sub_group_bys(sub_group_bys_result) do
+    Enum.reduce(sub_group_bys_result.group_by_results, %{}, &decode_group_by/2)
+  end
+
+  defp sort_map_results_by_type(results, type, name, new_result) when is_map(results) do
+    current = Map.get(results, type)
+    if current != nil do
+      Map.put(results, type, Map.put(current, name, new_result))
+    else
+      Map.put(results, type, %{name => new_result})
+    end
+  end
+
 end

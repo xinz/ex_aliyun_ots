@@ -243,3 +243,22 @@ defmodule ExAliyunOts.Const.Search.SortType do
   const :pk, :pk
 end
 
+defmodule ExAliyunOts.Const.Search.AggregationType do
+  import ExAliyunOts.Constants
+
+  const :avg, :'AGG_AVG'
+  const :distinct_count, :'AGG_DISTINCT_COUNT'
+  const :max, :'AGG_MAX'
+  const :min, :'AGG_MIN'
+  const :sum, :'AGG_SUM'
+  const :count, :'AGG_COUNT'
+end
+
+defmodule ExAliyunOts.Const.Search.GroupByType do
+  import ExAliyunOts.Constants
+
+  const :field, :'GROUP_BY_FIELD'
+  const :range, :'GROUP_BY_RANGE'
+  const :filter, :'GROUP_BY_FILTER'
+  const :geo_distance, :'GROUP_BY_GEO_DISTANCE'
+end
