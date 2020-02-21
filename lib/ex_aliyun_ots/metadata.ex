@@ -221,6 +221,18 @@ defmodule ExAliyunOts.Var.Search do
     defstruct path: "", query: nil, score_mode: ScoreMode.none
   end
 
+  defmodule GeoDistanceQuery do
+    defstruct field_name: "", center_point: nil, distance: nil
+  end
+
+  defmodule GeoBoundingBoxQuery do
+    defstruct field_name: "", top_left: nil, bottom_right: nil
+  end
+
+  defmodule GeoPolygonQuery do
+    defstruct field_name: "", points: []
+  end
+
   defmodule ExistsQuery do
     defstruct field_name: ""
   end

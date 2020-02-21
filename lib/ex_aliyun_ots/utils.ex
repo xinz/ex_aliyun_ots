@@ -3,6 +3,8 @@ defmodule ExAliyunOts.Utils do
   Common tools.
   """
 
+  @geo_point_reg ~r/\-?\d+\.?\d*,\-?\d+\.?\d*/
+
   defmodule Guards do
     @moduledoc """
     Define some custom guard expressions.
@@ -18,6 +20,10 @@ defmodule ExAliyunOts.Utils do
 
   end
   
+  def valid_geo_point?(point) when is_bitstring(point) do
+    Regex.match?(@geo_point_reg, point)
+  end
+
   def row_to_map({pks, attrs}) when is_list(pks) and is_list(attrs) do
     %{}
     |> do_reduce_pks(pks)

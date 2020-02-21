@@ -6,6 +6,7 @@ defmodule ExAliyunOts.Client.Search do
     IndexSchema,
     FieldSchema,
     FieldSort,
+    GeoDistanceSort,
     Sorter,
     Sort,
     Collapse,
@@ -33,6 +34,9 @@ defmodule ExAliyunOts.Client.Search do
     RangeQuery,
     BoolQuery,
     NestedQuery,
+    GeoDistanceQuery,
+    GeoBoundingBoxQuery,
+    GeoPolygonQuery,
     ExistsQuery,
     Aggregation,
     Aggregations,
@@ -72,7 +76,7 @@ defmodule ExAliyunOts.Client.Search do
     Range
   }
 
-  alias ExAliyunOts.Http
+  alias ExAliyunOts.{Http, Utils}
   alias ExAliyunOts.Var.Search
   alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, ScoreMode, AggregationType, GroupByType}
 
@@ -298,10 +302,12 @@ defmodule ExAliyunOts.Client.Search do
   end
 
   defp prepare_sorter(%Search.FieldSort{field_name: field_name, order: order}) do
-    if order not in [SortOrder.asc(), SortOrder.desc()] do
-      raise ExAliyunOts.RuntimeError, "Invalid sort order: #{inspect(order)}"
-    end
+    assert_valid_sort_order(order)
     Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order))
+  end
+  defp prepare_sorter(%Search.GeoDistanceSort{field_name: field_name, order: order, points: points, distance_type: distance_type}) do
+    assert_valid_sort_order(order)
+    Sorter.new(geo_distance_sort: GeoDistanceSort.new(field_name: field_name, order: order, points: points, distance_type: distance_type))
   end
   defp prepare_sorter(sorter) do
     error(fn ->
@@ -312,6 +318,24 @@ defmodule ExAliyunOts.Client.Search do
       ]
     end)
     nil
+  end
+
+  defp assert_valid_sort_order(SortOrder.asc()), do: :ok
+  defp assert_valid_sort_order(SortOrder.desc()), do: :ok
+  defp assert_valid_sort_order(invalid) do
+    raise ExAliyunOts.RuntimeError, "Invalid sort order: #{inspect(invalid)}, please use SortOrder.desc or SortOrder.asc"
+  end
+
+  defp assert_valid_geo_points(points) do
+    invalid =
+      Enum.find(points, fn(point) ->
+        Utils.valid_geo_point?(point) == false
+      end)
+    if invalid != nil do
+      raise ExAliyunOts.RuntimeError, "Invalid geo point: #{inspect(invalid)}, please set it as `$latitude,$longitude` format."
+    else
+      :ok
+    end
   end
 
   defp prepare_collapse("") do
@@ -508,9 +532,9 @@ defmodule ExAliyunOts.Client.Search do
     )
   end
   defp prepare_query(%Search.TermQuery{
-           field_name: field_name,
-           term: term
-         }) do
+         field_name: field_name,
+         term: term
+       }) do
     term_bytes = term_to_bytes(term)
     proto_query = TermQuery.new(field_name: field_name, term: term_bytes)
     Query.new(
@@ -519,9 +543,9 @@ defmodule ExAliyunOts.Client.Search do
     )
   end
   defp prepare_query(%Search.TermsQuery{
-           field_name: field_name,
-           terms: terms
-         }) do
+         field_name: field_name,
+         terms: terms
+       }) do
     terms_bytes = Enum.map(terms, fn(term) -> term_to_bytes(term) end)
     proto_query = TermsQuery.new(field_name: field_name, terms: terms_bytes)
     Query.new(
@@ -530,9 +554,9 @@ defmodule ExAliyunOts.Client.Search do
     )
   end
   defp prepare_query(%Search.PrefixQuery{
-           field_name: field_name,
-           prefix: prefix
-         }) do
+         field_name: field_name,
+         prefix: prefix
+       }) do
     proto_query = PrefixQuery.new(field_name: field_name, prefix: prefix)
     Query.new(
       type: QueryType.prefix,
@@ -540,9 +564,9 @@ defmodule ExAliyunOts.Client.Search do
     )
   end
   defp prepare_query(%Search.WildcardQuery{
-           field_name: field_name,
-           value: value
-         }) do
+         field_name: field_name,
+         value: value
+       }) do
     proto_query = WildcardQuery.new(field_name: field_name, value: value)
     Query.new(
       type: QueryType.wildcard,
@@ -550,12 +574,12 @@ defmodule ExAliyunOts.Client.Search do
     )
   end
   defp prepare_query(%Search.RangeQuery{
-           field_name: field_name,
-           from: from,
-           to: to,
-           include_lower: include_lower,
-           include_upper: include_upper
-         }) do
+         field_name: field_name,
+         from: from,
+         to: to,
+         include_lower: include_lower,
+         include_upper: include_upper
+       }) do
     # `from` value is lower value, and `to` value is upper value.
     # if both of them are not nil, we should set "`from` <= `to`" as expected.
     cond do
@@ -576,12 +600,12 @@ defmodule ExAliyunOts.Client.Search do
     )
   end
   defp prepare_query(%Search.BoolQuery{
-           must: must,
-           must_not: must_not,
-           filter: filter,
-           should: should,
-           minimum_should_match: minimum_should_match
-         }) do
+         must: must,
+         must_not: must_not,
+         filter: filter,
+         should: should,
+         minimum_should_match: minimum_should_match
+       }) do
     must_queries = Enum.map(must, fn(query) -> prepare_query(query) end)
     must_not_queries = Enum.map(must_not, fn(query) -> prepare_query(query) end)
     filter_queries = Enum.map(filter, fn(query) -> prepare_query(query) end)
@@ -612,10 +636,10 @@ defmodule ExAliyunOts.Client.Search do
     )
   end
   defp prepare_query(%Search.NestedQuery{
-           path: path,
-           query: query,
-           score_mode: score_mode
-         }) do
+         path: path,
+         query: query,
+         score_mode: score_mode
+       }) do
     if score_mode not in valid_score_modes(), do: raise ExAliyunOts.RuntimeError, "Invalid score_mode: #{inspect score_mode}"
     proto_inner_query = prepare_query(query)
     proto_query = NestedQuery.new(path: path, query: proto_inner_query, score_mode: score_mode)
@@ -624,9 +648,58 @@ defmodule ExAliyunOts.Client.Search do
       query: NestedQuery.encode(proto_query)
     )
   end
+  defp prepare_query(%Search.GeoDistanceQuery{
+         field_name: field_name,
+         center_point: center_point,
+         distance: distance
+       }) when is_number(distance) and distance >= 0 do
+    if Utils.valid_geo_point?(center_point) do
+      proto_query = GeoDistanceQuery.new(
+        field_name: field_name,
+        center_point: center_point,
+        distance: distance
+      )
+      Query.new(
+        type: QueryType.geo_distance,
+        query: GeoDistanceQuery.encode(proto_query)
+      )
+    else
+      raise ExAliyunOts.RuntimeError, "Invalid center_point: #{inspect(center_point)}, please set it as `$latitude,$longitude` format."
+    end
+  end
+  defp prepare_query(%Search.GeoBoundingBoxQuery{
+         field_name: field_name,
+         top_left: top_left,
+         bottom_right: bottom_right
+       }) do
+    assert_valid_geo_points([top_left, bottom_right])
+    proto_query = GeoBoundingBoxQuery.new(
+      field_name: field_name,
+      top_left: top_left,
+      bottom_right: bottom_right
+    )
+    Query.new(
+      type: QueryType.geo_bounding_box,
+      query: GeoBoundingBoxQuery.encode(proto_query)
+    )
+  end
+  defp prepare_query(%Search.GeoPolygonQuery{
+         field_name: field_name,
+         points: points
+       }) do
+    assert_valid_geo_points(points)
+    proto_query = GeoPolygonQuery.new(
+      field_name: field_name,
+      points: points
+    )
+    Query.new(
+      type: QueryType.geo_polygon,
+      query: GeoPolygonQuery.encode(proto_query)
+    )
+  end
   defp prepare_query(%Search.ExistsQuery{
-           field_name: field_name
-         }) do
+         field_name: field_name
+       }) do
     proto_query = ExistsQuery.new(field_name: field_name)
     Query.new(
       type: QueryType.exists,

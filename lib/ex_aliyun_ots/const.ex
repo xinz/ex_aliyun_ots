@@ -165,8 +165,8 @@ defmodule ExAliyunOts.Const.Search.QueryType do
   const :const_score, :'CONST_SCORE_QUERY'
   const :func_score, :'FUNCTION_SCORE_QUERY'
   const :nested, :'NESTED_QUERY'
-  const :geo_bounding_box, :'GEO_BOUNDING_BOX_QUERY'
   const :geo_distance, :'GEO_DISTANCE_QUERY'
+  const :geo_bounding_box, :'GEO_BOUNDING_BOX_QUERY'
   const :geo_polygon, :'GEO_POLYGON_QUERY'
   const :exists, :'EXISTS_QUERY'
 end

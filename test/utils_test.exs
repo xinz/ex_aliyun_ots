@@ -20,4 +20,19 @@ defmodule ExAliyunOtsTest.UtilsTest do
     assert result == [{"a", "name"}, {"b", true}, {"c", 100}]
   end
 
+  test "valid geo_point" do
+    assert Utils.valid_geo_point?("-1,0") == true
+    assert Utils.valid_geo_point?("10.0,20.123") == true
+    assert Utils.valid_geo_point?("-4.51,-98.1") == true
+    assert Utils.valid_geo_point?("20,-15") == true
+    assert Utils.valid_geo_point?("9,9") == true
+    assert Utils.valid_geo_point?("5,9.9813") == true
+
+    assert Utils.valid_geo_point?(",10.01") == false
+    assert Utils.valid_geo_point?("23") == false
+    assert Utils.valid_geo_point?("31,") == false
+    assert Utils.valid_geo_point?("-1,") == false 
+    assert Utils.valid_geo_point?(",-1") == false 
+  end
+
 end

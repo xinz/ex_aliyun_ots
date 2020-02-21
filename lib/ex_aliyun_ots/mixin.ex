@@ -4,7 +4,7 @@ defmodule ExAliyunOts.Mixin do
   alias ExAliyunOts.Var.Search
   alias ExAliyunOts.Client
 
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction, Search.QueryType, Search.ColumnReturnType, Search.SortType, Search.AggregationType, Search.GroupByType, Search.SortOrder}
+  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction, Search.QueryType, Search.ColumnReturnType, Search.SortType, Search.AggregationType, Search.GroupByType, Search.SortOrder, Search.SortMode, Search.GeoDistanceType}
 
   require PKType
   require OperationType
@@ -20,6 +20,8 @@ defmodule ExAliyunOts.Mixin do
   require AggregationType
   require GroupByType
   require SortOrder
+  require SortMode
+  require GeoDistanceType
 
   @regex_filter_options ~r/^(.+?)(\[.+?\])$/
 
@@ -367,11 +369,8 @@ defmodule ExAliyunOts.Mixin do
   defp map_search_options(var, nil) do
     var
   end
-  defp map_search_options(var, options) do
-    options
-    |> Keyword.keys()
-    |> Enum.reduce(var, fn(key, acc) ->
-      value = Keyword.get(options, key)
+  defp map_search_options(var, opts) do
+    Enum.reduce(opts, var, fn({key, value}, acc) ->
       if value != nil and Map.has_key?(var, key) do
         do_map_search_options(key, value, acc)
       else
@@ -387,7 +386,7 @@ defmodule ExAliyunOts.Mixin do
     Map.put(var, key, map_columns_to_get(value))
   end
   defp do_map_search_options(:sort = key, value, var) do
-    Map.put(var, key, map_search_sort(value))
+    Map.put(var, key, map_query_sort(value))
   end
   defp do_map_search_options(:must = key, value, var) when is_list(value) do
     # for BoolQuery within `must` items list
@@ -608,20 +607,83 @@ defmodule ExAliyunOts.Mixin do
     raise ExAliyunOts.RuntimeError, "invalid columns_to_get for search: #{inspect value}"
   end
 
-  defp map_search_sort(nil) do
-    nil
+  defp map_query_sort(nil), do: nil
+  defp map_query_sort(sorters) when is_list(sorters) do
+    Enum.map(sorters, &map_search_query_sorter/1)
   end
-  defp map_search_sort(sorters) when is_list(sorters) do
-    Enum.map(sorters, fn(sorter) ->
-      {sorter_type, rest_sorter_options} = Keyword.pop(sorter, :type)
-      case sorter_type do
-        SortType.field ->
-          map_search_options(%Search.FieldSort{}, rest_sorter_options)
-        _ ->
-          raise ExAliyunOts.RuntimeError, "invalid sorter: #{inspect sorter}"
+
+  defp map_search_query_sorter(sorter) when is_list(sorter) do
+    {sorter_type, rest_sorter_options} = Keyword.pop(sorter, :type)
+    case sorter_type do
+      SortType.field ->
+        map_search_query_sort_options(%Search.FieldSort{}, rest_sorter_options)
+      SortType.geo_distance ->
+        map_search_query_sort_options(%Search.GeoDistanceSort{}, rest_sorter_options)
+      _ ->
+        raise ExAliyunOts.RuntimeError, "invalid sorter: #{inspect sorter}"
+    end
+  end
+  defp map_search_query_sorter(%Search.GeoDistanceSort{} = sorter) do
+    sorter
+  end
+  defp map_search_query_sorter(%Search.FieldSort{} = sorter) do
+    sorter
+  end
+
+  defp map_search_query_sort_options(var, nil) do
+    var
+  end
+  defp map_search_query_sort_options(var, opts) do
+    Enum.reduce(opts, var, fn({key, value}, acc) ->
+      if value != nil and Map.has_key?(var, key) do
+        do_map_search_query_sort_options(key, value, acc)
+      else
+        acc
       end
     end)
   end
+
+  defp do_map_search_query_sort_options(:order = key, value, var) do
+    Map.put(var, key, map_query_sort_order(value))
+  end
+  defp do_map_search_query_sort_options(:type = key, value, var) do
+    Map.put(var, key, map_query_sort_type(value))
+  end
+  defp do_map_search_query_sort_options(:mode = key, value, var) do
+    Map.put(var, key, map_query_sort_mode(value))
+  end
+  defp do_map_search_query_sort_options(:distance_type = key, value, var) do
+    Map.put(var, key, map_query_sort_geo_distance_type(value))
+  end
+  defp do_map_search_query_sort_options(key, value, var) do
+    Map.put(var, key, value)
+  end
+
+  defp map_query_sort_order(nil), do: nil
+  defp map_query_sort_order(:asc), do: SortOrder.asc
+  defp map_query_sort_order(:desc), do: SortOrder.desc
+  defp map_query_sort_order(SortOrder.asc), do: SortOrder.asc
+  defp map_query_sort_order(SortOrder.desc), do: SortOrder.desc
+
+  defp map_query_sort_type(nil), do: nil
+  defp map_query_sort_type(:field), do: SortType.field
+  defp map_query_sort_type(:geo_distance), do: SortType.geo_distance
+  defp map_query_sort_type(:pk), do: SortType.pk
+  defp map_query_sort_type(:score), do: SortType.score
+
+  defp map_query_sort_mode(nil), do: nil
+  defp map_query_sort_mode(:min), do: SortMode.min
+  defp map_query_sort_mode(:max), do: SortMode.max
+  defp map_query_sort_mode(:avg), do: SortMode.avg
+  defp map_query_sort_mode(SortMode.min), do: SortMode.min
+  defp map_query_sort_mode(SortMode.max), do: SortMode.max
+  defp map_query_sort_mode(SortMode.avg), do: SortMode.avg
+
+  defp map_query_sort_geo_distance_type(nil), do: nil
+  defp map_query_sort_geo_distance_type(:arc), do: GeoDistanceType.arc
+  defp map_query_sort_geo_distance_type(:plane), do: GeoDistanceType.plane
+  defp map_query_sort_geo_distance_type(GeoDistanceType.arc), do: GeoDistanceType.arc
+  defp map_query_sort_geo_distance_type(GeoDistanceType.plane), do: GeoDistanceType.plane
 
   defp map_updates(options) do
     Enum.reduce([:delete, :delete_all, :put, :increment], %{}, fn(update_operation, acc) ->
@@ -815,8 +877,41 @@ defmodule ExAliyunOts.Mixin do
     map_search_options(%Search.NestedQuery{}, opts)
   end
 
+  def geo_distance_query(field_name, distance, center_point) do
+    %Search.GeoDistanceQuery{
+      field_name: field_name,
+      distance: distance,
+      center_point: center_point
+    }
+  end
+
+  def geo_bounding_box_query(field_name, top_left, bottom_right) do
+    %Search.GeoBoundingBoxQuery{
+      field_name: field_name,
+      top_left: top_left,
+      bottom_right: bottom_right
+    }
+  end
+
+  def geo_polygon_query(field_name, points) do
+    %Search.GeoPolygonQuery{
+      field_name: field_name,
+      points: points
+    }
+  end
+
   def exists_query(field_name) do
     %Search.ExistsQuery{field_name: field_name}
+  end
+
+  def geo_distance_sort(field_name, points, opts) when is_list(points) do
+    %Search.GeoDistanceSort{
+      field_name: field_name,
+      order: map_query_sort_order(Keyword.get(opts, :order)),
+      mode: map_query_sort_mode(Keyword.get(opts, :mode)),
+      distance_type: map_query_sort_geo_distance_type(Keyword.get(opts, :distance_type)),
+      points: points
+    }
   end
 
   defmacro filter(filter_expr) do
