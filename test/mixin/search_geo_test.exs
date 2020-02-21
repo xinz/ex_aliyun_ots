@@ -26,6 +26,19 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
     {:ok, response} =
       search @table, @index,
         search_query: [
+          query: [
+            type: QueryType.geo_distance,
+            field_name: "location",
+            distance: 500_000,
+            center_point: "5,5"
+          ]
+        ]
+
+    assert response.total_hits == 2
+
+    {:ok, response} =
+      search @table, @index,
+        search_query: [
           query: geo_distance_query("location", 500_000, "5,5"),
           sort: [
             [type: :geo_distance, field_name: "location", order: :asc, points: ["5.14,5.21"]]
@@ -56,6 +69,18 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
           query: geo_bounding_box_query("location", "10,-10", "-10,10")
         ]
     assert response.total_hits == 6
+
+    {:ok, response2} =
+      search @table, @index,
+        search_query: [
+          query: [
+            field_name: "location",
+            type: QueryType.geo_bounding_box,
+            top_left: "10,-10",
+            bottom_right: "-10,10"
+          ]
+        ]
+    assert response2.rows == response.rows
   end
 
   test "geo_polygon_query" do
@@ -72,6 +97,18 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
     {[{"id", id1}], _} = row1
     {[{"id", id2}], _} = row2
     assert id1 == "a2" and id2 == "a4"
+
+    {:ok, response2} =
+      search @table, @index,
+        search_query: [
+          query: [
+            type: QueryType.geo_polygon,
+            field_name: "location",
+            points: ["11,11", "0,0", "1,5"]
+          ]
+        ]
+
+    assert response2.rows == response.rows
 
     {:ok, response} = 
       search @table, @index,

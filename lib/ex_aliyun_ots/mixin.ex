@@ -567,6 +567,15 @@ defmodule ExAliyunOts.Mixin do
   defp map_query_details(QueryType.nested, query) do
     map_search_options(%Search.NestedQuery{}, query)
   end
+  defp map_query_details(QueryType.geo_distance, query) do
+    map_search_options(%Search.GeoDistanceQuery{}, query)
+  end
+  defp map_query_details(QueryType.geo_bounding_box, query) do
+    map_search_options(%Search.GeoBoundingBoxQuery{}, query)
+  end
+  defp map_query_details(QueryType.geo_polygon, query) do
+    map_search_options(%Search.GeoPolygonQuery{}, query)
+  end
   defp map_query_details(QueryType.exists, query) do
     map_search_options(%Search.ExistsQuery{}, query)
   end
