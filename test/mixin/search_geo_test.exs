@@ -15,11 +15,11 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
   setup_all do
     Application.ensure_all_started(:ex_aliyun_ots)
 
-    #TestSupportSearchGeo.init(@instance_key, @table, @index)
+    TestSupportSearchGeo.init(@instance_key, @table, @index)
 
-    #on_exit(fn ->
-    #  TestSupportSearchGeo.clean(@instance_key, @table, @index)
-    #end)
+    on_exit(fn ->
+      TestSupportSearchGeo.clean(@instance_key, @table, @index)
+    end)
   end
 
   test "geo_distance_query" do
@@ -122,4 +122,113 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
     {[{"id", id3}], _} = row3
     assert id1 == "a1" and id2 == "a2" and id3 == "a4"
   end
+
+  test "group_by_geo_distance" do
+    {:ok, response} =
+      search @table, @index,
+        search_query: [
+          query: match_all_query(),
+          limit: 0,
+          group_bys: [
+            group_by_geo_distance("test", "location",
+              lat: 0,
+              lon: 0,
+              ranges: [
+                {0, 100_000},
+                {100_000, 500_000},
+                {500_000, 1000_000},
+              ],
+              sub_aggs: [
+                agg_sum("test_sum", "value")
+              ]
+            )
+          ]
+        ]
+
+    group_result = Map.get(response.group_bys.by_geo_distance, "test")
+    assert length(group_result) == 3
+
+    [item1, item2, item3] = group_result
+    assert item1.from == 0 and item1.to == 1.0e5
+    assert item1.row_count == 1
+    assert Map.get(item1.sub_aggs.sum, "test_sum") == 10.0
+
+    assert item2.from == 1.0e5 and item2.to == 5.0e5
+    assert item2.row_count == 0
+    assert Map.get(item2.sub_aggs.sum, "test_sum") == 0.0
+
+    assert item3.from == 5.0e5 and item3.to == 1.0e6
+    assert item3.row_count == 2
+    assert Map.get(item3.sub_aggs.sum, "test_sum") == 12.0
+  end
+
+  test "invalid input group_by_geo_distance" do
+    assert_raise ExAliyunOts.RuntimeError, ~r/Invalid latitude: `.*` or longitude: `.*`/, fn ->
+      search @table, @index,
+        search_query: [
+          query: match_all_query(),
+          limit: 0,
+          group_bys: [
+            group_by_geo_distance("test", "location",
+              lat: "lat",
+              lon: "lon",
+              ranges: [
+                {0, 100_000},
+                {100_000, 500_000}
+              ],
+              sub_aggs: [
+                agg_sum("test_sum", "value")
+              ]
+            )
+          ]
+        ]
+    end
+
+    assert_raise ExAliyunOts.RuntimeError, ~r/Invalid from: `.*` or to: `.*`/, fn ->
+      search @table, @index,
+        search_query: [
+          query: match_all_query(),
+          limit: 0,
+          group_bys: [
+            group_by_geo_distance("test", "location",
+              lat: 10,
+              lon: 10,
+              ranges: [
+                {0, 100_000},
+                {"100_000", "500_000"}
+              ],
+              sub_aggs: [
+                agg_sum("test_sum", "value")
+              ]
+            )
+          ]
+        ]
+    end
+  end
+
+  test "ranges can overlap" do
+    {:ok, response} =
+      search @table, @index,
+        search_query: [
+          query: match_all_query(),
+          limit: 0,
+          group_bys: [
+            group_by_geo_distance("test", "location",
+              lat: 10,
+              lon: 10,
+              ranges: [
+                {0, 100_000},
+                {10_000, 500_000}
+              ],
+              sub_aggs: [
+                agg_sum("test_sum", "value")
+              ]
+            )
+          ]
+        ]
+
+    group_result = Map.get(response.group_bys.by_geo_distance, "test")
+    assert length(group_result) == 2
+  end
+
 end

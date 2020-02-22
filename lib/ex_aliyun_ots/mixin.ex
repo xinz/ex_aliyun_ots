@@ -788,6 +788,18 @@ defmodule ExAliyunOts.Mixin do
     }
   end
 
+  def group_by_geo_distance(group_name, field_name, opts \\ []) do
+    %Search.GroupByGeoDistance{
+      name: group_name,
+      field_name: field_name,
+      lat: Keyword.get(opts, :lat),
+      lon: Keyword.get(opts, :lon),
+      sub_aggs: Keyword.get(opts, :sub_aggs),
+      sub_group_bys: Keyword.get(opts, :sub_group_bys),
+      ranges: Keyword.get(opts, :ranges)
+    }
+  end
+
   def group_key_sort(order)
       when order == SortOrder.desc
       when order == :desc do

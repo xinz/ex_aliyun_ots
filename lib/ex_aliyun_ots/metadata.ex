@@ -254,7 +254,7 @@ defmodule ExAliyunOts.Var.Search do
   end
 
   defmodule GroupByGeoDistance do
-    defstruct name: nil, field_name: "", origin: nil, sub_group_bys: nil, sub_aggs: nil, ranges: nil
+    defstruct name: nil, field_name: "", lat: nil, lon: nil, sub_group_bys: nil, sub_aggs: nil, ranges: nil
   end
 
   defmodule GroupKeySort do

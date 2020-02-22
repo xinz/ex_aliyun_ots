@@ -58,12 +58,12 @@ defmodule ExAliyunOts.Client.Search do
     GroupByField,
     GroupByRange,
     GroupByFilter,
-    #GroupByGeoDistance,
+    GroupByGeoDistance,
     GroupBysResult,
     GroupByFilterResult,
     GroupByFilterResultItem,
-    #GroupByGeoDistanceResult,
-    #GroupByGeoDistanceResultItem,
+    GroupByGeoDistanceResult,
+    GroupByGeoDistanceResultItem,
     GroupByRangeResult,
     GroupByRangeResultItem,
     GroupByFieldResult,
@@ -73,7 +73,8 @@ defmodule ExAliyunOts.Client.Search do
     GroupKeySort,
     RowCountSort,
     SubAggSort,
-    Range
+    Range,
+    GeoPoint
   }
 
   alias ExAliyunOts.{Http, Utils}
@@ -338,6 +339,13 @@ defmodule ExAliyunOts.Client.Search do
     end
   end
 
+  defp assert_valid_geo_point(lat, lon) when is_number(lat) and is_number(lon) do
+    :ok
+  end
+  defp assert_valid_geo_point(lat, lon) do
+    raise ExAliyunOts.RuntimeError, "Invalid latitude: `#{inspect(lat)}` or longitude: `#{inspect(lon)}` for a geo point, please set them as number."
+  end
+
   defp prepare_collapse("") do
     nil
   end
@@ -448,6 +456,18 @@ defmodule ExAliyunOts.Client.Search do
     |> GroupByFilter.encode()
     |> to_group_by(name, GroupByType.filter)
   end
+  defp map_group_by(%Search.GroupByGeoDistance{name: name, field_name: field_name, ranges: ranges, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, lat: lat, lon: lon}) do
+    assert_valid_geo_point(lat, lon)
+
+    sub_group_bys = map_group_bys(sub_group_bys, [])
+    sub_aggs = map_aggs(sub_aggs, [])
+    ranges = map_group_by_ranges(ranges, [])
+    origin = GeoPoint.new(lat: lat, lon: lon)
+    [field_name: field_name, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, ranges: ranges, origin: origin]
+    |> GroupByGeoDistance.new()
+    |> GroupByGeoDistance.encode()
+    |> to_group_by(name, GroupByType.geo_distance)
+  end
 
   defp to_group_by(body, name, type) do
     GroupBy.new([body: body, name: name, type: type])
@@ -480,9 +500,12 @@ defmodule ExAliyunOts.Client.Search do
   defp map_group_by_ranges([], result) do
     Enum.reverse(result)
   end
-  defp map_group_by_ranges([{from, to} | rest], result) do
+  defp map_group_by_ranges([{from, to} | rest], result) when is_number(from) and is_number(to) do
     range = Range.new(from: from, to: to)
     map_group_by_ranges(rest, [range | result])
+  end
+  defp map_group_by_ranges([{from, to} | _rest], _result) do
+    raise ExAliyunOts.RuntimeError, "Invalid from: `#{inspect(from)}` or to: `#{inspect(to)}` for a range, please set them as number."
   end
 
   defp map_group_by_filters(nil, []), do: nil
@@ -773,6 +796,11 @@ defmodule ExAliyunOts.Client.Search do
     items = decode_sub_details(result.group_by_filter_result_items, [])
     sort_map_results_by_type(map_results, :by_filter, name, items)
   end
+  defp decode_group_by(%{type: GroupByType.geo_distance, name: name, group_by_result: group_by_result}, map_results) do
+    result = GroupByGeoDistanceResult.decode(group_by_result)
+    items = decode_sub_details(result.group_by_geo_distance_result_items, [])
+    sort_map_results_by_type(map_results, :by_geo_distance, name, items)
+  end
 
   defp decode_sub_details([], prepared) do
     Enum.reverse(prepared)
@@ -810,6 +838,20 @@ defmodule ExAliyunOts.Client.Search do
     sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
 
     prepared_item = %{
+      row_count: item.row_count,
+      sub_aggs: sub_aggs,
+      sub_group_bys: sub_group_bys
+    }
+    decode_sub_details(rest, [prepared_item | prepared])
+  end
+  defp decode_sub_details([%GroupByGeoDistanceResultItem{sub_aggs_result: sub_aggs_result, sub_group_bys_result: sub_group_bys_result} = item | rest], prepared) do
+
+    sub_aggs = decode_sub_aggs(sub_aggs_result)
+    sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
+
+    prepared_item = %{
+      from: item.from,
+      to: item.to,
       row_count: item.row_count,
       sub_aggs: sub_aggs,
       sub_group_bys: sub_group_bys
