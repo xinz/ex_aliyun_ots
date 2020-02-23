@@ -628,6 +628,10 @@ defmodule ExAliyunOts.Mixin do
         map_search_query_sort_options(%Search.FieldSort{}, rest_sorter_options)
       SortType.geo_distance ->
         map_search_query_sort_options(%Search.GeoDistanceSort{}, rest_sorter_options)
+      SortType.pk ->
+        map_search_query_sort_options(%Search.PrimaryKeySort{}, rest_sorter_options)
+      SortType.score ->
+        map_search_query_sort_options(%Search.ScoreSort{}, rest_sorter_options)
       _ ->
         raise ExAliyunOts.RuntimeError, "invalid sorter: #{inspect sorter}"
     end
@@ -668,7 +672,7 @@ defmodule ExAliyunOts.Mixin do
     Map.put(var, key, value)
   end
 
-  defp map_query_sort_order(nil), do: nil
+  defp map_query_sort_order(nil), do: SortOrder.asc
   defp map_query_sort_order(:asc), do: SortOrder.asc
   defp map_query_sort_order(:desc), do: SortOrder.desc
   defp map_query_sort_order(SortOrder.asc), do: SortOrder.asc
@@ -925,6 +929,23 @@ defmodule ExAliyunOts.Mixin do
     %Search.ExistsQuery{field_name: field_name}
   end
 
+  def pk_sort(order) do
+    %Search.PrimaryKeySort{order: map_query_sort_order(order)}
+  end
+
+  def score_sort(order) do
+    %Search.ScoreSort{order: map_query_sort_order(order)}
+  end
+
+  def field_sort(field_name, opts \\ []) do
+    %Search.FieldSort{
+      field_name: field_name,
+      order: map_query_sort_order(Keyword.get(opts, :order)),
+      mode: map_query_sort_mode(Keyword.get(opts, :mode)),
+      nested_filter: Keyword.get(opts, :nested_filter)
+    }
+  end
+
   def geo_distance_sort(field_name, points, opts) when is_list(points) do
     %Search.GeoDistanceSort{
       field_name: field_name,
@@ -932,6 +953,13 @@ defmodule ExAliyunOts.Mixin do
       mode: map_query_sort_mode(Keyword.get(opts, :mode)),
       distance_type: map_query_sort_geo_distance_type(Keyword.get(opts, :distance_type)),
       points: points
+    }
+  end
+
+  def nested_filter(path, filter) when is_map(filter) do
+    %Search.NestedFilter{
+      path: path,
+      filter: filter
     }
   end
 

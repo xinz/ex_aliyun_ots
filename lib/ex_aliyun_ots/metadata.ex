@@ -148,6 +148,10 @@ defmodule ExAliyunOts.Var.Search do
     require GeoDistanceType
     defstruct field_name: "", points: [], order: SortOrder.asc, mode: nil, distance_type: GeoDistanceType.arc, nested_filter: nil
   end
+
+  defmodule NestedFilter do
+    defstruct path: nil, filter: nil
+  end
   
   defmodule ScoreSort do
     alias ExAliyunOts.Const.Search.SortOrder

@@ -100,10 +100,10 @@ defmodule ExAliyunOtsTest.Support.Search do
   defp insert_test_data(instance_key, table) do
 
     data = [
-      %{id: "a1", class: "class1", name: "name_a1", age: 20, score: 99.71, is_actived: true, tags: Jason.encode!(["1", "2", "3"]), place: 10},
-      %{id: "a2", class: "class1", name: "name_a2", age: 28, score: 100, is_actived: false, tags: Jason.encode!(["2", "3"])},
-      %{id: "a3", class: "class2", name: "name_a3", age: 32, score: 66.78, is_actived: true, tags: Jason.encode!(["4", "1"]), place: 4},
-      %{id: "a4", class: "class3", name: "name_a4", age: 24, score: 41.01, is_actived: true, tags: Jason.encode!(["4"]), place: 20},
+      %{id: "a1", class: "class1", name: "name_a1", age: 20, score: 99.71, is_actived: true, tags: Jason.encode!(["1", "2", "3"]), place: 10, values: Jason.encode!([1, 2, 3])},
+      %{id: "a2", class: "class1", name: "name_a2", age: 28, score: 100, is_actived: false, tags: Jason.encode!(["2", "3"]), values: Jason.encode!([4, 5, 10])},
+      %{id: "a3", class: "class2", name: "name_a3", age: 32, score: 66.78, is_actived: true, tags: Jason.encode!(["4", "1"]), place: 4, values: Jason.encode!([-3, 6, 8])},
+      %{id: "a4", class: "class3", name: "name_a4", age: 24, score: 41.01, is_actived: true, tags: Jason.encode!(["4"]), place: 20, values: Jason.encode!([4, 7, 10])},
       %{id: "a5", class: "class2", name: "name_a5", age: 26, score: 89, is_actived: true, place: 3},
       %{id: "a6", class: "class4", name: "name_a6", age: 27, score: 79.99, is_actived: false},
       %{id: "a7", class: "class1", name: "name_a7", age: 28, score: 100, is_actived: true},
@@ -209,7 +209,12 @@ defmodule ExAliyunOtsTest.Support.Search do
             %Search.FieldSchema{
               field_name: "place",
               field_type: FieldType.long
-            }
+            },
+            %Search.FieldSchema{
+              field_name: "values",
+              is_array: true,
+              field_type: FieldType.long
+            },
           ]
         }
       }

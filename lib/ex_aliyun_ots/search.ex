@@ -5,8 +5,10 @@ defmodule ExAliyunOts.Client.Search do
     CreateSearchIndexRequest,
     IndexSchema,
     FieldSchema,
+    PrimaryKeySort,
     FieldSort,
     GeoDistanceSort,
+    ScoreSort,
     Sorter,
     Sort,
     Collapse,
@@ -74,12 +76,13 @@ defmodule ExAliyunOts.Client.Search do
     RowCountSort,
     SubAggSort,
     Range,
-    GeoPoint
+    GeoPoint,
+    NestedFilter
   }
 
   alias ExAliyunOts.{Http, Utils}
   alias ExAliyunOts.Var.Search
-  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, ScoreMode, AggregationType, GroupByType}
+  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, ScoreMode, AggregationType, GroupByType, SortMode}
 
   import ExAliyunOts.Logger, only: [error: 1]
   require FieldType
@@ -88,6 +91,7 @@ defmodule ExAliyunOts.Client.Search do
   require ScoreMode
   require AggregationType
   require GroupByType
+  require SortMode
 
   @variant_type_integer 0x0
   @variant_type_double 0x1
@@ -302,13 +306,30 @@ defmodule ExAliyunOts.Client.Search do
     Sort.new(sorter: prepared_sorters)
   end
 
-  defp prepare_sorter(%Search.FieldSort{field_name: field_name, order: order}) do
+  defp prepare_sorter(%Search.PrimaryKeySort{order: order}) do
     assert_valid_sort_order(order)
-    Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order))
+    Sorter.new(pk_sort: PrimaryKeySort.new(order: order))
   end
-  defp prepare_sorter(%Search.GeoDistanceSort{field_name: field_name, order: order, points: points, distance_type: distance_type}) do
+  defp prepare_sorter(%Search.FieldSort{field_name: field_name, order: order, mode: mode, nested_filter: nested_filter}) do
     assert_valid_sort_order(order)
-    Sorter.new(geo_distance_sort: GeoDistanceSort.new(field_name: field_name, order: order, points: points, distance_type: distance_type))
+    assert_valid_sort_mode(mode)
+
+    nested_filter = prepare_sorter_nested_filter(nested_filter)
+
+    Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order, mode: mode, nested_filter: nested_filter))
+  end
+  defp prepare_sorter(%Search.GeoDistanceSort{field_name: field_name, order: order, points: points, distance_type: distance_type, mode: mode, nested_filter: nested_filter}) do
+    assert_valid_sort_order(order)
+    assert_valid_sort_mode(mode)
+    assert_valid_geo_points(points)
+
+    nested_filter = prepare_sorter_nested_filter(nested_filter)
+
+    Sorter.new(geo_distance_sort: GeoDistanceSort.new(field_name: field_name, order: order, points: points, distance_type: distance_type, mode: mode, nested_filter: nested_filter))
+  end
+  defp prepare_sorter(%Search.ScoreSort{order: order}) do
+    assert_valid_sort_order(order)
+    Sorter.new(score_sort: ScoreSort.new(order: order))
   end
   defp prepare_sorter(sorter) do
     error(fn ->
@@ -321,10 +342,33 @@ defmodule ExAliyunOts.Client.Search do
     nil
   end
 
+  defp prepare_sorter_nested_filter(nil), do: nil
+  defp prepare_sorter_nested_filter(%Search.NestedFilter{path: path, filter: filter}) do
+    query = prepare_query(filter)
+    NestedFilter.new(path: path, filter: query)
+  end
+
   defp assert_valid_sort_order(SortOrder.asc()), do: :ok
   defp assert_valid_sort_order(SortOrder.desc()), do: :ok
   defp assert_valid_sort_order(invalid) do
-    raise ExAliyunOts.RuntimeError, "Invalid sort order: #{inspect(invalid)}, please use SortOrder.desc or SortOrder.asc"
+    raise ExAliyunOts.RuntimeError, "Invalid sort order: #{inspect(invalid)}, please use SortOrder.desc or SortOrder.asc."
+  end
+
+  defp assert_valid_sort_mode(SortMode.min()), do: :ok
+  defp assert_valid_sort_mode(SortMode.max()), do: :ok
+  defp assert_valid_sort_mode(SortMode.avg()), do: :ok
+  defp assert_valid_sort_mode(nil), do: :ok
+  defp assert_valid_sort_mode(invalid) do
+    raise ExAliyunOts.RuntimeError, "Invalid sort mode: #{inspect(invalid)}, please use SortMode.min | SortMode.max | SortMode.avg for it."
+  end
+
+  defp assert_valid_score_mode(ScoreMode.none()), do: :ok
+  defp assert_valid_score_mode(ScoreMode.avg()), do: :ok
+  defp assert_valid_score_mode(ScoreMode.max()), do: :ok
+  defp assert_valid_score_mode(ScoreMode.total()), do: :ok
+  defp assert_valid_score_mode(ScoreMode.min()), do: :ok
+  defp assert_valid_score_mode(invalid) do
+    raise ExAliyunOts.RuntimeError, "Invalid score_mode: #{inspect(invalid)} for NestedQuery, please use ScoreMode.none | ScoreMode.avg | ScoreMode.max | ScoreMode.total | ScoreMode.min for it."
   end
 
   defp assert_valid_geo_points(points) do
@@ -663,7 +707,9 @@ defmodule ExAliyunOts.Client.Search do
          query: query,
          score_mode: score_mode
        }) do
-    if score_mode not in valid_score_modes(), do: raise ExAliyunOts.RuntimeError, "Invalid score_mode: #{inspect score_mode}"
+
+    assert_valid_score_mode(score_mode)
+
     proto_inner_query = prepare_query(query)
     proto_query = NestedQuery.new(path: path, query: proto_inner_query, score_mode: score_mode)
     Query.new(
@@ -731,10 +777,6 @@ defmodule ExAliyunOts.Client.Search do
   end
   defp prepare_query(query) do
     raise ExAliyunOts.RuntimeError, "Not supported query: #{inspect query}"
-  end
-
-  defp valid_score_modes() do
-    [ScoreMode.none, ScoreMode.avg, ScoreMode.max, ScoreMode.total, ScoreMode.min]
   end
 
   defp decode_search_response(response_body) do

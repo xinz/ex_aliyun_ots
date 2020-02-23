@@ -135,8 +135,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             terms: [22, 26, 27]
           ],
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.asc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age", order: :asc),
+            field_sort("name", order: :asc)
           ]
         ]
     assert response.total_hits == 3
@@ -150,7 +150,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         search_query: [
           query: terms_query("age", [22, 26, 27]),
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.asc],
+            field_sort("age", order: :asc),
             [type: SortType.field, field_name: "name", order: SortOrder.asc]
           ]
         ]
@@ -169,8 +169,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             prefix: "n"
           ],
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.asc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age"),
+            field_sort("name"),
           ]
         ],
         columns_to_get: ["age", "name"]
@@ -185,8 +185,8 @@ defmodule ExAliyunOts.MixinTest.Search do
         search_query: [
           query: prefix_query("name", "n"),
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.asc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age"),
+            field_sort("name"),
           ]
         ],
         columns_to_get: ["age", "name"]
@@ -205,8 +205,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             value: "n*"
           ],
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.asc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age"),
+            field_sort("name"),
           ]
         ],
         columns_to_get: ColumnReturnType.all
@@ -221,8 +221,8 @@ defmodule ExAliyunOts.MixinTest.Search do
         search_query: [
           query: wildcard_query("name", "n*"),
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.asc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age"),
+            field_sort("name"),
           ]
         ],
         columns_to_get: ColumnReturnType.all
@@ -244,8 +244,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             include_lower: false 
           ],
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.desc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age", order: :desc),
+            field_sort("name")
           ]
         ]
     assert response.total_hits == 2
@@ -301,8 +301,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             include_lower: false
           ),
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.desc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age", order: :desc),
+            field_sort("name")
           ]
         ]
     assert response.total_hits == 2
@@ -325,8 +325,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             ],
           ],
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.desc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age", order: :desc),
+            field_sort("name")
           ]
         ]
 
@@ -356,8 +356,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             must_not: term_query("age", 28)
           ),
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.desc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age", order: :desc),
+            field_sort("name")
           ]
         ]
 
@@ -388,8 +388,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             minimum_should_match: 2
           ],
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.desc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age", order: :desc),
+            field_sort("name")
           ]
         ]
     assert response.total_hits == 1
@@ -411,8 +411,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             minimum_should_match: 2
           ),
           sort: [
-            [type: SortType.field, field_name: "age", order: SortOrder.desc],
-            [type: SortType.field, field_name: "name", order: SortOrder.asc]
+            field_sort("age", order: :desc),
+            field_sort("name")
           ]
         ]
     assert response.total_hits == 1
@@ -477,6 +477,88 @@ defmodule ExAliyunOts.MixinTest.Search do
         ]
     assert response.total_hits == 1
     assert length(response.rows) == 1
+  end
+
+  test "field_sort with nested_filter" do
+    index_name = "test_search_index2"
+    {:ok, _response} =
+      search @table, index_name,
+        search_query: [
+          query: nested_query(
+            "content",
+            [
+              exists_query("content.header")
+            ]
+          ),
+          sort: [
+            field_sort("content.header",
+              order: :desc,
+              nested_filter: nested_filter(
+                "content",
+                term_query("content.header", "header1")
+              )
+            )
+          ]
+        ]
+  end
+
+  test "field_sort with min/max/avg mode for array" do
+    index_name = "test_search_index"
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: exists_query("values"),
+          sort: [
+            field_sort("values",
+              mode: :min
+            )
+          ]
+        ]
+
+    [row1, row2, row3, row4] = response.rows
+    {[{_, id1}], _} = row1
+    {[{_, id2}], _} = row2
+    {[{_, id3}], _} = row3
+    {[{_, id4}], _} = row4
+    assert id1 == "a3" and id2 == "a1" and id3 == "a2" and id4 == "a4"
+
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: exists_query("values"),
+          sort: [
+            field_sort("values",
+              mode: :max,
+              order: :desc
+            )
+          ]
+        ]
+
+    [row1, row2, row3, row4] = response.rows
+    {[{_, id1}], _} = row1
+    {[{_, id2}], _} = row2
+    {[{_, id3}], _} = row3
+    {[{_, id4}], _} = row4
+    assert id1 == "a2" and id2 == "a4" and id3 == "a3" and id4 == "a1"
+
+    {:ok, response} =
+      search @table, index_name,
+        search_query: [
+          query: exists_query("values"),
+          sort: [
+            field_sort("values",
+              mode: :avg,
+              order: :asc
+            )
+          ]
+        ]
+
+    [row1, row2, row3, row4] = response.rows
+    {[{_, id1}], _} = row1
+    {[{_, id2}], _} = row2
+    {[{_, id3}], _} = row3
+    {[{_, id4}], _} = row4
+    assert id1 == "a1" and id2 == "a3" and id3 == "a2" and id4 == "a4"
   end
 
   test "exists query" do
