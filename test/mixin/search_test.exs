@@ -481,7 +481,7 @@ defmodule ExAliyunOts.MixinTest.Search do
 
   test "field_sort with nested_filter" do
     index_name = "test_search_index2"
-    {:ok, _response} =
+    {:ok, response} =
       search @table, index_name,
         search_query: [
           query: nested_query(
@@ -495,11 +495,18 @@ defmodule ExAliyunOts.MixinTest.Search do
               order: :desc,
               nested_filter: nested_filter(
                 "content",
-                term_query("content.header", "header1")
+                prefix_query("content.header", "header")
               )
             )
           ]
         ]
+
+    [row1, row2] = response.rows
+    {_, [{"content", c1, _}]} = row1
+    {_, [{"content", c2, _}]} = row2
+
+    assert c1 == "[{\"body\":\"body2\",\"header\":\"header2\"}]"
+    assert c2 == "[{\"body\":\"body1\",\"header\":\"header1\"}]"
   end
 
   test "field_sort with min/max/avg mode for array" do
