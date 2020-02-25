@@ -288,43 +288,16 @@ defmodule ExAliyunOts.Tunnel.Worker do
         :ok
 
       error ->
-        case invalid_tunnel?(error) do
-          true ->
-            Logger.info(fn -> "Invalid tunnel" end)
 
-          false ->
-            Logger.info(fn ->
-              [
-                "Unknown error when heartbeat ",
-                inspect(error)
-              ]
-            end)
-        end
+        Logger.error(fn ->
+          [
+            "Occur an error when heartbeat ",
+            inspect(error)
+          ]
+        end)
 
         error
     end
-  end
-
-  defp invalid_tunnel?({:error, error_msg}) do
-    Logger.error(fn ->
-      [
-        "Get invalid_tunnel ",
-        inspect(error_msg)
-      ]
-    end)
-    String.contains?(error_msg, "OTSParameterInvalid") or String.contains?(error_msg, "OTSTunnelExpired")
-  end
-
-  defp invalid_tunnel?(error) do
-    Logger.error(fn ->
-      [
-        "Get invalid_tunnel ",
-        inspect(error),
-        " occur unknown error"
-      ]
-    end)
-
-    false
   end
 
   defp shutdown(state) do

@@ -13,12 +13,12 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
       {:ok, _} ->
         checkpointer.sequence_number + 1
 
-      {:error, error_msg} ->
+      {:error, error} ->
         Logger.info(fn ->
-          "Checkpoint occur error: #{inspect(error_msg)}"
+          "Checkpoint occur error: #{inspect(error)}"
         end)
 
-        if String.contains?(error_msg, "OTSSequenceNumberNotMatch") do
+        if error.code == "OTSSequenceNumberNotMatch" do
           # Occur the conflict of sequence_number, try to update local sequence_number from remote server,
           # and then retry checkpoint.
 
@@ -46,7 +46,7 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
                     "GetCheckpoint occur error: #{inspect(error)} while retry checkpoint."
           end
         else
-          raise ExAliyunOts.RuntimeError, "Checkpoint occur error_msg: #{inspect(error_msg)}."
+          raise ExAliyunOts.RuntimeError, "Checkpoint occur error: #{inspect(error)}."
         end
     end
   end

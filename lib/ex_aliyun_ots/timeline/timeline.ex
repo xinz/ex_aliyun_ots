@@ -230,7 +230,7 @@ defmodule ExAliyunOts.Timeline do
   def create(%__MODULE__{
         fields: fields
       })
-      when length(fields) == 0 or length(fields) > @fields_max_size do
+      when fields == [] or length(fields) > @fields_max_size do
     raise ExAliyunOts.RuntimeError,
           "Invalid fields size as #{length(fields)}, please keep its size greater than 0 and less or equal to #{@fields_max_size}."
   end

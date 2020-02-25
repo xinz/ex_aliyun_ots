@@ -76,7 +76,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
             {records, next_token, state}
           end
 
-        {:error, error_msg} ->
+        {:error, error} ->
           Logger.error(fn ->
             [
               "Occur an error when read_records, ",
@@ -89,11 +89,11 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
               " token: ",
               inspect(token),
               " error message: ",
-              inspect(error_msg)
+              inspect(error)
             ]
           end)
 
-          if stream_channel_expired?(error_msg) do
+          if stream_channel_expired?(error.code) do
             # The tunnel has a 7-day life cycle, if there's an active connect-read-check loop, the tunnel will not expire.
             {:tunnel_expired, state}
           else
@@ -173,8 +173,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
     records_num > @rpo_bar or size > @rpo_size_bar
   end
 
-  defp stream_channel_expired?(error_msg) do
-    String.contains?(error_msg, "OTSTunnelServerUnavailableuOTSTrimmedDataAccess")
-  end
+  defp stream_channel_expired?("OTSTunnelServerUnavailable"), do: true
+  defp stream_channel_expired?(_error_code), do: false
 
 end
