@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.Constants do
+  @moduledoc false
 
   defmacro __using__(_opts \\ []) do
     quote do
@@ -42,6 +43,7 @@ defmodule ExAliyunOts.Constants do
 end
 
 defmodule ExAliyunOts.Const.ErrorType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :ots_client_unknown, "OTSClientUnknownError"
@@ -65,6 +67,7 @@ defmodule ExAliyunOts.Const.ErrorType do
 end
 
 defmodule ExAliyunOts.Const.OperationType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :update, :'UPDATE'
@@ -76,6 +79,7 @@ defmodule ExAliyunOts.Const.OperationType do
 end
 
 defmodule ExAliyunOts.Const.PKType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :integer, :'INTEGER'
@@ -88,6 +92,7 @@ defmodule ExAliyunOts.Const.PKType do
 end
 
 defmodule ExAliyunOts.Const.ReturnType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :pk, :'RT_PK'
@@ -96,6 +101,7 @@ defmodule ExAliyunOts.Const.ReturnType do
 end
 
 defmodule ExAliyunOts.Const.Direction do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :forward, :'FORWARD'
@@ -103,6 +109,7 @@ defmodule ExAliyunOts.Const.Direction do
 end
 
 defmodule ExAliyunOts.Const.RowExistence do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :ignore, :'IGNORE'
@@ -112,6 +119,7 @@ defmodule ExAliyunOts.Const.RowExistence do
 end
 
 defmodule ExAliyunOts.Const.FilterType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :single_column, :'FT_SINGLE_COLUMN_VALUE'
@@ -120,6 +128,7 @@ defmodule ExAliyunOts.Const.FilterType do
 end
 
 defmodule ExAliyunOts.Const.LogicOperator do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :not, :'LO_NOT'
@@ -128,6 +137,7 @@ defmodule ExAliyunOts.Const.LogicOperator do
 end
 
 defmodule ExAliyunOts.Const.ComparatorType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :eq, :'CT_EQUAL'
@@ -139,6 +149,7 @@ defmodule ExAliyunOts.Const.ComparatorType do
 end
 
 defmodule ExAliyunOts.Const.Search.FieldType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :long, :'LONG'
@@ -151,6 +162,7 @@ defmodule ExAliyunOts.Const.Search.FieldType do
 end
 
 defmodule ExAliyunOts.Const.Search.QueryType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :match, :'MATCH_QUERY'
@@ -172,6 +184,7 @@ defmodule ExAliyunOts.Const.Search.QueryType do
 end
 
 defmodule ExAliyunOts.Const.Search.QueryOperator do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :or, :'OR'
@@ -179,6 +192,7 @@ defmodule ExAliyunOts.Const.Search.QueryOperator do
 end
 
 defmodule ExAliyunOts.Const.Search.ScoreMode do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :none, :'SCORE_MODE_NONE'
@@ -189,6 +203,7 @@ defmodule ExAliyunOts.Const.Search.ScoreMode do
 end
 
 defmodule ExAliyunOts.Const.Search.SortOrder do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :asc, :'SORT_ORDER_ASC'
@@ -196,6 +211,7 @@ defmodule ExAliyunOts.Const.Search.SortOrder do
 end
 
 defmodule ExAliyunOts.Const.Search.SortMode do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :min, :'SORT_MODE_MIN'
@@ -204,6 +220,7 @@ defmodule ExAliyunOts.Const.Search.SortMode do
 end
 
 defmodule ExAliyunOts.Const.Search.GeoDistanceType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :arc, :'GEO_DISTANCE_ARC'
@@ -211,6 +228,7 @@ defmodule ExAliyunOts.Const.Search.GeoDistanceType do
 end
 
 defmodule ExAliyunOts.Const.Search.ColumnReturnType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :all, :'RETURN_ALL'
@@ -219,6 +237,7 @@ defmodule ExAliyunOts.Const.Search.ColumnReturnType do
 end
 
 defmodule ExAliyunOts.Const.Search.IndexOptions do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :docs, :'DOCS'
@@ -228,6 +247,7 @@ defmodule ExAliyunOts.Const.Search.IndexOptions do
 end
 
 defmodule ExAliyunOts.Const.Search.SyncPhase do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :full, :'FULL'
@@ -235,6 +255,7 @@ defmodule ExAliyunOts.Const.Search.SyncPhase do
 end
 
 defmodule ExAliyunOts.Const.Search.SortType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :field, :field
@@ -244,6 +265,7 @@ defmodule ExAliyunOts.Const.Search.SortType do
 end
 
 defmodule ExAliyunOts.Const.Search.AggregationType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :avg, :'AGG_AVG'
@@ -255,6 +277,7 @@ defmodule ExAliyunOts.Const.Search.AggregationType do
 end
 
 defmodule ExAliyunOts.Const.Search.GroupByType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const :field, :'GROUP_BY_FIELD'

@@ -6,9 +6,7 @@ defmodule ExAliyunOts.Utils do
   @geo_point_reg ~r/\-?\d+\.?\d*,\-?\d+\.?\d*/
 
   defmodule Guards do
-    @moduledoc """
-    Define some custom guard expressions.
-    """
+    @moduledoc false
 
     defguard is_valid_primary_key_type(type) when type in [:integer, :binary, :string]
 

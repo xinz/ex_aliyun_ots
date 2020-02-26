@@ -1,5 +1,5 @@
 defmodule ExAliyunOts.Client.Transaction do
-  # Transaction module
+  @moduledoc false
 
   alias ExAliyunOts.{PlainBuffer, Http}
 

@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.Const.TunnelType do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const(:base, :BaseData)
@@ -7,6 +8,7 @@ defmodule ExAliyunOts.Const.TunnelType do
 end
 
 defmodule ExAliyunOts.Const.Tunnel.ChannelStatus do
+  @moduledoc false
   import ExAliyunOts.Constants
 
   const(:wait, :WAIT)

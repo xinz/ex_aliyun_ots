@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.Client.Table do
+  @moduledoc false
 
   alias ExAliyunOts.TableStore.{
     CreateTableRequest,

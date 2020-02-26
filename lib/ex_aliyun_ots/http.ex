@@ -1,28 +1,6 @@
 defmodule ExAliyunOts.Http.Middleware do
+  @moduledoc false
   @behaviour Tesla.Middleware
-
-  @moduledoc """
-  Config and setup http request
-
-  ### Example usage
-  ```
-  defmodule MyClient do
-    use Tesla
-
-    ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder
-  end
-  ```
-
-  ### Required
-  - `:instance` - ots instance
-  - `:uri` - ots request uri
-  - `:request_body` - the body of post request
-  - `:decoder` - the corrresonding decoder to response
-
-  ### Option
-  - `:deserialize_row` - need to deserialize row from response
-  - `:require_response_size` - return byte size of response body
-  """
 
   alias ExAliyunOts.{PlainBuffer, Protocol, Error}
 
@@ -196,6 +174,7 @@ defmodule ExAliyunOts.Http.Middleware do
 end
 
 defmodule ExAliyunOts.Http do
+  @moduledoc false
   import ExAliyunOts.Logger, only: [error: 1]
 
   alias ExAliyunOts.Error

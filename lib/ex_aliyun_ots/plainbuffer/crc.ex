@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.CRC do
+  @moduledoc false
 
   use Bitwise
 
@@ -64,4 +65,3 @@ defmodule ExAliyunOts.CRC do
   end
 
 end
-

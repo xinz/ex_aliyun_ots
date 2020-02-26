@@ -29,10 +29,12 @@ defmodule ExAliyunOts.Timeline do
             identifier: nil
 
   defmodule Entry do
+    @moduledoc false
     defstruct sequence_id: nil, message: nil
   end
 
   defmodule BatchWrite do
+    @moduledoc false
     defstruct timeline: nil, entry: nil
   end
 

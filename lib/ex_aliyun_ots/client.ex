@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.Client do
+  @moduledoc false
 
   alias ExAliyunOts.Client.{Table, Row, Search, Transaction, Tunnel}
 

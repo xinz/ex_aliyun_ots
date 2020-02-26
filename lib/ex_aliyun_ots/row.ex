@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.Client.Row do
+  @moduledoc false
 
   import ExAliyunOts.Logger, only: [debug: 1]
 

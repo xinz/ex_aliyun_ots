@@ -1,5 +1,5 @@
 defmodule ExAliyunOts.Client.Search do
-  # SearchIndex functions
+  @moduledoc false
 
   alias ExAliyunOts.TableStoreSearch.{
     CreateSearchIndexRequest,
