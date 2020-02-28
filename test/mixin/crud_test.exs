@@ -1,9 +1,9 @@
 defmodule ExAliyunOts.MixinTest.CRUD do
 
-  use ExUnit.Case
-
   use ExAliyunOts,
     instance: EDCEXTestInstance
+
+  use ExUnit.Case
 
   require Logger
 

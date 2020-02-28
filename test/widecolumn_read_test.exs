@@ -1,23 +1,23 @@
 defmodule ExAliyunOtsTest.WideColumnRead do
   use ExUnit.Case
-  use ExAliyunOts.Mixin
+
+  use ExAliyunOts,
+    instance: EDCEXTestInstance
 
   require Logger
   alias ExAliyunOts.Const.PKType
   require PKType
 
-  @instance_key EDCEXTestInstance
-
   test "wide column read" do
     cur_timestamp = Timex.to_unix(Timex.now())
     table_name = "test_wcr_#{cur_timestamp}"
 
-    create_table_result = create_table @instance_key, table_name, [{"key", PKType.string}]
+    create_table_result = create_table table_name, [{"key", PKType.string}]
 
     assert create_table_result == :ok
 
     {:ok, _putrow_response} =
-      put_row @instance_key, table_name, [{"key", "1"}],
+      put_row table_name, [{"key", "1"}],
         [{"bcol", "bc"}, {"ecol", "ec"}, {"dcol", "dc"}, {"acol", "ac"}, {"fcol", "fc"},
          {"ccol", "cc"}, {"room_a", "room_a1"}, {"room_c", "room_c2"}, {"room_b", "room_b3"},
          {"room_x", "room_x4"}, {"room_g", "room_g5"}, {"room_e", "room_e6"}],
@@ -26,7 +26,7 @@ defmodule ExAliyunOtsTest.WideColumnRead do
     # wide column read by start/end
     # using `start_column` as "room", `end_column` as "room|" will get all "room_*" attribute columns
     {:ok, response} =
-      get_row @instance_key, table_name, [{"key", "1"}],
+      get_row table_name, [{"key", "1"}],
         start_column: "room",
         end_column: "room|"
 
@@ -41,7 +41,7 @@ defmodule ExAliyunOtsTest.WideColumnRead do
 
     # wide column read by filter
     {:ok, response} =
-      get_row @instance_key, table_name, [{"key", "1"}],
+      get_row table_name, [{"key", "1"}],
         start_column: "room",
         filter: pagination(offset: 0, limit: 3)
     
@@ -52,7 +52,7 @@ defmodule ExAliyunOtsTest.WideColumnRead do
     assert {"room_c", "room_c2", _} = Enum.at(attrs, 2)
 
     # delete table
-    del_result = delete_table @instance_key, table_name
+    del_result = delete_table(table_name)
     assert del_result == :ok
   end
 
