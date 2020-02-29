@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.Client.Tunnel do
+  @moduledoc false
 
   alias ExAliyunOts.Http
 

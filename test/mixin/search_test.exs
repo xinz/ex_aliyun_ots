@@ -1023,8 +1023,10 @@ defmodule ExAliyunOts.MixinTest.Search do
           query: match_all_query(),
           limit: 0,
           group_bys: [
-            group_by_range("group_name", "price",
-              ranges: [
+            group_by_range(
+              "group_name",
+              "price",
+              [
                 {0, 18}, # [0, 18)
                 {18, 50} # [18, 50)
               ],
@@ -1067,8 +1069,10 @@ defmodule ExAliyunOts.MixinTest.Search do
           ],
           limit: 0,
           group_bys: [
-            group_by_range("group_name", "price",
-              ranges: [
+            group_by_range(
+              "group_name",
+              "price",
+              [
                 {0, 20},
                 {20, 50}
               ],

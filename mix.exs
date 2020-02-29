@@ -55,11 +55,20 @@ defmodule ExAliyunOts.Mixfile do
   end
 
   defp docs do
-    [main: "readme",
-     formatter_opts: [gfm: true],
-     extras: [
-       "README.md"
-     ]]
+    [
+      main: "readme",
+      formatter_opts: [gfm: true],
+      extras: [
+        "README.md"
+      ],
+      groups_for_functions: [
+        "Query": & &1[:query] == :query,
+        "Sort": & &1[:sort] == :sort,
+        "Aggregation": & &1[:aggs] == :aggs,
+        "GroupBy": & &1[:group_bys] == :group_bys,
+        "Sort in GroupByField": & &1[:sort_in_group_bys] == :sort_in_group_bys
+      ]
+    ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
