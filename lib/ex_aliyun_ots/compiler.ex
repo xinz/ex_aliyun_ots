@@ -165,11 +165,11 @@ defmodule ExAliyunOts.Compiler do
       #
       defdelegate group_by_field(group_name, field_name, opts \\ []), to: Search
 
-      defdelegate group_by_range(group_name, field_name, opts \\ []), to: Search
+      defdelegate group_by_range(group_name, field_name, ranges, opts \\ []), to: Search
 
       defdelegate group_by_filter(group_name, filters, opts \\ []), to: Search
 
-      defdelegate group_by_geo_distance(group_name, field_name, opts \\ []), to: Search
+      defdelegate group_by_geo_distance(group_name, field_name, ranges, opts \\ []), to: Search
 
       # Sort
       #

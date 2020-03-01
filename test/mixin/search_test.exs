@@ -450,9 +450,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         search_query: [
           query: nested_query(
             "content",
-            [
-              term_query("content.header", "header1")
-            ]
+            term_query("content.header", "header1")
           )
         ]
     assert response.total_hits == 1
@@ -486,9 +484,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         search_query: [
           query: nested_query(
             "content",
-            [
-              exists_query("content.header")
-            ]
+            exists_query("content.header")
           ),
           sort: [
             field_sort("content.header",

@@ -1,4 +1,57 @@
 defmodule ExAliyunOts.Search do
+  @moduledoc """
+  Use the multiple efficient index schemas of search index to solve complex query problems.
+
+  Here are links to the search section of Alibaba official document: [Chinese](https://help.aliyun.com/document_detail/91974.html) | [English](https://www.alibabacloud.com/help/doc-detail/91974.htm)
+
+  To use `ExAliyunOts`, a module that calls `use ExAliyunOts` has to be defined:
+
+  ```elixir
+  defmodule MyApp.Tablestore do
+    use ExAliyunOts, instance: :my_app
+  end
+  ```
+
+  This automatically defines some functions in `MyApp.Tablestore` module, we can use them as helpers to invoke `MyApp.Tablestore.search/3`, here are some examples:
+
+  ```
+  import MyApp.Tablestore
+
+  search "table", "index_name",
+    search_query: [
+      query: match_query("age", 28),
+      sort: [
+        field_sort("age", order: :desc)
+      ]
+    ]
+
+  search "table", "index_name",
+    search_query: [
+      query: exists_query("column_a"),
+      group_bys: [
+        group_by_field("group_name", "column_b",
+          sub_group_bys: [
+            group_by_range("group_name_1", "column_d", [{0, 10}, {10, 20}])
+          ],
+          sort: [
+            group_key_sort(:desc)
+          ]
+        ),
+        group_by_field("group_name2", "column_c")
+      ],
+      aggs: [
+        agg_min("aggregation_name", "column_e")
+      ]
+    ]
+  ```
+
+  Please notice:
+
+    * The statistics(via `:aggs`) and GroupBy type aggregations(via `:group_bys`) can be used at the same time;
+    * The GroupBy type aggregations support the nested sub statistics and sub GroupBy type aggregations;
+    * To ensure the performance and reduce the complexity of aggregations, there is a limition with a certain number
+    of levels for nesting.
+  """
 
   alias ExAliyunOts.Var.Search
 
@@ -16,13 +69,23 @@ defmodule ExAliyunOts.Search do
   Use MatchQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: match_query("age", 28)
     ]
   ```
+
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117485.html) | [English](https://www.alibabacloud.com/help/doc-detail/117485.html)
+
+  Options
+
+    * `:minimum_should_match`, the minimum number of terms that the value of the fieldName field in a row
+    contains when Table Store returns this row in the query result, by default it's 1.
+    * `:operator`, the operator used in a logical operation, by default it's `Or`, it means that as long as several
+    terms after the participle are partially hit, they are considered hit this query.
   """
   @doc query: :query
+  @spec match_query(field_name :: String.t(), text :: String.t(), options :: Keyword.t()) :: map()
   def match_query(field_name, text, options \\ []) do
     %Search.MatchQuery{
       field_name: field_name,
@@ -35,13 +98,16 @@ defmodule ExAliyunOts.Search do
   Use MatchAllQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: match_all_query()
     ]
   ```
+
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117484.html) | [English](https://www.alibabacloud.com/help/doc-detail/117484.html)
   """
   @doc query: :query
+  @spec match_all_query() :: map()
   def match_all_query() do
     %Search.MatchAllQuery{}
   end
@@ -49,14 +115,20 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use MatchPhraseQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Similar to `MatchQuery`, however, the location relationship of multiple terms after word segmentation will be considered,
+  multiple terms after word segmentation must exist in the same order and location in the row data to be hit this query.
+
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117486.html) | [English](https://www.alibabacloud.com/help/doc-detail/117486.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: match_phrase_query("content", "tablestore")
     ]
   ```
   """
   @doc query: :query
+  @spec match_phrase_query(field_name :: String.t(), text :: String.t()) :: map()
   def match_phrase_query(field_name, text) do
     %Search.MatchPhraseQuery{field_name: field_name, text: text}
   end
@@ -64,14 +136,17 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use TermQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117488.html) | [English](https://www.alibabacloud.com/help/doc-detail/117488.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: term_query("age", 28)
     ]
   ```
   """
   @doc query: :query
+  @spec term_query(field_name :: String.t(), term :: String.t()) :: map()
   def term_query(field_name, term) do
     %Search.TermQuery{field_name: field_name, term: term}
   end
@@ -79,14 +154,17 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use TermsQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117493.html) | [English](https://www.alibabacloud.com/help/doc-detail/117493.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: terms_query("age", [28, 29, 30])
     ]
   ```
   """
   @doc query: :query
+  @spec terms_query(field_name :: String.t(), terms :: list()) :: map()
   def terms_query(field_name, terms) when is_list(terms) do
     %Search.TermsQuery{field_name: field_name, terms: terms}
   end
@@ -94,14 +172,17 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use PrefixQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117495.html) | [English](https://www.alibabacloud.com/help/doc-detail/117495.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: prefix_query("name", "n")
     ]
   ```
   """
   @doc query: :query
+  @spec prefix_query(field_name :: String.t(), prefix :: String.t()) :: map()
   def prefix_query(field_name, prefix) do
     %Search.PrefixQuery{field_name: field_name, prefix: prefix}
   end
@@ -109,8 +190,10 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use RangeQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117496.html) | [English](https://www.alibabacloud.com/help/doc-detail/117496.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: range_query(
         "score",
@@ -124,13 +207,16 @@ defmodule ExAliyunOts.Search do
 
   Options:
 
-    * `:from`, ...
-    * `:to`, ...
-    * `:include_lower`, by default it's `true`.
-    * `:include_upper`, by default it's `true`.
+    * `:from`, the value of the start position.
+    * `:to`, the value of the end position.
+    * `:include_lower`, specifies whether to include the `:from` value in the result, available options are `true` | `false`,
+    by default it's `true`.
+    * `:include_upper`, specifies whether to include the `:to` value in the result, available options are `true` | `false`,
+    by default it's `true`.
 
   """
   @doc query: :query
+  @spec range_query(field_name :: String.t(), options :: Keyword.t()) :: map()
   def range_query(field_name, options \\ []) do
     %Search.RangeQuery{
       field_name: field_name,
@@ -144,14 +230,17 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use WildcardQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117497.html) | [English](https://www.alibabacloud.com/help/doc-detail/117497.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: wildcard_query("name", "n*")
     ]
   ```
   """
   @doc query: :query
+  @spec wildcard_query(field_name :: String.t(), value :: String.t()) :: map()
   def wildcard_query(field_name, value) do
     %Search.WildcardQuery{field_name: field_name, value: value}
   end
@@ -159,8 +248,10 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use BoolQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117498.html) | [English](https://www.alibabacloud.com/help/doc-detail/117498.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: bool_query(
         must: range_query("age", from: 20, to: 32),
@@ -174,37 +265,41 @@ defmodule ExAliyunOts.Search do
 
   Options:
 
-    * `:must`
-    * `:must_not`
-    * `:should`
+    * `:must`, specifies the Queries that the query result must match, this option is equivalent to the `AND` operator.
+    * `:must_not`, specifies the Queries that the query result must not match, this option is equivalent to the `NOT` operator.
+    * `:should`, specifies the Queries that the query result may or may not match, this option is equivalent to the `OR` operator.
+    * `:minimum_should_match`, specifies the minimum number of `:should` that the query result must match.
 
   """
   @doc query: :query
+  @spec bool_query(options :: Keyword.t()) :: map()
   def bool_query(options) do
     map_search_options(%Search.BoolQuery{}, options)
   end
 
   @doc """
-  Use NestedQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+  Use NestedQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`, the target field
+  need to be a nested type, it is used to query sub documents of nested type.
+
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/120221.html) | [English](https://www.alibabacloud.com/help/doc-detail/120221.html)
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: nested_query(
         "content",
-        [
-          term_query("content.header", "header1")
-        ]
+        term_query("content.header", "header1")
       )
     ]
   ```
 
-  Options(TODO):
+  Options:
 
     * `:score_mode`, available options have `:none` | `:avg` | `:max` | `:total` | `:min`, by default
-    it's `:none`
+    it's `:none`.
   """
   @doc query: :query
+  @spec nested_query(path :: String.t(), query :: map() | Keyword.t(), options :: Keyword.t()) :: map()
   def nested_query(path, query, options \\ []) do
     options = Keyword.merge(options, [path: path, query: query])
     map_search_options(%Search.NestedQuery{}, options)
@@ -213,8 +308,10 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use GeoDistanceQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117500.html) | [English](https://www.alibabacloud.com/help/doc-detail/117500.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: geo_distance_query("location", 500_000, "5,5")
     ]
@@ -223,6 +320,8 @@ defmodule ExAliyunOts.Search do
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
   @doc query: :query
+  @spec geo_distance_query(field_name :: String.t(), distance :: float() | integer(), center_point :: String.t())
+    :: map()
   def geo_distance_query(field_name, distance, center_point) do
     %Search.GeoDistanceQuery{
       field_name: field_name,
@@ -234,8 +333,10 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use GeoBoundingBoxQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117499.html) | [English](https://www.alibabacloud.com/help/doc-detail/117499.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: geo_bounding_box_query("location", "10,-10", "-10,10")
     ]
@@ -245,7 +346,7 @@ defmodule ExAliyunOts.Search do
   """
   @doc query: :query
   @spec geo_bounding_box_query(field_name :: String.t(), top_left :: String.t(), bottom_right :: String.t())
-    :: %Search.GeoBoundingBoxQuery{}
+    :: map()
   def geo_bounding_box_query(field_name, top_left, bottom_right) do
     %Search.GeoBoundingBoxQuery{
       field_name: field_name,
@@ -257,8 +358,10 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use GeoPolygonQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/117501.html) | [English](https://www.alibabacloud.com/help/doc-detail/117501.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: geo_polygon_query("location", ["11,11", "0,0", "1,5"])
     ]
@@ -267,8 +370,7 @@ defmodule ExAliyunOts.Search do
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
   @doc query: :query
-  @spec geo_polygon_query(field_name :: String.t(), geo_points :: list())
-    :: %Search.GeoPolygonQuery{}
+  @spec geo_polygon_query(field_name :: String.t(), geo_points :: list()) :: map()
   def geo_polygon_query(field_name, geo_points) do
     %Search.GeoPolygonQuery{
       field_name: field_name,
@@ -279,16 +381,17 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use ExistsQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/124204.html) | [English](https://www.alibabacloud.com/help/doc-detail/124204.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: exists_query("values")
     ]
   ```
   """
   @doc query: :query
-  @spec exists_query(field_name :: String.t())
-    :: %Search.ExistsQuery{}
+  @spec exists_query(field_name :: String.t()) :: map()
   def exists_query(field_name) do
     %Search.ExistsQuery{field_name: field_name}
   end
@@ -297,8 +400,10 @@ defmodule ExAliyunOts.Search do
   Calculate the minimum value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132191.html) | [English](https://www.alibabacloud.com/help/doc-detail/132191.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       aggs: [
@@ -317,8 +422,7 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_min(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t())
-    :: %Search.Aggregation{}
+  @spec agg_min(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
   def agg_min(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.min,
@@ -332,8 +436,10 @@ defmodule ExAliyunOts.Search do
   Calculate the maximum value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132191.html) | [English](https://www.alibabacloud.com/help/doc-detail/132191.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       aggs: [
@@ -352,8 +458,7 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_max(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t())
-    :: %Search.Aggregation{}
+  @spec agg_max(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
   def agg_max(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.max,
@@ -367,8 +472,10 @@ defmodule ExAliyunOts.Search do
   Calculate the average value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132191.html) | [English](https://www.alibabacloud.com/help/doc-detail/132191.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       aggs: [
@@ -387,8 +494,7 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_avg(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t())
-    :: %Search.Aggregation{}
+  @spec agg_avg(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
   def agg_avg(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.avg,
@@ -402,8 +508,10 @@ defmodule ExAliyunOts.Search do
   Calculate the distinct count of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132191.html) | [English](https://www.alibabacloud.com/help/doc-detail/132191.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       aggs: [
@@ -422,8 +530,7 @@ defmodule ExAliyunOts.Search do
     count, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_max(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t())
-    :: %Search.Aggregation{}
+  @spec agg_distinct_count(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
   def agg_distinct_count(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.distinct_count,
@@ -437,8 +544,10 @@ defmodule ExAliyunOts.Search do
   Calculate the summation of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132191.html) | [English](https://www.alibabacloud.com/help/doc-detail/132191.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       aggs: [
@@ -457,8 +566,7 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_sum(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t())
-    :: %Search.Aggregation{}
+  @spec agg_sum(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
   def agg_sum(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.sum,
@@ -472,8 +580,10 @@ defmodule ExAliyunOts.Search do
   Calculate the count of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132191.html) | [English](https://www.alibabacloud.com/help/doc-detail/132191.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       aggs: [
@@ -488,8 +598,7 @@ defmodule ExAliyunOts.Search do
   If the field is not existed in a row of data, then this row does not participate in the statistics of count.
   """
   @doc aggs: :aggs
-  @spec agg_count(aggregation_name :: String.t(), field_name :: String.t())
-    :: %Search.Aggregation{}
+  @spec agg_count(aggregation_name :: String.t(), field_name :: String.t()) :: map()
   def agg_count(aggregation_name, field_name) do
     %Search.Aggregation{
       type: AggregationType.count,
@@ -504,38 +613,41 @@ defmodule ExAliyunOts.Search do
 
   We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132210.html) | [English](https://www.alibabacloud.com/help/doc-detail/132210.html)
+
   ```elixir
-  search_query: [
-    query: ...,
-    group_bys: [
-      group_by_field("group_name", "type",
-        size: 3,
-        sub_group_bys: [
-          group_by_field("sub_gn1", "is_actived")
-        ],
-        sort: [
-          row_count_sort(:asc),
-          group_key_sort(:desc)
-        ]
-      ),
-      group_by_field("group_name2", "is_actived")
+  search "table", "index_name",
+    search_query: [
+      query: ...,
+      group_bys: [
+        group_by_field("group_name", "type",
+          size: 3,
+          sub_group_bys: [
+            group_by_field("sub_gn1", "is_actived")
+          ],
+          sort: [
+            row_count_sort(:asc),
+            group_key_sort(:desc)
+          ]
+        ),
+        group_by_field("group_name2", "is_actived")
+      ]
     ]
-  ]
 
   The `group_name` can be any business description string, when get the grouped results, we need to use
   it to fetch them.
 
-  Options(TODO)
+  Options
 
-    * `:sort`, optional,
-    * `:size`, optional,
-    * `:sub_group_bys`, optional,
-    * `:sub_aggs`, optional,
+    * `:sort`, optional, add sorting rules for items in a group, by default, sort in descending order according to 
+    the quantity of items in the group. Support `group_key_sort/1` | `row_count_sort/1` | `sub_agg_sort/2` sort.
+    * `:size`, optional, the number of returned groups.
+    * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
+    * `:sub_aggs`, optional, add sub statistics.
   ```
   """
   @doc group_bys: :group_bys
-  @spec group_by_field(group_name :: String.t(), field_name :: String.t(), options :: Keyword.t())
-    :: %Search.GroupByField{}
+  @spec group_by_field(group_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
   def group_by_field(group_name, field_name, options \\ []) do
     %Search.GroupByField{
       name: group_name,
@@ -553,13 +665,15 @@ defmodule ExAliyunOts.Search do
 
   We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132210.html) | [English](https://www.alibabacloud.com/help/doc-detail/132210.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       group_bys: [
         group_by_range("group_name", "price",
-          ranges: [
+          [
             {0, 18},
             {18, 50}
           ],
@@ -585,13 +699,13 @@ defmodule ExAliyunOts.Search do
 
   Options
 
-    * `:sub_group_bys`, optional,
-    * `:sub_aggs`, optional
+    * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
+    * `:sub_aggs`, optional, add sub statistics.
   ```
   """
   @doc group_bys: :group_bys
   @spec group_by_range(group_name :: String.t(), field_name :: String.t(), ranges :: list(),
-    options :: Keyword.t()) :: %Search.GroupByRange{}
+    options :: Keyword.t()) :: map()
   def group_by_range(group_name, field_name, ranges, options \\ []) do
     %Search.GroupByRange{
       name: group_name,
@@ -608,8 +722,10 @@ defmodule ExAliyunOts.Search do
 
   We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132210.html) | [English](https://www.alibabacloud.com/help/doc-detail/132210.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       group_bys: [
@@ -626,12 +742,11 @@ defmodule ExAliyunOts.Search do
 
   Options
 
-    * `:sub_aggs`
-    * `:sub_group_bys`
+    * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
+    * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_filter(group_name :: String.t(), filters :: list(), options :: Keyword.t())
-    :: %Search.GroupByFilter{}
+  @spec group_by_filter(group_name :: String.t(), filters :: list(), options :: Keyword.t()) :: map()
   def group_by_filter(group_name, filters, options \\ []) when is_list(filters) do
     %Search.GroupByFilter{
       name: group_name,
@@ -648,19 +763,21 @@ defmodule ExAliyunOts.Search do
 
   We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132210.html) | [English](https://www.alibabacloud.com/help/doc-detail/132210.html)
+
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       group_bys: [
         group_by_geo_distance("test", "location",
-          lat: 0,
-          lon: 0,
-          ranges: [
+          [
             {0, 100_000},
             {100_000, 500_000},
             {500_000, 1000_000},
           ],
+          lon: 0,
+          lat: 0,
           sub_aggs: [
             agg_sum("test_sum", "value")
           ]
@@ -671,34 +788,35 @@ defmodule ExAliyunOts.Search do
 
   Options
 
-    * `:lat`, required
-    * `:lon`, required
-    * `:ranges`, required
-    * `:sub_aggs`, optional
-    * `:sub_group_bys`, optional
+    * `:lon`, required, the longitude of the origin center point, integer or float.
+    * `:lat`, required, the latitude of the origin center point, integer or float.
+    * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
+    * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_geo_distance(group_name :: String.t(), field_name :: String.t(), options :: Keyword.t())
-    :: %Search.GroupByGeoDistance{}
-  def group_by_geo_distance(group_name, field_name, options \\ []) do
+  @spec group_by_geo_distance(group_name :: String.t(), field_name :: String.t(), ranges :: list(),
+    options :: Keyword.t()) :: map()
+  def group_by_geo_distance(group_name, field_name, ranges, options \\ []) do
     %Search.GroupByGeoDistance{
       name: group_name,
       field_name: field_name,
-      lat: Keyword.fetch!(options, :lat),
+      ranges: ranges,
       lon: Keyword.fetch!(options, :lon),
+      lat: Keyword.fetch!(options, :lat),
       sub_aggs: Keyword.get(options, :sub_aggs),
       sub_group_bys: Keyword.get(options, :sub_group_bys),
-      ranges: Keyword.fetch!(options, :ranges)
     }
   end
 
   @doc """
   Use in `group_by_field/3` scenario, in ascending/descending order of field literal.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132210.html) | [English](https://www.alibabacloud.com/help/doc-detail/132210.html)
+
   In the following example, the returned results will be sorted in descending order of the `"type"` field:
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       group_bys: [
@@ -717,7 +835,7 @@ defmodule ExAliyunOts.Search do
   ```
   """
   @doc sort_in_group_bys: :sort_in_group_bys
-  @spec group_key_sort(order :: :asc | :desc) :: %Search.GroupKeySort{}
+  @spec group_key_sort(order :: :asc | :desc) :: map()
   def group_key_sort(order)
       when order == SortOrder.desc
       when order == :desc do
@@ -735,10 +853,12 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use in `group_by_field/3` scenario, in ascending/descending order of row(s) count.
 
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132210.html) | [English](https://www.alibabacloud.com/help/doc-detail/132210.html)
+
   In the following example, the returned results will be sorted in ascending order of the matched row(s):
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       group_bys: [
@@ -773,11 +893,12 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  TODO
+  Use in `group_by_field/3` scenario, in ascending/descending order of the value from sub statistics.
+
+  Offical doc for [Chinese](https://help.aliyun.com/document_detail/132210.html) | [English](https://www.alibabacloud.com/help/doc-detail/132210.html)
   """
   @doc sort_in_group_bys: :sort_in_group_bys
-  @spec sub_agg_sort(sub_agg_name :: String.t(), order :: :asc | :desc)
-    :: %Search.SubAggSort{}
+  @spec sub_agg_sort(sub_agg_name :: String.t(), order :: :asc | :desc) :: map()
   def sub_agg_sort(sub_agg_name, _)
       when is_bitstring(sub_agg_name) == false
       when sub_agg_name == "" do
@@ -798,15 +919,22 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
+  Sort by the primary key(s) of row, use it in the nested `:sort` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Each search request use this sort by default.
   """
   @doc sort: :sort
-  @spec pk_sort(order :: :asc | :desc) :: %Search.PrimaryKeySort{}
+  @spec pk_sort(order :: :asc | :desc) :: map()
   def pk_sort(order) do
     %Search.PrimaryKeySort{order: map_query_sort_order(order)}
   end
 
+  @doc """
+  Sort by the relevance score to apply the full-text indexing properly, use it in the nested `:sort` option of
+  `:search_query` option in `ExAliyunOts/search/4`.
+  """
   @doc sort: :sort
-  @spec score_sort(order :: :asc | :desc) :: %Search.ScoreSort{}
+  @spec score_sort(order :: :asc | :desc) :: map()
   def score_sort(order) do
     %Search.ScoreSort{order: map_query_sort_order(order)}
   end
@@ -815,7 +943,7 @@ defmodule ExAliyunOts.Search do
   Sort by the value of a column, use it in the nested `:sort` option of `:search_query` option in `ExAliyunOts.search/4`.
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: ...,
       sort: [
@@ -831,7 +959,7 @@ defmodule ExAliyunOts.Search do
   as matched rows, and sort by the minimum value of list items.
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: exists_query("values"),
       sort: [
@@ -844,7 +972,7 @@ defmodule ExAliyunOts.Search do
   sort by the value of "content.header" in `:desc` order.
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: nested_query(
         "content",
@@ -874,7 +1002,7 @@ defmodule ExAliyunOts.Search do
     * `:nested_filter`, optional, see `nested_filter/2` for details.
   """
   @doc sort: :sort
-  @spec field_sort(field_name :: String.t(), options :: Keyword.t()) :: %Search.FieldSort{}
+  @spec field_sort(field_name :: String.t(), options :: Keyword.t()) :: map()
   def field_sort(field_name, options \\ []) do
     %Search.FieldSort{
       field_name: field_name,
@@ -889,7 +1017,7 @@ defmodule ExAliyunOts.Search do
   sort by the minimum/maximum/average summation value.
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: geo_distance_query("location", 500_000, "5,5"),
       sort: [
@@ -909,8 +1037,7 @@ defmodule ExAliyunOts.Search do
     * `:distance_type`, optional, available options are `:arc` | `:plane`, as `:arc` means distance calculated by arc surface, as `:plane` means distance calculated by plane.
   """
   @doc sort: :sort
-  @spec geo_distance_sort(field_name :: String.t(), options :: list(), options :: Keyword.t())
-    :: %Search.GeoDistanceSort{}
+  @spec geo_distance_sort(field_name :: String.t(), options :: list(), options :: Keyword.t()) :: map()
   def geo_distance_sort(field_name, points, options) when is_list(points) do
     %Search.GeoDistanceSort{
       field_name: field_name,
@@ -927,7 +1054,7 @@ defmodule ExAliyunOts.Search do
   is a Query to filter results.
 
   ```elixir
-  search table, index_name,
+  search "table", "index_name",
     search_query: [
       query: nested_query(
         "content",
@@ -951,8 +1078,7 @@ defmodule ExAliyunOts.Search do
   will lead to uncertainty of sorting results.
   """
   @doc sort: :sort
-  @spec nested_filter(path :: String.t(), filter :: map())
-    :: %Search.NestedFilter{}
+  @spec nested_filter(path :: String.t(), filter :: map()) :: map()
   def nested_filter(path, filter) when is_map(filter) do
     %Search.NestedFilter{
       path: path,
