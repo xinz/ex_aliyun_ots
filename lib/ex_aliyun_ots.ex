@@ -34,7 +34,7 @@ defmodule ExAliyunOts do
 
       # Create table
       create_table "table",
-        [{"pk1", PKType.integer}, {"pk2", PKType.string}]
+        [{"pk1", :integer}, {"pk2", :string}]
 
       # Put row
       put_row "table",
@@ -68,9 +68,8 @@ defmodule ExAliyunOts do
 
   alias ExAliyunOts.{Var, Client}
 
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction}
+  alias ExAliyunOts.Const.{OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction}
 
-  require PKType
   require OperationType
   require ReturnType
   require RowExistence
@@ -106,6 +105,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       get_row table_name1, [{"key", "key1"}],
         columns_to_get: ["name", "level"],
         filter: filter(("name[ignore_if_missing: true, latest_version_only: true]" == var_name and "age" > 1) or ("class" == "1"))
@@ -140,6 +141,8 @@ defmodule ExAliyunOts do
   Official document in [Chinese](https://help.aliyun.com/document_detail/35194.html) | [English](https://www.alibabacloud.com/help/doc-detail/35194.html)
 
   ## Example
+
+      import MyApp.TableStore
 
       update_row "table", [{"pk", "pk1"}],
         delete_all: ["attr1", "attr2"],
@@ -180,6 +183,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       get_row table_name,
         [{"key", "1"}],
         start_column: "room",
@@ -202,6 +207,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       delete_row "table",
         [{"key", "key1"}, {"key2", "key2"}],
         condition: condition(:expect_exist, "attr_column" == "value2")
@@ -223,10 +230,10 @@ defmodule ExAliyunOts do
   ## Example
 
       create_table "table_name2",
-        [{"key1", PKType.string}, {"key2", PKType.auto_increment}]
+        [{"key1", :string}, {"key2", :auto_increment}]
 
       create_table "table_name3", 
-        [{"key1", PKType.string}],
+        [{"key1", :string}],
         reserved_throughput_write: 1,
         reserved_throughput_read: 1,
         time_to_live: 100_000,
@@ -261,6 +268,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       delete_table("table_name")
   """
   @spec delete_table(instance :: atom(), table :: String.t())
@@ -274,6 +283,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       list_table()
   """
   @spec list_table(instance :: atom())
@@ -286,6 +297,8 @@ defmodule ExAliyunOts do
   Official document in [Chinese](https://help.aliyun.com/document_detail/27315.html) | [English](https://www.alibabacloud.com/help/doc-detail/27315.html)
 
   ## Example
+
+      import MyApp.TableStore
 
       update_table "table_name",
         reserved_throughput_write: 10,
@@ -311,6 +324,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       describe_table(table_name)
   """
   @spec describe_table(instance :: atom(), table :: String.t())
@@ -323,6 +338,8 @@ defmodule ExAliyunOts do
   Official document in [Chinese](https://help.aliyun.com/document_detail/27310.html) | [English](https://www.alibabacloud.com/help/doc-detail/27310.html)
 
   ## Example
+
+      import MyApp.TableStore
 
       batch_get [
         get(table_name1, [[{"key1", 1}, {"key2", "1"}]]),
@@ -347,6 +364,8 @@ defmodule ExAliyunOts do
 
   ## Example
   
+      import MyApp.TableStore
+
       batch_write [
         {"table1", [
           write_delete([{"key1", 5}, {"key2", "5"}],
@@ -395,6 +414,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       get_row "table1",
         [{"key1", "id1"}, {"key2", "id2"}],
         columns_to_get: ["name", "level"],
@@ -439,6 +460,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       put_row "table1",
         [{"key1", "id1"}],
         [{"name", "name1"}, {"age", 20}],
@@ -475,6 +498,8 @@ defmodule ExAliyunOts do
   Official document in [Chinese](https://help.aliyun.com/document_detail/27307.html) | [English](https://www.alibabacloud.com/help/doc-detail/27307.html)
 
   ## Example
+
+      import MyApp.TableStore
 
       value = "1"
       update_row "table1",
@@ -532,6 +557,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       delete_row "table1",
         [{"key1", 3}, {"key2", "3"}],
         condition: condition(:expect_exist, "attr2" == "value2")
@@ -562,7 +589,7 @@ defmodule ExAliyunOts do
 
   ## Options
 
-  The available options same as `get_row/4`.
+  The available options are same as `get_row/4`.
   """
   @spec get(table :: String.t(), pk_keys :: list(), options :: Keyword.t()) :: map()
   def get(table, pk_keys, options \\ []) do
@@ -578,7 +605,7 @@ defmodule ExAliyunOts do
 
   ## Options
 
-  The available options same as `put_row/5`.
+  The available options are same as `put_row/5`.
   """
   @spec write_put(pk_keys :: list(), attrs :: list(), options :: Keyword.t()) :: map()
   def write_put(pk_keys, attrs, options \\ []) do
@@ -595,7 +622,7 @@ defmodule ExAliyunOts do
 
   ## Options
 
-  The available options same as `update_row/4`.
+  The available options are same as `update_row/4`.
   """
   @spec write_update(pk_keys :: list(), options :: Keyword.t()) :: map()
   def write_update(pk_keys, options \\ []) do
@@ -628,20 +655,22 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       get_range "table_name",
-        [{"key1", 1}, {"key2", PKType.inf_min}],
-        [{"key1", 4}, {"key2", PKType.inf_max}],
+        [{"key1", 1}, {"key2", :inf_min}],
+        [{"key1", 4}, {"key2", :inf_max}],
         direction: :forward
 
       get_range "table_name",
-        [{"key1", 1}, {"key2", PKType.inf_min}],
-        [{"key1", 4}, {"key2", PKType.inf_max}],
+        [{"key1", 1}, {"key2", :inf_min}],
+        [{"key1", 4}, {"key2", :inf_max}],
         time_range: {1525922253224, 1525923253224},
         direction: :forward
 
       get_range "table_name",
-        [{"key1", 1}, {"key2", PKType.inf_min}],
-        [{"key1", 4}, {"key2", PKType.inf_max}],
+        [{"key1", 1}, {"key2", :inf_min}],
+        [{"key1", 4}, {"key2", :inf_max}],
         time_range: 1525942123224,
         direction: :forward
 
@@ -691,9 +720,11 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       iterate_all_range table_name1,
-        [{"key1", 1}, {"key2", PKType.inf_min}],
-        [{"key1", 4}, {"key2", PKType.inf_max}],
+        [{"key1", 1}, {"key2", :inf_min}],
+        [{"key1", 4}, {"key2", :inf_max}],
         direction: :forward
 
   ## Options
@@ -733,6 +764,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       list_search_index("table")
   """
   @spec list_search_index(instance :: atom(), table :: String.t())
@@ -745,6 +778,8 @@ defmodule ExAliyunOts do
   Official document in [Chinese](https://help.aliyun.com/document_detail/117478.html) | [English](https://www.alibabacloud.com/help/doc-detail/117478.html)
 
   ## Example
+
+      import MyApp.TableStore
 
       delete_search_index("table", "index_name")
   """
@@ -763,6 +798,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       describe_search_index("table", "index_name")
   """
   @spec describe_search_index(instance :: atom(), table :: String.t(), index_name :: String.t())
@@ -780,8 +817,10 @@ defmodule ExAliyunOts do
 
   ## Example
 
-    partition_key = {"key", "key1"}
-    start_local_transaction("table", partition_key)
+      import MyApp.TableStore
+
+      partition_key = {"key", "key1"}
+      start_local_transaction("table", partition_key)
   """
   @spec start_local_transaction(instance :: atom(), table :: String.t(), partition_key :: tuple())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
@@ -798,6 +837,8 @@ defmodule ExAliyunOts do
 
   ## Example
 
+      import MyApp.TableStore
+
       commit_transaction("transaction_id")
   """
   @spec commit_transaction(instance :: atom(), transaction_id :: String.t())
@@ -810,6 +851,8 @@ defmodule ExAliyunOts do
   Official document in [Chinese](https://help.aliyun.com/document_detail/93819.html) | [English](https://www.alibabacloud.com/help/doc-detail/93819.html)
 
   ## Example
+
+      import MyApp.TableStore
 
       abort_transaction("transaction_id")
   """

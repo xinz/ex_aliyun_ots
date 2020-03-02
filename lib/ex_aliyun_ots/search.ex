@@ -68,16 +68,17 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use MatchQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: match_query("age", 28)
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+      search "table", "index_name",
+        search_query: [
+          query: match_query("age", 28)
+        ]
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117485.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117485.html){:target="_blank"}
 
-  Options
+  ## Options
 
     * `:minimum_should_match`, the minimum number of terms that the value of the fieldName field in a row
     contains when Table Store returns this row in the query result, by default it's 1.
@@ -97,12 +98,14 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use MatchAllQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: match_all_query()
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: match_all_query()
+        ]
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117484.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117484.html){:target="_blank"}
   """
@@ -120,12 +123,14 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117486.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117486.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: match_phrase_query("content", "tablestore")
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: match_phrase_query("content", "tablestore")
+        ]
   """
   @doc query: :query
   @spec match_phrase_query(field_name :: String.t(), text :: String.t()) :: map()
@@ -138,12 +143,14 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117488.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117488.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: term_query("age", 28)
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: term_query("age", 28)
+        ]
   """
   @doc query: :query
   @spec term_query(field_name :: String.t(), term :: String.t()) :: map()
@@ -156,12 +163,13 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117493.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117493.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: terms_query("age", [28, 29, 30])
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+      search "table", "index_name",
+        search_query: [
+          query: terms_query("age", [28, 29, 30])
+        ]
   """
   @doc query: :query
   @spec terms_query(field_name :: String.t(), terms :: list()) :: map()
@@ -174,12 +182,14 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117495.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117495.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: prefix_query("name", "n")
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: prefix_query("name", "n")
+        ]
   """
   @doc query: :query
   @spec prefix_query(field_name :: String.t(), prefix :: String.t()) :: map()
@@ -192,20 +202,22 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117496.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117496.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: range_query(
-        "score",
-        from: 60,
-        to: 80,
-        include_upper: false,
-        include_lower: false
-      )
-    ]
-  ```
+  ## Example
 
-  Options:
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: range_query(
+            "score",
+            from: 60,
+            to: 80,
+            include_upper: false,
+            include_lower: false
+          )
+        ]
+
+  ## Options
 
     * `:from`, the value of the start position.
     * `:to`, the value of the end position.
@@ -232,12 +244,14 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117497.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117497.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: wildcard_query("name", "n*")
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: wildcard_query("name", "n*")
+        ]
   """
   @doc query: :query
   @spec wildcard_query(field_name :: String.t(), value :: String.t()) :: map()
@@ -250,20 +264,22 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117498.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117498.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: bool_query(
-        must: range_query("age", from: 20, to: 32),
-        must_not: term_query("age", 28)
-      )
-    ]
-  ```
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: bool_query(
+            must: range_query("age", from: 20, to: 32),
+            must_not: term_query("age", 28)
+          )
+        ]
 
   The following options can be a single `Query` or a list of `Query` to combine the "And | Or | At least"
   serach condication.
 
-  Options:
+  ## Options
 
     * `:must`, specifies the Queries that the query result must match, this option is equivalent to the `AND` operator.
     * `:must_not`, specifies the Queries that the query result must not match, this option is equivalent to the `NOT` operator.
@@ -283,17 +299,19 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/120221.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/120221.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: nested_query(
-        "content",
-        term_query("content.header", "header1")
-      )
-    ]
-  ```
+  ## Example
+ 
+      import MyApp.TableStore
 
-  Options:
+      search "table", "index_name",
+        search_query: [
+          query: nested_query(
+            "content",
+            term_query("content.header", "header1")
+          )
+        ]
+
+  ## Options
 
     * `:score_mode`, available options have `:none` | `:avg` | `:max` | `:total` | `:min`, by default
     it's `:none`.
@@ -310,12 +328,13 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117500.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117500.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: geo_distance_query("location", 500_000, "5,5")
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+      search "table", "index_name",
+        search_query: [
+          query: geo_distance_query("location", 500_000, "5,5")
+        ]
 
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
@@ -335,12 +354,13 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117499.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117499.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: geo_bounding_box_query("location", "10,-10", "-10,10")
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+      search "table", "index_name",
+        search_query: [
+          query: geo_bounding_box_query("location", "10,-10", "-10,10")
+        ]
 
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
@@ -360,12 +380,14 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/117501.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117501.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: geo_polygon_query("location", ["11,11", "0,0", "1,5"])
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: geo_polygon_query("location", ["11,11", "0,0", "1,5"])
+        ]
 
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
@@ -383,12 +405,14 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/124204.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/124204.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: exists_query("values")
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: exists_query("values")
+        ]
   """
   @doc query: :query
   @spec exists_query(field_name :: String.t()) :: map()
@@ -402,20 +426,22 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      aggs: [
-        agg_min("agg_name", "score")
-      ]
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_min("agg_name", "score")
+          ]
+        ]
 
   The `aggregation_name` can be any business description string, when get the calculated results, we need to use
   it to fetch them.
 
-  Options
+  ## Options
 
     * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
     in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of minimum
@@ -438,20 +464,22 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      aggs: [
-        agg_max("agg_name", "score")
-      ]
-    ]
-  ```
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_max("agg_name", "score")
+          ]
+        ]
 
   The `aggregation_name` can be any business description string, when get the calculated results, we need to use
   it to fetch them.
 
-  Options
+  ## Options
 
     * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
     in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of maximum
@@ -474,20 +502,22 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      aggs: [
-        agg_avg("agg_name", "score")
-      ]
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_avg("agg_name", "score")
+          ]
+        ]
 
   The `aggregation_name` can be any business description string, when get the calculated results, we need to use
   it to fetch them.
 
-  Options
+  ## Options
 
     * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
     in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of average
@@ -510,20 +540,22 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      aggs: [
-        agg_distinct_count("agg_name", "score")
-      ]
-    ]
-  ```
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_distinct_count("agg_name", "score")
+          ]
+        ]
 
   The `aggregation_name` can be any business description string, when get the calculated results, we need to use
   it to fetch them.
 
-  Options
+  ## Options
 
     * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
     in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of distinct 
@@ -546,20 +578,22 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      aggs: [
-        agg_sum("agg_name", "score")
-      ]
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_sum("agg_name", "score")
+          ]
+        ]
 
   The `aggregation_name` can be any business description string, when get the calculated results, we need to use
   it to fetch them.
 
-  Options
+  ## Options
 
     * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
     in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of summation
@@ -582,15 +616,17 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      aggs: [
-        agg_sum("agg_name", "score")
-      ]
-    ]
-  ```
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_sum("agg_name", "score")
+          ]
+        ]
 
   The `aggregation_name` can be any business description string, when get the calculated results, we need to use
   it to fetch them.
@@ -615,30 +651,32 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      group_bys: [
-        group_by_field("group_name", "type",
-          size: 3,
-          sub_group_bys: [
-            group_by_field("sub_gn1", "is_actived")
-          ],
-          sort: [
-            row_count_sort(:asc),
-            group_key_sort(:desc)
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_field("group_name", "type",
+              size: 3,
+              sub_group_bys: [
+                group_by_field("sub_gn1", "is_actived")
+              ],
+              sort: [
+                row_count_sort(:asc),
+                group_key_sort(:desc)
+              ]
+            ),
+            group_by_field("group_name2", "is_actived")
           ]
-        ),
-        group_by_field("group_name2", "is_actived")
-      ]
-    ]
-  ```
+        ]
 
   The `group_name` can be any business description string, when get the grouped results, we need to use
   it to fetch them.
 
-  Options
+  ## Options
 
     * `:sort`, optional, add sorting rules for items in a group, by default, sort in descending order according to 
     the quantity of items in the group. Support `group_key_sort/1` | `row_count_sort/1` | `sub_agg_sort/2` sort.
@@ -668,30 +706,32 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      group_bys: [
-        group_by_range("group_name", "price",
-          [
-            {0, 18},
-            {18, 50}
-          ],
-          sub_group_bys: [
-            group_by_field("sorted_by_type", "type",
-              sort: [
-                group_key_sort(:asc)
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_range("group_name", "price",
+              [
+                {0, 18},
+                {18, 50}
+              ],
+              sub_group_bys: [
+                group_by_field("sorted_by_type", "type",
+                  sort: [
+                    group_key_sort(:asc)
+                  ]
+                )
+              ],
+              sub_aggs: [
+                agg_distinct_count("distinct_price", "price")
               ]
             )
-          ],
-          sub_aggs: [
-            agg_distinct_count("distinct_price", "price")
           ]
-        )
-      ]
-    ]
-  ```
+        ]
 
   The `group_name` can be any business description string, when get the grouped results, we need to use
   it to fetch them.
@@ -699,11 +739,10 @@ defmodule ExAliyunOts.Search do
   Please notice that each range item(as a tuple, according to {`from`, `to`}) of `ranges`, its start is greater
   than or equal to `from`, and its ending is less than `to`, the range interval value can be integer or float.
 
-  Options
+  ## Options
 
     * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
     * `:sub_aggs`, optional, add sub statistics.
-  ```
   """
   @doc group_bys: :group_bys
   @spec group_by_range(group_name :: String.t(), field_name :: String.t(), ranges :: list(),
@@ -726,23 +765,25 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      group_bys: [
-        group_by_filter(
-          "group_name",
-          [
-            term_query("is_actived", true),
-            range_query("price", from: 50)
-          ]
-        )
-      ]
-    ]
-  ```
+  ## Example
 
-  Options
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_filter(
+              "group_name",
+              [
+                term_query("is_actived", true),
+                range_query("price", from: 50)
+              ]
+            )
+          ]
+        ]
+
+  ## Options
 
     * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
     * `:sub_aggs`, optional, add sub statistics.
@@ -767,28 +808,30 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      group_bys: [
-        group_by_geo_distance("test", "location",
-          [
-            {0, 100_000},
-            {100_000, 500_000},
-            {500_000, 1000_000},
-          ],
-          lon: 0,
-          lat: 0,
-          sub_aggs: [
-            agg_sum("test_sum", "value")
-          ]
-        )
-      ]
-    ]
-  ```
+  ## Example
+ 
+      import MyApp.TableStore
 
-  Options
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_geo_distance("test", "location",
+              [
+                {0, 100_000},
+                {100_000, 500_000},
+                {500_000, 1000_000},
+              ],
+              lon: 0,
+              lat: 0,
+              sub_aggs: [
+                agg_sum("test_sum", "value")
+              ]
+            )
+          ]
+        ]
+
+  ## Options
 
     * `:lon`, required, the longitude of the origin center point, integer or float.
     * `:lat`, required, the latitude of the origin center point, integer or float.
@@ -815,26 +858,28 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
 
+  ## Example
+
   In the following example, the returned results will be sorted in descending order of the `"type"` field:
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      group_bys: [
-        group_by_field(
-          "group_name",
-          "type",
-          sub_group_bys: [
-            ...
-          ],
-          sort: [
-            group_key_sort(:desc)
-          ]
-        ),
+    import MyApp.TableStore
+
+    search "table", "index_name",
+      search_query: [
+        query: ...,
+        group_bys: [
+          group_by_field(
+            "group_name",
+            "type",
+            sub_group_bys: [
+              ...
+            ],
+            sort: [
+              group_key_sort(:desc)
+            ]
+          ),
+        ]
       ]
-    ]
-  ```
   """
   @doc sort_in_group_bys: :sort_in_group_bys
   @spec group_key_sort(order :: :asc | :desc) :: map()
@@ -857,26 +902,28 @@ defmodule ExAliyunOts.Search do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
 
+  ## Example
+
   In the following example, the returned results will be sorted in ascending order of the matched row(s):
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      group_bys: [
-        group_by_field(
-          "group_name",
-          "type",
-          sub_group_bys: [
-            ...
-          ],
-          sort: [
-            row_count_sort(:asc)
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_field(
+              "group_name",
+              "type",
+              sub_group_bys: [
+                ...
+              ],
+              sort: [
+                row_count_sort(:asc)
+              ]
+            ),
           ]
-        ),
-      ]
-    ]
-  ```
+        ]
   """
   @doc sort_in_group_bys: :sort_in_group_bys
   @spec row_count_sort(order :: :asc | :desc) :: %Search.RowCountSort{}
@@ -944,15 +991,17 @@ defmodule ExAliyunOts.Search do
   @doc """
   Sort by the value of a column, use it in the nested `:sort` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: ...,
-      sort: [
-        field_sort("field_a", order: :desc)
-      ]
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          sort: [
+            field_sort("field_a", order: :desc)
+          ]
+        ]
 
   If there's a nested type of search index, and they are a integer or float list, we can use `:mode` to
   sort according to the minimum/maximum/average value of the list, by default it's `:nil`.
@@ -960,44 +1009,48 @@ defmodule ExAliyunOts.Search do
   For example, there's a nested type as "values" field, the following query will find "values" field existed
   as matched rows, and sort by the minimum value of list items.
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: exists_query("values"),
-      sort: [
-        field_sort("values", mode: :min)
-      ]
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: exists_query("values"),
+          sort: [
+            field_sort("values", mode: :min)
+          ]
+        ]
 
   Still for nested type of search index, we can sort by the nested value via `:nested_filter` option, for example,
   sort by the value of "content.header" in `:desc` order.
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: nested_query(
-        "content",
-        [
-          exists_query("content.header")
-        ]
-      ),
-      sort: [
-        field_sort("content.header",
-          order: :desc,
-          nested_filter: nested_filter(
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: nested_query(
             "content",
-            prefix_query("content.header", "header")
-          )
-        )
-      ]
-    ]
-  ```
+            [
+              exists_query("content.header")
+            ]
+          ),
+          sort: [
+            field_sort("content.header",
+              order: :desc,
+              nested_filter: nested_filter(
+                "content",
+                prefix_query("content.header", "header")
+              )
+            )
+          ]
+        ]
 
   Please ensure that the query criteria matched will participate in sorting, if there exists any not matched case
   will lead to uncertainty of sorting results.
 
-  Options
+  ## Options
 
     * `:mode`, optional, available options are `:min` | `:max` | `:avg`, by default it's `:nil`;
     * `:order`, optional, available options are `:asc` | `:desc`, by default it's `:asc`;
@@ -1018,19 +1071,21 @@ defmodule ExAliyunOts.Search do
   Geographic distance sorting, according to the sum of distances between to the input geographical points,
   sort by the minimum/maximum/average summation value.
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: geo_distance_query("location", 500_000, "5,5"),
-      sort: [
-        geo_distance_sort("location", ["5.14,5.21"], order: :asc)
-      ]
-    ]
-  ```
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: geo_distance_query("location", 500_000, "5,5"),
+          sort: [
+            geo_distance_sort("location", ["5.14,5.21"], order: :asc)
+          ]
+        ]
 
   The input points are a list of string, each format as "$latitude,$longitude".
 
-  Options
+  ## Options
 
     * `:order`, optional, available options are `:asc` | `:desc`;
     * `:mode`, optional, used for nested type field within integer or float, as `:min` will sort by the minimum value of
@@ -1055,26 +1110,28 @@ defmodule ExAliyunOts.Search do
   Use for the nested type field in `field_sort/2` as `:nested_filter` option, the input `filter`
   is a Query to filter results.
 
-  ```elixir
-  search "table", "index_name",
-    search_query: [
-      query: nested_query(
-        "content",
-        [
-          exists_query("content.header")
-        ]
-      ),
-      sort: [
-        field_sort("content.header",
-          order: :desc,
-          nested_filter: nested_filter(
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: nested_query(
             "content",
-            prefix_query("content.header", "header")
-          )
-        )
-      ]
-    ]
-  ```
+            [
+              exists_query("content.header")
+            ]
+          ),
+          sort: [
+            field_sort("content.header",
+              order: :desc,
+              nested_filter: nested_filter(
+                "content",
+                prefix_query("content.header", "header")
+              )
+            )
+          ]
+        ]
 
   Please ensure that the query criteria matched will participate in sorting, if there exists any not matched case
   will lead to uncertainty of sorting results.
