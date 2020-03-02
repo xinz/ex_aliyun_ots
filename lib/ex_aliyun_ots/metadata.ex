@@ -8,6 +8,8 @@ defmodule ExAliyunOts.RuntimeError do
 end
 
 defmodule ExAliyunOts.Instance do
+  @moduledoc "Describe Alibaba TableStore instance primary information."
+
   @type t :: %__MODULE__{}
 
   defstruct [
@@ -24,6 +26,8 @@ defmodule ExAliyunOts.HTTPRequest do
 end
 
 defmodule ExAliyunOts.Error do
+  @moduledoc "Describe request error from server http response."
+
   @type t :: %__MODULE__{
           code: binary,
           message: binary,
