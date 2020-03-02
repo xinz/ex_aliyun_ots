@@ -8,11 +8,11 @@ defmodule ExAliyunOts.Search do
 
   ```elixir
   defmodule MyApp.Tablestore do
-    use ExAliyunOts, instance: :my_app
+    use ExAliyunOts, instance: :my_instance
   end
   ```
 
-  This automatically defines some functions in `MyApp.Tablestore` module, we can use them as helpers to invoke `MyApp.Tablestore.search/3`, here are some examples:
+  This automatically defines some search functions in `MyApp.Tablestore` module, we can use them as helpers when invoke `MyApp.Tablestore.search/3`, here are some examples:
 
   ```
   import MyApp.Tablestore
@@ -633,6 +633,7 @@ defmodule ExAliyunOts.Search do
         group_by_field("group_name2", "is_actived")
       ]
     ]
+  ```
 
   The `group_name` can be any business description string, when get the grouped results, we need to use
   it to fetch them.
@@ -690,6 +691,7 @@ defmodule ExAliyunOts.Search do
         )
       ]
     ]
+  ```
 
   The `group_name` can be any business description string, when get the grouped results, we need to use
   it to fetch them.
