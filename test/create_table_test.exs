@@ -32,6 +32,26 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     assert result == :ok
   end
 
+  test "create table use :atom and then delete it" do
+    cur_timestamp = Timex.to_unix(Timex.now())
+    table_name = "test_table2_tmp_#{cur_timestamp}"
+
+    var_create_table = %Var.CreateTable{
+      table_name: table_name,
+      primary_keys: [{"partition_key", :string}, {"default_id", :auto_increment}, {"order_id", :string}],
+      time_to_live: 86_400
+    }
+
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
+    assert result == :ok
+    {:error, error} = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
+
+    assert error.message == "Requested table already exists."
+
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
+    assert result == :ok
+  end
+
   test "create table, put and get row" do
     cur_timestamp = Timex.to_unix(Timex.now())
     table_name = "test_table_#{cur_timestamp}"
