@@ -63,7 +63,7 @@ defmodule ExAliyunOts do
     * using macros and functions from the `ExAliyunOts` module.
 
   All defined functions and macros in `ExAliyunOts` are available and referrible for your own ExAliyunOts module as well, except that the given arity of functions may
-  different, because the `instance` parameter is NOT needed in your own ExAliyunOts module although the `ExAliyunOts` module defines it.
+  different, because the `instance` parameter of each invoke request is NOT needed from your own ExAliyunOts module although the `ExAliyunOts` module defines it.
   """
 
   alias ExAliyunOts.{Var, Client}
@@ -129,6 +129,7 @@ defmodule ExAliyunOts do
       * if set `[latest_version_only: false]`, there will check the value of all versions are matched or not.
 
   """
+  @doc row: :row
   defmacro filter(filter_expr) do
     quote do
       ast_expr = unquote(Macro.escape(filter_expr))
@@ -172,6 +173,7 @@ defmodule ExAliyunOts do
 
   The `batch_write/3` operation is a collection of put_row / update_row / delete_row operations.
   """
+  @doc row: :row
   @spec condition(existence :: :expect_exist | :expect_not_exist | :ignore) :: map()
   def condition(existence) do
     map_condition(existence)
@@ -192,6 +194,7 @@ defmodule ExAliyunOts do
 
   Use `pagination/1` for `:filter` options when get row.
   """
+  @doc row: :row
   @spec pagination(options :: Keyword.t()) :: map()
   def pagination(options) do
     offset = Keyword.get(options, :offset)
@@ -214,6 +217,7 @@ defmodule ExAliyunOts do
         condition: condition(:expect_exist, "attr_column" == "value2")
 
   """
+  @doc row: :row
   defmacro condition(existence, filter_expr) do
     quote do
       condition = ExAliyunOts.map_condition(unquote(existence))
@@ -252,6 +256,7 @@ defmodule ExAliyunOts do
       - `:is_enabled`, enable or not enable stream, use `true` or `false`;
       - `:expiration_time`, the expiration time of stream.
   """
+  @doc table: :table
   @spec create_table(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def create_table(instance, table, pk_keys, options \\ []) do
@@ -272,6 +277,7 @@ defmodule ExAliyunOts do
 
       delete_table("table_name")
   """
+  @doc table: :table
   @spec delete_table(instance :: atom(), table :: String.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def delete_table(instance, table) do
@@ -287,6 +293,7 @@ defmodule ExAliyunOts do
 
       list_table()
   """
+  @doc table: :table
   @spec list_table(instance :: atom())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def list_table(instance) do
@@ -309,6 +316,7 @@ defmodule ExAliyunOts do
 
     Please see options of `create_table/4`.
   """
+  @doc table: :table
   @spec update_table(instance :: atom(), table :: String.t(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def update_table(instance, table, options \\ []) do
@@ -328,6 +336,7 @@ defmodule ExAliyunOts do
 
       describe_table(table_name)
   """
+  @doc table: :table
   @spec describe_table(instance :: atom(), table :: String.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def describe_table(instance, table) do
@@ -353,6 +362,7 @@ defmodule ExAliyunOts do
 
   The batch get operation can be considered as a collection of mulitple `get/3` operations.
   """
+  @doc row: :row
   @spec batch_get(instance :: atom(), requests :: list())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def batch_get(instance, requests) do
@@ -388,6 +398,7 @@ defmodule ExAliyunOts do
 
   The batch write operation can be considered as a collection of mulitple `write_put/3`, `write_update/2` and `write_delete/2` operations.
   """
+  @doc row: :row
   @spec batch_write(instance :: atom(), requests :: list(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def batch_write(instance, requests, options \\ [])
@@ -444,6 +455,7 @@ defmodule ExAliyunOts do
       - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
     `:transaction_id`, optional, read operation within local transaction.
   """
+  @doc row: :row
   @spec get_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def get_row(instance, table, pk_keys, options \\ []) do
@@ -482,6 +494,7 @@ defmodule ExAliyunOts do
     `:transaction_id`, optional, write operation within local transaction.
 
   """
+  @doc row: :row
   @spec put_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def put_row(instance, table, pk_keys, attrs, options \\ []) do
@@ -538,6 +551,7 @@ defmodule ExAliyunOts do
     * `:condition`, required, please see `condition/1` or `condition/2` for details.
     * `:transaction_id`, optional, write operation within local transaction.
   """
+  @doc row: :row
   @spec update_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def update_row(instance, table, pk_keys, options \\ []) do
@@ -573,6 +587,7 @@ defmodule ExAliyunOts do
     * `:condition`, required, please see `condition/1` or `condition/2` for details.
     * `:transaction_id`, optional, write operation within local transaction.
   """
+  @doc row: :row
   @spec delete_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def delete_row(instance, table, pk_keys, options \\ []) do
@@ -591,6 +606,7 @@ defmodule ExAliyunOts do
 
   The available options are same as `get_row/4`.
   """
+  @doc row: :row
   @spec get(table :: String.t(), pk_keys :: list(), options :: Keyword.t()) :: map()
   def get(table, pk_keys, options \\ []) do
     var_get_row = %Var.GetRow{
@@ -607,6 +623,7 @@ defmodule ExAliyunOts do
 
   The available options are same as `put_row/5`.
   """
+  @doc row: :row
   @spec write_put(pk_keys :: list(), attrs :: list(), options :: Keyword.t()) :: map()
   def write_put(pk_keys, attrs, options \\ []) do
     var_batch_put_row = %Var.RowInBatchWriteRequest{
@@ -624,6 +641,7 @@ defmodule ExAliyunOts do
 
   The available options are same as `update_row/4`.
   """
+  @doc row: :row
   @spec write_update(pk_keys :: list(), options :: Keyword.t()) :: map()
   def write_update(pk_keys, options \\ []) do
     var_batch_update_row = %Var.RowInBatchWriteRequest{
@@ -641,6 +659,7 @@ defmodule ExAliyunOts do
 
   The available operation same as `delete_row/4`.
   """
+  @doc row: :row
   @spec write_delete(pk_keys :: list(), options :: Keyword.t()) :: map()
   def write_delete(pk_keys, options \\ []) do
     var_batch_delete_row = %Var.RowInBatchWriteRequest{
@@ -694,6 +713,7 @@ defmodule ExAliyunOts do
     `:transaction_id`, optional, read operation within local transaction.
 
   """
+  @doc row: :row
   @spec get_range(instance :: atom(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ [])
@@ -731,6 +751,7 @@ defmodule ExAliyunOts do
 
   Please see options of `get_range/5` for details.
   """
+  @doc row: :row
   @spec iterate_all_range(instance :: atom(), table :: String.t(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def iterate_all_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ []) do
@@ -748,6 +769,7 @@ defmodule ExAliyunOts do
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/91974.html) | [English](https://www.alibabacloud.com/help/doc-detail/91974.html)
   """
+  @doc search: :search
   @spec search(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def search(instance, table, index_name, options) do
@@ -768,6 +790,7 @@ defmodule ExAliyunOts do
 
       list_search_index("table")
   """
+  @doc search: :search
   @spec list_search_index(instance :: atom(), table :: String.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def list_search_index(instance, table) do
@@ -783,6 +806,7 @@ defmodule ExAliyunOts do
 
       delete_search_index("table", "index_name")
   """
+  @doc search: :search
   @spec delete_search_index(instance :: atom(), table :: String.t(), index_name :: String.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def delete_search_index(instance, table, index_name) do
@@ -802,6 +826,7 @@ defmodule ExAliyunOts do
 
       describe_search_index("table", "index_name")
   """
+  @doc search: :search
   @spec describe_search_index(instance :: atom(), table :: String.t(), index_name :: String.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def describe_search_index(instance, table, index_name) do
@@ -822,6 +847,7 @@ defmodule ExAliyunOts do
       partition_key = {"key", "key1"}
       start_local_transaction("table", partition_key)
   """
+  @doc local_transaction: :local_transaction
   @spec start_local_transaction(instance :: atom(), table :: String.t(), partition_key :: tuple())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def start_local_transaction(instance, table, partition_key) do
@@ -841,6 +867,7 @@ defmodule ExAliyunOts do
 
       commit_transaction("transaction_id")
   """
+  @doc local_transaction: :local_transaction
   @spec commit_transaction(instance :: atom(), transaction_id :: String.t())
     :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def commit_transaction(instance, transaction_id) do
@@ -856,6 +883,7 @@ defmodule ExAliyunOts do
 
       abort_transaction("transaction_id")
   """
+  @doc local_transaction: :local_transaction
   def abort_transaction(instance, transaction_id) do
     Client.abort_transaction(instance, transaction_id)
   end
