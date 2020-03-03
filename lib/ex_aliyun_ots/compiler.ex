@@ -15,6 +15,7 @@ defmodule ExAliyunOts.Compiler do
       unquote(row_batch_helper_functions())
       unquote(local_transaction_functions())
       unquote(search_functions())
+      unquote(search_create_index_helper_functions())
       unquote(search_helper_functions())
     end
   end
@@ -83,28 +84,6 @@ defmodule ExAliyunOts.Compiler do
     end
   end
 
-  defp search_functions() do
-    quote do
-
-      def search(table, index_name, opts \\ []) do
-        ExAliyunOts.search(@instance, table, index_name, opts)
-      end
-
-      def list_search_index(table) do
-        ExAliyunOts.list_search_index(@instance, table)
-      end
-
-      def delete_search_index(table, index_name) do
-        ExAliyunOts.delete_search_index(@instance, table, index_name)
-      end
-
-      def describe_search_index(table, index_name) do
-        ExAliyunOts.describe_search_index(@instance, table, index_name)
-      end
-
-    end
-  end
-
   defp row_batch_helper_functions() do
     quote do
 
@@ -141,6 +120,52 @@ defmodule ExAliyunOts.Compiler do
       def abort_transaction(transaction_id) do
         ExAliyunOts.abort_transaction(@instance, transaction_id)
       end
+
+    end
+  end
+
+  defp search_functions() do
+    quote do
+
+      def create_search_index(table, index_name, opts \\ []) do
+        ExAliyunOts.create_search_index(@instance, table, index_name, opts)
+      end
+
+      def search(table, index_name, opts \\ []) do
+        ExAliyunOts.search(@instance, table, index_name, opts)
+      end
+
+      def list_search_index(table) do
+        ExAliyunOts.list_search_index(@instance, table)
+      end
+
+      def delete_search_index(table, index_name) do
+        ExAliyunOts.delete_search_index(@instance, table, index_name)
+      end
+
+      def describe_search_index(table, index_name) do
+        ExAliyunOts.describe_search_index(@instance, table, index_name)
+      end
+
+    end
+  end
+
+  defp search_create_index_helper_functions() do
+    quote do
+
+      defdelegate field_schema_integer(field_name, opts \\ []), to: Search
+
+      defdelegate field_schema_float(field_name, options \\ []), to: Search
+
+      defdelegate field_schema_boolean(field_name, options \\ []), to: Search
+
+      defdelegate field_schema_keyword(field_name, options \\ []), to: Search
+
+      defdelegate field_schema_text(field_name, options \\ []), to: Search
+
+      defdelegate field_schema_nested(field_name, options \\ []), to: Search
+
+      defdelegate field_schema_geo_point(field_name, options \\ []), to: Search
 
     end
   end

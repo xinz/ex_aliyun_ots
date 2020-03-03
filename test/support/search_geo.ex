@@ -10,6 +10,8 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
   require RowExistence
   require FieldType
 
+  import ExAliyunOts.Search, only: [field_schema_keyword: 1, field_schema_geo_point: 1, field_schema_integer: 1]
+
   def init(instance_key, table, index_name) do
     create_table(instance_key, table)
 
@@ -42,29 +44,14 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
   end
 
   defp create_index(instance_key, table, index_name) do
-    var_request =
-      %Search.CreateSearchIndexRequest{
-        table_name: table,
-        index_name: index_name,
-        index_schema: %Search.IndexSchema{
-          field_schemas: [
-            %Search.FieldSchema{
-              field_name: "name"
-            },
-            %Search.FieldSchema{
-              field_name: "location",
-              field_type: FieldType.geo_point
-            },
-            %Search.FieldSchema{
-              field_name: "value",
-              field_type: FieldType.long
-            }
-          ]
-        }
-      }
-    result = Client.create_search_index(instance_key, var_request)
+    result =
+      ExAliyunOts.create_search_index instance_key, table, index_name,
+        field_schemas: [
+          field_schema_keyword("name"),
+          field_schema_geo_point("location"),
+          field_schema_integer("value")
+        ]
     Logger.info "create_search_index for GEO test: #{inspect result}"
-
   end
 
   defp insert_test_data(instance_key, table) do

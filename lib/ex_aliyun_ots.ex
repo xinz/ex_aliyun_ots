@@ -798,6 +798,63 @@ defmodule ExAliyunOts do
   end
 
   @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117452.html) | [English](https://www.alibabacloud.com/help/doc-detail/117452.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      create_search_index "table", "index_name",
+        field_schemas: [
+          field_schema_keyword("name"),
+          field_schema_integer("age")
+        ]
+
+      create_search_index "table", "index_name",
+        field_schemas: [
+          field_schema_keyword("name"),
+          field_schema_geo_point("location"),
+          field_schema_integer("value")
+        ]
+
+      create_search_index "table", "index_name",
+        field_schemas: [
+          field_schema_nested(
+          "content",
+          field_schemas: [
+            field_schema_keyword("header"),
+            field_schema_keyword("body")
+          ]
+        )
+      ]
+
+  ## Options
+
+    * `:field_schemas`, required, a list of predefined search-index schema fields, please see the following helper functions:
+      - `ExAliyunOts.Search.field_schema_integer/2`
+      - `ExAliyunOts.Search.field_schema_float/2`
+      - `ExAliyunOts.Search.field_schema_boolean/2`
+      - `ExAliyunOts.Search.field_schema_keyword/2`
+      - `ExAliyunOts.Search.field_schema_text/2`
+      - `ExAliyunOts.Search.field_schema_nested/2`
+      - `ExAliyunOts.Search.field_schema_geo_point/2`
+  """
+  @doc search: :search
+  @spec create_search_index(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
+    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  def create_search_index(instance, table, index_name, options) do
+    var_request =
+      %Var.Search.CreateSearchIndexRequest{
+        table_name: table,
+        index_name: index_name,
+        index_schema: %Var.Search.IndexSchema{
+          field_schemas: Keyword.fetch!(options, :field_schemas)
+        }
+      }
+    Client.create_search_index(instance, var_request)
+  end
+
+  @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/117478.html) | [English](https://www.alibabacloud.com/help/doc-detail/117478.html)
 
   ## Example

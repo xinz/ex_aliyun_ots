@@ -66,6 +66,7 @@ defmodule ExAliyunOts.Mixfile do
         "Sort": & &1[:sort] == :sort,
         "Aggregation": & &1[:aggs] == :aggs,
         "GroupBy": & &1[:group_bys] == :group_bys,
+        "Define Field Schema": & &1[:field_schema] == :field_schema,
         "Sort in GroupByField": & &1[:sort_in_group_bys] == :sort_in_group_bys,
         "Table": & &1[:table] == :table,
         "Row": & &1[:row] == :row,

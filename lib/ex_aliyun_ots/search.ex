@@ -55,8 +55,9 @@ defmodule ExAliyunOts.Search do
 
   alias ExAliyunOts.Var.Search
 
-  alias ExAliyunOts.Const.{Search.QueryType, Search.ColumnReturnType, Search.SortType, Search.AggregationType, Search.SortOrder, Search.SortMode, Search.GeoDistanceType}
+  alias ExAliyunOts.Const.{Search.FieldType, Search.QueryType, Search.ColumnReturnType, Search.SortType, Search.AggregationType, Search.SortOrder, Search.SortMode, Search.GeoDistanceType}
 
+  require FieldType
   require QueryType
   require ColumnReturnType
   require SortType
@@ -1143,6 +1144,184 @@ defmodule ExAliyunOts.Search do
       path: path,
       filter: filter
     }
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_integer("age")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[1,2]"`.
+  """
+  @doc field_schema: :field_schema
+  @spec field_schema_integer(field_name :: String.t(), options :: Keyword.t()) :: map()
+  def field_schema_integer(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.long, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_float("price")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[1.0,2.0]"`.
+  """
+  @doc field_schema: :field_schema
+  @spec field_schema_float(field_name :: String.t(), options :: Keyword.t()) :: map()
+  def field_schema_float(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.double, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_boolean("status")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[false,true,false]"`.
+  """
+  @doc field_schema: :field_schema
+  @spec field_schema_boolean(field_name :: String.t(), options :: Keyword.t()) :: map()
+  def field_schema_boolean(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.boolean, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_keyword("status")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"a\",\"b\"]"`.
+  """
+  @doc field_schema: :field_schema
+  def field_schema_keyword(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.keyword, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_text("content")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"a\",\"b\"]"`.
+    * `:analyzer`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html) |
+    [English](https://www.alibabacloud.com/help/doc-detail/120227.html).
+  """
+  @doc field_schema: :field_schema
+  def field_schema_text(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.text, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_nested(
+        "content",
+        field_schemas: [
+          field_schema_keyword("header"),
+          field_schema_keyword("body"),
+        ]
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:field_schemas`, required, the nested field schema.
+  """
+  @doc field_schema: :field_schema
+  def field_schema_nested(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.nested, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_geo_point("location")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"10.21,10\",\"10.31,9.98\"]"`.
+  """
+  @doc field_schema: :field_schema
+  def field_schema_geo_point(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.geo_point, field_name: field_name}, options)
+  end
+
+  defp map_field_schema(%{field_type: FieldType.nested} = schema, options) when is_map(schema) do
+    schema
+    |> do_map_field_schema(options)
+    |> Map.put(:field_schemas, expect_list(Keyword.get(options, :field_schemas, [])))
+  end
+  defp map_field_schema(%{field_type: FieldType.text} = schema, options) when is_map(schema) do
+    schema
+    |> do_map_field_schema(options)
+    |> Map.put(:analyzer, Keyword.get(options, :analyzer, nil))
+  end
+  defp map_field_schema(schema, options) when is_map(schema) do
+    do_map_field_schema(schema, options)
+  end
+
+  defp do_map_field_schema(schema, options) do
+    schema
+    |> Map.put(:index, expect_boolean(Keyword.get(options, :index, true)))
+    |> Map.put(:enable_sort_and_agg, expect_boolean(Keyword.get(options, :enable_sort_and_agg, true)))
+    |> Map.put(:store, expect_boolean(Keyword.get(options, :store, true)))
+    |> Map.put(:is_array, expect_boolean_or_nil(Keyword.get(options, :is_array)))
+  end
+
+  defp expect_boolean_or_nil(nil), do: nil
+  defp expect_boolean_or_nil(value), do: expect_boolean(value)
+
+  defp expect_boolean(true), do: true
+  defp expect_boolean(false), do: false
+  defp expect_boolean(invalid) do
+    raise ExAliyunOts.RuntimeError, "Expect get a boolean value but it is invalid: #{inspect(invalid)}"
+  end
+
+  defp expect_list(items) when is_list(items), do: items
+  defp expect_list(invalid) do
+    raise ExAliyunOts.RuntimeError, "Expect get a list but it is invalid: #{inspect(invalid)}"
   end
 
   @doc false

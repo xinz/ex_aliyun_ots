@@ -172,7 +172,7 @@ defmodule ExAliyunOts.Var.Search do
     @moduledoc false
     alias ExAliyunOts.Const.Search.FieldType
     require FieldType
-    defstruct field_name: "", field_type: FieldType.keyword, index_options: nil, analyzer: "", index: true, enable_sort_and_agg: true, store: true, field_schemas: [], is_array: nil
+    defstruct field_name: "", field_type: FieldType.keyword, index_options: nil, analyzer: nil, index: true, enable_sort_and_agg: true, store: true, field_schemas: [], is_array: nil
   end
 
   defmodule FieldSort do

@@ -578,7 +578,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ]
     assert length(response.rows) >= 1
 
-    # seach exists_query for `comment` field as nil column
+    # serach exists_query for `comment` field as nil column
     {:ok, response} =
       search @table, index_name,
         search_query: [
@@ -606,7 +606,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ]
     assert length(response.rows) >= 1
 
-    # seach exists_query for `comment` field as nil column
+    # serach exists_query for `comment` field as nil column
     {:ok, response} =
       search @table, index_name,
         search_query: [
@@ -1184,6 +1184,20 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert result == :ok
     {result, _response} = delete_search_index(@table, index_name)
     assert result == :ok
+  end
+
+  test "delete search index2" do
+    index_name = "tmp_search_index2"
+    {result, _response} = 
+      create_search_index(@table, index_name,
+        field_schemas: [
+          field_schema_keyword("name"),
+          field_schema_integer("age")
+        ])
+
+    assert result == :ok
+
+    delete_search_index(@table, index_name)
   end
 
 end

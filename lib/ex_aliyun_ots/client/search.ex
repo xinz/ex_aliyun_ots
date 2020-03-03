@@ -264,7 +264,7 @@ defmodule ExAliyunOts.Client.Search do
         field_name: var_field_schema.field_name,
         field_type: var_field_schema.field_type,
         index: var_field_schema.index,
-        doc_values: var_field_schema.enable_sort_and_agg,
+        sort_and_agg: var_field_schema.enable_sort_and_agg,
         store: var_field_schema.store
       )
 
@@ -278,15 +278,17 @@ defmodule ExAliyunOts.Client.Search do
               iterate_all_field_schemas(sub_field_schema)
             end
           end)
-        # nested field schema not supports `:index` | `:store` | `:doc_values` definition
+        # nested field schema not supports `:index` | `:store` | `:sort_and_agg` definition
         proto_field_schema
         |> Map.put(:field_schemas, prepared_sub_field_schemas)
         |> Map.put(:index, nil)
         |> Map.put(:store, nil)
-        |> Map.put(:doc_values, nil)
+        |> Map.put(:sort_and_agg, nil)
 
       field_type == FieldType.text() ->
-        Map.put(proto_field_schema, :doc_values, false)
+        proto_field_schema
+        |> Map.put(:sort_and_agg, nil)
+        |> Map.put(:analyzer, var_field_schema.analyzer)
       true ->
         Map.put(proto_field_schema, :is_array, var_field_schema.is_array)
     end

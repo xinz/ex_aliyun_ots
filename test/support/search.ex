@@ -10,6 +10,8 @@ defmodule ExAliyunOtsTest.Support.Search do
   require RowExistence
   require FieldType
 
+  import ExAliyunOts.Search, only: [field_schema_keyword: 1, field_schema_nested: 2]
+
   def init(instance_key, table, index_names, opts \\ []) do
     initialize(instance_key, table, index_names)
 
@@ -255,32 +257,48 @@ defmodule ExAliyunOtsTest.Support.Search do
   end
 
   defp create_search_index2(instance_key, table, index_name) do
-    sub_nested1 = %Search.FieldSchema{
-      field_name: "header",
-      field_type: FieldType.keyword,
-    }
-    sub_nested2 = %Search.FieldSchema{
-      field_name: "body",
-      field_type: FieldType.keyword,
-    }
-    var_request =
-      %Search.CreateSearchIndexRequest{
-        table_name: table,
-        index_name: index_name,
-        index_schema: %Search.IndexSchema{
-          field_schemas: [
-            %Search.FieldSchema{
-              field_name: "content",
-              field_type: FieldType.nested,
-              field_schemas: [
-                sub_nested1,
-                sub_nested2
-              ],
-            }
-          ]
-        }
-      }
-    result = Client.create_search_index(instance_key, var_request)
+
+    #
+    # These two use cases are the same thing.
+    #
+    #sub_nested1 = %Search.FieldSchema{
+    #  field_name: "header",
+    #  field_type: FieldType.keyword,
+    #}
+    #sub_nested2 = %Search.FieldSchema{
+    #  field_name: "body",
+    #  field_type: FieldType.keyword,
+    #}
+    #var_request =
+    #  %Search.CreateSearchIndexRequest{
+    #    table_name: table,
+    #    index_name: index_name,
+    #    index_schema: %Search.IndexSchema{
+    #      field_schemas: [
+    #        %Search.FieldSchema{
+    #          field_name: "content",
+    #          field_type: FieldType.nested,
+    #          field_schemas: [
+    #            sub_nested1,
+    #            sub_nested2
+    #          ],
+    #        }
+    #      ]
+    #    }
+    #  }
+    #result = Client.create_search_index(instance_key, var_request)
+    #
+    result =
+      ExAliyunOts.create_search_index(instance_key, table, index_name,
+        field_schemas: [
+          field_schema_nested("content",
+            field_schemas: [
+              field_schema_keyword("header"),
+              field_schema_keyword("body"),
+            ]
+          )
+        ]
+      )
     Logger.info "create_search_index2: #{inspect result}"
   end
 
