@@ -31,11 +31,11 @@ config :ex_aliyun_ots, MyInstance
 config :ex_aliyun_ots,
   instances: [MyInstance],
   debug: false, # Optional
-  enable_tunnel?: false # Optional
+  enable_tunnel: false # Optional
 ```
 
 * `debug`，配置是否打开debug logger，默认值为false
-* `enable_tunnel?`，配置是否在`Application`启动时也加载`Tunnel`所需要的`Supervisor`及`Registry`，默认值为false
+* `enable_tunnel`，配置是否在`Application`启动时也加载`Tunnel`所需要的`Supervisor`及`Registry`，默认值为false
 
 ## Ecto Adapter
 

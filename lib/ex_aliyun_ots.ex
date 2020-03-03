@@ -15,10 +15,10 @@ defmodule ExAliyunOts do
       config :ex_aliyun_ots,
         instances: [:my_instance],
         debug: false,
-        enable_tunnel?: false
+        enable_tunnel: false
 
   * `debug`, optional, specifies whether to enable debug logger, by default it's false, and please DO NOT use debug mode in production.
-  * `enable_tunnel?`, optional, specifies whether to enable tunnel functions, there will startup tunnel related `Supervisor` and `Registry` when enable it, by default it's false.
+  * `enable_tunnel`, optional, specifies whether to enable tunnel functions, there will startup tunnel related `Supervisor` and `Registry` when enable it, by default it's false.
 
   ## Using ExAliyunOts
 
