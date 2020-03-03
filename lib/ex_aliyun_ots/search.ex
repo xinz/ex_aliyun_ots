@@ -1259,10 +1259,10 @@ defmodule ExAliyunOts.Search do
 
   ## Options
 
+    * `:field_schemas`, required, the nested field schema(s);
     * `:index`, specifies whether to set as index, by default it is true;
     * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
-    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
-    * `:field_schemas`, required, the nested field schema.
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true.
   """
   @doc field_schema: :field_schema
   def field_schema_nested(field_name, options \\ []) do
