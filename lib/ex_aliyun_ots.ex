@@ -443,17 +443,20 @@ defmodule ExAliyunOts do
 
   ## Options
 
-    `:columns_to_get`, optional, fetch the special fields, by default it returns all fields.
-    `:start_column`, optional, specifies the start column when using for wide-row-read, the returned result contains this `:start_column`.
-    `:end_column`, optional, specifies the end column when using for wide-row-read, the returned result does not contain this `:end_column`.
-    `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
-    `:max_versions`, optional, how many versions need to return in results, by default it is 1.
-    `:time_range`, optional, read data by timestamp range, support two ways to use it:
-      - time_range: {start_timestamp, end_timestamp}, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
-      and then will return in the results.
-      - time_range: specail_timestamp, exactly match and then will return in the results.
-      - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
-    `:transaction_id`, optional, read operation within local transaction.
+    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, here are available options:
+      - `:all`, return all fields;
+      - `:none`, do not return attribute columns;
+      - `["field1", "field2"]`, specifies the expected return fields directly;
+    * `:start_column`, optional, specifies the start column when using for wide-row-read, the returned result contains this `:start_column`.
+    * `:end_column`, optional, specifies the end column when using for wide-row-read, the returned result does not contain this `:end_column`.
+    * `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
+    * `:max_versions`, optional, how many versions need to return in results, by default it is 1.
+    * `:time_range`, optional, read data by timestamp range, support two ways to use it:
+    *   - time_range: {start_timestamp, end_timestamp}, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
+    *   and then will return in the results.
+    *   - time_range: specail_timestamp, exactly match and then will return in the results.
+    *   - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
+    * `:transaction_id`, optional, read operation within local transaction.
   """
   @doc row: :row
   @spec get_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
@@ -695,23 +698,25 @@ defmodule ExAliyunOts do
 
   ## Options
 
-    `:direction`, required, the order of fetch data, available options are `:forward` | `:backward`, by it is `:forward`.
+    * `:direction`, required, the order of fetch data, available options are `:forward` | `:backward`, by it is `:forward`.
       - `:forward`, this query is performed in the order of primary key in ascending, in this case, input `inclusive_start_primary_keys` should less
       than `exclusive_end_primary_keys`;
       - `:backward`, this query is performed in the order of primary key in descending, in this case, input `inclusive_start_primary_keys` should greater
       than `exclusive_end_primary_keys`.
-    `:columns_to_get`, optional, fetch the special fields, by default it returns all fields.
-    `:start_column`, optional, specifies the start column when using for wide-row-read, the returned result contains this `:start_column`.
-    `:end_column`, optional, specifies the end column when using for wide-row-read, the returned result does not contain this `:end_column`.
-    `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
-    `:max_versions`, optional, how many versions need to return in results, by default it is 1.
-    `:time_range`, optional, read data by timestamp range, support two ways to use it:
-      - time_range: {start_timestamp, end_timestamp}, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
-      and then will return in the results.
-      - time_range: specail_timestamp, exactly match and then will return in the results.
-      - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
-    `:transaction_id`, optional, read operation within local transaction.
-
+    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, here are available options:
+      - `:all`, return all fields;
+      - `:none`, do not return attribute columns;
+      - `["field1", "field2"]`, specifies the expected return fields directly;
+    * `:start_column`, optional, specifies the start column when using for wide-row-read, the returned result contains this `:start_column`.
+    * `:end_column`, optional, specifies the end column when using for wide-row-read, the returned result does not contain this `:end_column`.
+    * `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
+    * `:max_versions`, optional, how many versions need to return in results, by default it is 1.
+    * `:time_range`, optional, read data by timestamp range, support two ways to use it:
+    *   - `time_range: {start_timestamp, end_timestamp}`, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
+    *   and then will return in the results.
+    *   - `time_range: specail_timestamp`, exactly match and then will return in the results.
+    *   - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
+    * `:transaction_id`, optional, read operation within local transaction.
   """
   @doc row: :row
   @spec get_range(instance :: atom(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
@@ -768,6 +773,42 @@ defmodule ExAliyunOts do
   The one entrance to use search index functions, please see `ExAliyunOts.Search` module for details.
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/91974.html) | [English](https://www.alibabacloud.com/help/doc-detail/91974.html)
+
+  ## Options
+
+    * `:search_query`, required, the main option to use Query and Sort.
+      - `:query`, required, bind to the Query functions:
+        - `ExAliyunOts.Search.bool_query/1`
+        - `ExAliyunOts.Search.exists_query/1`
+        - `ExAliyunOts.Search.geo_bounding_box_query/3`
+        - `ExAliyunOts.Search.geo_distance_query/3`
+        - `ExAliyunOts.Search.geo_polygon_query/2`
+        - `ExAliyunOts.Search.match_all_query/0`
+        - `ExAliyunOts.Search.match_phrase_query/2`
+        - `ExAliyunOts.Search.match_query/3`
+        - `ExAliyunOts.Search.nested_query/3`
+        - `ExAliyunOts.Search.prefix_query/2`
+        - `ExAliyunOts.Search.range_query/2`
+        - `ExAliyunOts.Search.term_query/2`
+        - `ExAliyunOts.Search.terms_query/2`
+        - `ExAliyunOts.Search.wildcard_query/2`
+      - `:sort`, optional, by default it is use `pk_sort/1`, bind to the Sort functions:
+        - `ExAliyunOts.Search.field_sort/2`
+        - `ExAliyunOts.Search.geo_distance_sort/3`
+        - `ExAliyunOts.Search.nested_filter/2`
+        - `ExAliyunOts.Search.pk_sort/1`
+        - `ExAliyunOts.Search.score_sort/1`
+      - `:aggs`, optional, please see official document in [Chinese](https://help.aliyun.com/document_detail/132191.html) | [English](https://www.alibabacloud.com/help/doc-detail/132191.html).
+      - `:group_bys`, optional, please see official document in [Chinese](https://help.aliyun.com/document_detail/132210.html) | [English](https://www.alibabacloud.com/help/doc-detail/132210.html).
+      - `:limit`, optional, the limited size of query.
+      - `:offset`, optional, the offset size of query. When the total rows are less or equal than 2000, can both used`:limit` and `:offset` to pagination.
+      - `:get_total_count`, optional, return the total count of the all matched rows, by default it is `true`.
+      - `:token`, optional, when do not load all the matched rows in a single request, there will return a `next_token` value in that result, and then we can pass it to `:token` in the next same search query to continue load.
+      - `:collapse`, optional, duplicate removal by the specified field, please see official document in [Chinese](https://help.aliyun.com/document_detail/154172.html), please NOTICE that currently there does not support use `:collapse` with `:token` together.
+    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, here are available options:
+      - `:all`, return all fields;
+      - `:none`, do not return attribute columns;
+      - `["field1", "field2"]`, specifies the expected return fields directly;
   """
   @doc search: :search
   @spec search(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
