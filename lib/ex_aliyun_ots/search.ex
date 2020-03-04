@@ -48,7 +48,7 @@ defmodule ExAliyunOts.Search do
   Please notice:
 
     * The statistics(via `:aggs`) and GroupBy type aggregations(via `:group_bys`) can be used at the same time;
-    * The GroupBy type aggregations support the nested sub statistics and sub GroupBy type aggregations;
+    * The GroupBy type aggregations support the nested sub statistics(via `:sub_aggs`) and sub GroupBy type aggregations(via `:sub_group_bys`);
     * To ensure the performance and reduce the complexity of aggregations, there is a limition with a certain number
     of levels for nesting.
   """

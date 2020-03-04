@@ -32,8 +32,8 @@ config :ex_aliyun_ots,
   enable_tunnel: false
 ```
 
-* `debug`, optional, specifies whether to enable debug logger, by default it's false, and please DO NOT use debug mode in production.
-* `enable_tunnel`, optional, specifies whether to enable tunnel functions, there will startup tunnel related `Supervisor` and `Registry` when enable it, by default it's false.
+* `debug`, optional, specifies whether to enable debug logger, by default it is false, and please DO NOT use debug mode in production.
+* `enable_tunnel`, optional, specifies whether to enable tunnel functions, there will startup tunnel related supervisor and registry when enable it, by default it is false.
 
 
 ## Using ExAliyunOts
@@ -87,7 +87,7 @@ All defined functions and macros in `ExAliyunOts` are available and referrible f
 
 ## Ecto Adapter
 
-We offer an [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore) implementation as an alternative.
+Here is a [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore) implementation as an alternative.
 
 ## Supported Functions
 
@@ -99,7 +99,7 @@ We offer an [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestor
 * Atomic counters
 * Search index
 * Local transation
-* Tunnel Service
+* Tunnel service
 * Timeline mode
 
 ## Supported API
@@ -120,7 +120,7 @@ We offer an [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestor
   * GetRange
   * BatchGetRow
   * BatchWriteRow
-  
+
 * SearchIndex
   * CreateSearchIndex
   * DescribeSearchIndex
@@ -133,12 +133,11 @@ We offer an [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestor
   * AbortTransaction
 
 * SDK built-in
-
   * IterateAllRange
   * Sequence
 
-* Tunnel Service
-* Timeline Mode
+* Tunnel service
+* Timeline mode
 
 ## References
 

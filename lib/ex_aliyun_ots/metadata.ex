@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.RuntimeError do
+  @moduledoc false
   defexception [:message, :error_code]
 
   def exception(value) do
