@@ -802,9 +802,9 @@ defmodule ExAliyunOts do
       - `:token`, optional, when do not load all the matched rows in a single request, there will return a `next_token` value in that result, and then we can pass it to `:token` in the next same search query to continue load.
       - `:collapse`, optional, duplicate removal by the specified field, please see official document in [Chinese](https://help.aliyun.com/document_detail/154172.html), please NOTICE that currently there does not support use `:collapse` with `:token` together.
     * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, here are available options:
-      - `:all`, return all fields;
-      - `:none`, do not return attribute columns;
-      - `["field1", "field2"]`, specifies the expected return fields directly;
+      - `:all`, return all attribute column fields;
+      - `:none`, do not return any attribute column fields;
+      - `["field1", "field2"]`, specifies the expected return attribute column fields.
   """
   @doc search: :search
   @spec search(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
