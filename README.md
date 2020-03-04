@@ -5,14 +5,14 @@
 
 Aliyun TableStore SDK for Elixir/Erlang
 
-> Tablestore is a NoSQL database service built on Alibaba Cloud’s Apsara distributed operating system that can store and access large volumes of structured data in real time.
+> TableStore is a NoSQL database service built on Alibaba Cloud’s Apsara distributed operating system that can store and access large volumes of structured data in real time.
 
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:ex_aliyun_ots, "~> 0.5"}
+    {:ex_aliyun_ots, "~> 0.6"}
   ]
 end
 ```
@@ -20,14 +20,14 @@ end
 ## Configuration
 
 ```elixir
-config :ex_aliyun_ots, MyInstance
+config :ex_aliyun_ots, :my_instance
   name: "MyInstanceName",
   endpoint: "MyInstanceEndpoint",
   access_key_id: "MyAliyunRAMKeyID",
   access_key_secret: "MyAliyunRAMKeySecret"
 
 config :ex_aliyun_ots,
-  instances: [MyInstance],
+  instances: [:my_instance],
   debug: false,
   enable_tunnel: false
 ```
