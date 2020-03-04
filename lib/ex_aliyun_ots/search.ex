@@ -6,51 +6,49 @@ defmodule ExAliyunOts.Search do
 
   To use `ExAliyunOts`, a module that calls `use ExAliyunOts` has to be defined:
 
-  ```elixir
-  defmodule MyApp.Tablestore do
-    use ExAliyunOts, instance: :my_instance
-  end
-  ```
+      defmodule MyApp.Tablestore do
+        use ExAliyunOts, instance: :my_instance
+      end
 
   This automatically defines some search functions in `MyApp.Tablestore` module, we can use them as helpers when invoke `MyApp.Tablestore.search/3`, here are some examples:
 
-  ```
-  import MyApp.Tablestore
+      import MyApp.Tablestore
 
-  search "table", "index_name",
-    search_query: [
-      query: match_query("age", 28),
-      sort: [
-        field_sort("age", order: :desc)
-      ]
-    ]
-
-  search "table", "index_name",
-    search_query: [
-      query: exists_query("column_a"),
-      group_bys: [
-        group_by_field("group_name", "column_b",
-          sub_group_bys: [
-            group_by_range("group_name_1", "column_d", [{0, 10}, {10, 20}])
-          ],
+      search "table", "index_name",
+        search_query: [
+          query: match_query("age", 28),
           sort: [
-            group_key_sort(:desc)
+            field_sort("age", order: :desc)
           ]
-        ),
-        group_by_field("group_name2", "column_c")
-      ],
-      aggs: [
-        agg_min("aggregation_name", "column_e")
-      ]
-    ]
-  ```
+        ]
+
+      search "table", "index_name",
+        search_query: [
+          query: exists_query("column_a"),
+          group_bys: [
+            group_by_field("group_name", "column_b",
+              sub_group_bys: [
+                group_by_range("group_name_1", "column_d", [{0, 10}, {10, 20}])
+              ],
+              sort: [
+                group_key_sort(:desc)
+              ]
+            ),
+            group_by_field("group_name2", "column_c")
+          ],
+          aggs: [
+            agg_min("aggregation_name", "column_e")
+          ]
+        ]
 
   Please notice:
 
-    * The statistics(via `:aggs`) and GroupBy type aggregations(via `:group_bys`) can be used at the same time;
-    * The GroupBy type aggregations support the nested sub statistics(via `:sub_aggs`) and sub GroupBy type aggregations(via `:sub_group_bys`);
+    * The statistics(via `:aggs`) and GroupBy type aggregations(via `:group_bys`) can be used at the same time.
+    * The GroupBy type aggregations support the nested sub statistics(via `:sub_aggs`) and sub GroupBy type aggregations(via `:sub_group_bys`).
     * To ensure the performance and reduce the complexity of aggregations, there is a limition with a certain number
     of levels for nesting.
+    * If you are only care about using `:aggs` or `:group_bys`, meanwhile do not need the returned rows, you can set `:limit` as 0 to ignore the matched rows
+    return, there will have a better query performace.
   """
 
   alias ExAliyunOts.Var.Search
@@ -684,7 +682,6 @@ defmodule ExAliyunOts.Search do
     * `:size`, optional, the number of returned groups.
     * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
     * `:sub_aggs`, optional, add sub statistics.
-  ```
   """
   @doc group_bys: :group_bys
   @spec group_by_field(group_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
