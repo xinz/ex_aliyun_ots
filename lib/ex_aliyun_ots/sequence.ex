@@ -4,13 +4,13 @@ defmodule ExAliyunOts.Sequence do
   require ReturnType
   require PKType
 
-  use ExAliyunOts.Mixin
-
   @primary_key_name "name"
 
   @value_column "value"
 
   import ExAliyunOts.Logger, only: [info: 1, error: 1]
+
+  import ExAliyunOts, only: [create_table: 4, condition: 1, delete_table: 2, delete_row: 4, update_row: 4]
 
   def create(instance_name, sequence) do
     create_table instance_name, sequence.name,

@@ -46,7 +46,7 @@ defmodule ExAliyunOts.Timeline do
 
       use ExAliyunOts.Constants
 
-      import ExAliyunOts.Mixin, only: [filter: 1]
+      import ExAliyunOts, only: [filter: 1]
 
       def new(options \\ []) when is_list(options) do
         options = Keyword.merge(@initialized_opts, options)
@@ -54,7 +54,7 @@ defmodule ExAliyunOts.Timeline do
       end
 
       def search(timeline, options \\ []) when is_list(options) do
-        ExAliyunOts.Mixin.execute_search(
+        ExAliyunOts.search(
           timeline.instance,
           timeline.table_name,
           timeline.index_name,

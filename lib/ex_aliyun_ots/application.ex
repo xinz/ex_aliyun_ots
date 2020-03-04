@@ -12,7 +12,7 @@ defmodule ExAliyunOts.Application do
   def start(_type, _args) do
 
     children = child_spec(
-      Application.get_env(@app, :enable_tunnel?, false),
+      Application.get_env(@app, :enable_tunnel, false),
       Application.get_env(@app, :instances, [])
     )
 

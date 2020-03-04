@@ -1,9 +1,9 @@
 defmodule ExAliyunOts.MixinTest.CRUD do
 
-  use ExUnit.Case
-
   use ExAliyunOts,
     instance: EDCEXTestInstance
+
+  use ExUnit.Case
 
   require Logger
 
@@ -129,6 +129,17 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     {[{"key1", 1}, {"key2", _}], attrs_key_1} = Enum.at(get_range_rows, 0)
     {[{"key1", 2}, {"key2", _}], attrs_key_2} = Enum.at(get_range_rows, 1)
 
+    {:ok, get_range_response} =
+      get_range table_name1,
+        [{"key1", 1}, {"key2", :inf_min}],
+        [{"key1", 4}, {"key2", :inf_max}],
+        limit: 2,
+        direction: :forward
+    get_range_rows = get_range_response.rows
+    assert length(get_range_rows) == 2
+    {[{"key1", 1}, {"key2", _}], ^attrs_key_1} = Enum.at(get_range_rows, 0)
+    {[{"key1", 2}, {"key2", _}], ^attrs_key_2} = Enum.at(get_range_rows, 1)
+
     next_primary_key = get_range_response.next_start_primary_key
     assert next_primary_key != nil
 
@@ -140,6 +151,15 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     get_range_rows2 = get_range_response2.rows
     assert length(get_range_rows2) == 1
     {[{"key1", 4}, {"key2", _}], attrs_key_4} = Enum.at(get_range_rows2, 0)
+
+    {:ok, get_range_response2} =
+      get_range table_name1,
+        next_primary_key,
+        [{"key1", 4}, {"key2", :inf_max}],
+        direction: :forward
+    get_range_rows2 = get_range_response2.rows
+    assert length(get_range_rows2) == 1
+    {[{"key1", 4}, {"key2", _}], ^attrs_key_4} = Enum.at(get_range_rows2, 0)
 
     {:ok, _iterate_all_range_response} =
       iterate_all_range table_name1,
@@ -167,8 +187,8 @@ defmodule ExAliyunOts.MixinTest.CRUD do
 
     {:ok, get_range_response} =
       get_range table_name1,
-        [{"key1", 1}, {"key2", PKType.inf_min}],
-        [{"key1", 4}, {"key2", PKType.inf_max}],
+        [{"key1", 1}, {"key2", :inf_min}],
+        [{"key1", 4}, {"key2", :inf_max}],
         time_range: start_timestamp,
         direction: :forward
     get_range_rows = get_range_response.rows

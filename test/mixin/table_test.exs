@@ -6,15 +6,13 @@ defmodule ExAliyunOts.MixinTest.Table do
     instance: EDCEXTestInstance
 
   require Logger
-  alias ExAliyunOts.Const.PKType
-  require PKType
 
   test "table" do
     cur_timestamp = Timex.to_unix(Timex.now())
     table_name = "test_mixin_table_#{cur_timestamp}"
 
     create_table_result =
-      create_table table_name, [{"key1", PKType.string}],
+      create_table table_name, [{"key1", :string}],
         reserved_throughput_write: 1,
         reserved_throughput_read: 1,
         time_to_live: 100_000,

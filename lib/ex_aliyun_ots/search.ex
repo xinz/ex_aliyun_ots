@@ -1,923 +1,1580 @@
-defmodule ExAliyunOts.Client.Search do
-  @moduledoc false
+defmodule ExAliyunOts.Search do
+  @moduledoc """
+  Use the multiple efficient index schemas of search index to solve complex query problems.
 
-  alias ExAliyunOts.TableStoreSearch.{
-    CreateSearchIndexRequest,
-    IndexSchema,
-    FieldSchema,
-    PrimaryKeySort,
-    FieldSort,
-    GeoDistanceSort,
-    ScoreSort,
-    Sorter,
-    Sort,
-    Collapse,
-    CreateSearchIndexRequest,
-    CreateSearchIndexResponse,
-    DeleteSearchIndexRequest,
-    DeleteSearchIndexResponse,
-    ListSearchIndexRequest,
-    ListSearchIndexResponse,
-    DescribeSearchIndexRequest,
-    DescribeSearchIndexResponse,
-    ColumnsToGet,
-    IndexSetting,
-    SearchQuery,
-    SearchRequest,
-    SearchResponse,
-    Query,
-    MatchQuery,
-    MatchAllQuery,
-    MatchPhraseQuery,
-    TermQuery,
-    TermsQuery,
-    PrefixQuery,
-    WildcardQuery,
-    RangeQuery,
-    BoolQuery,
-    NestedQuery,
-    GeoDistanceQuery,
-    GeoBoundingBoxQuery,
-    GeoPolygonQuery,
-    ExistsQuery,
-    Aggregation,
-    Aggregations,
-    AvgAggregation,
-    MaxAggregation,
-    MinAggregation,
-    SumAggregation,
-    CountAggregation,
-    DistinctCountAggregation,
-    AggregationsResult,
-    AvgAggregationResult,
-    DistinctCountAggregationResult,
-    MaxAggregationResult,
-    MinAggregationResult,
-    SumAggregationResult,
-    CountAggregationResult,
-    GroupBys,
-    GroupBy,
-    GroupByField,
-    GroupByRange,
-    GroupByFilter,
-    GroupByGeoDistance,
-    GroupBysResult,
-    GroupByFilterResult,
-    GroupByFilterResultItem,
-    GroupByGeoDistanceResult,
-    GroupByGeoDistanceResultItem,
-    GroupByRangeResult,
-    GroupByRangeResultItem,
-    GroupByFieldResult,
-    GroupByFieldResultItem,
-    GroupBySort,
-    GroupBySorter,
-    GroupKeySort,
-    RowCountSort,
-    SubAggSort,
-    Range,
-    GeoPoint,
-    NestedFilter
-  }
+  Here are links to the search section of Alibaba official document: [Chinese](https://help.aliyun.com/document_detail/91974.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/91974.htm){:target="_blank"}
 
-  alias ExAliyunOts.{Http, Utils}
-  alias ExAliyunOts.Var.Search
-  alias ExAliyunOts.Const.Search.{FieldType, SortOrder, QueryType, ScoreMode, AggregationType, GroupByType, SortMode}
+  To use `ExAliyunOts`, a module that calls `use ExAliyunOts` has to be defined:
 
-  import ExAliyunOts.Logger, only: [error: 1]
-  require FieldType
-  require SortOrder
-  require QueryType
-  require ScoreMode
-  require AggregationType
-  require GroupByType
-  require SortMode
-
-  @variant_type_integer 0x0
-  @variant_type_double 0x1
-  @variant_type_boolean 0x2
-  @variant_type_string 0x3
-
-  def request_to_create_search_index(%Search.CreateSearchIndexRequest{
-        table_name: table_name,
-        index_name: index_name,
-        index_schema: index_schema
-      }) do
-    proto_field_schemas =
-      Enum.map(index_schema.field_schemas, fn field_schema ->
-        iterate_all_field_schemas(field_schema)
-      end)
-
-    proto_index_setting = prepare_index_setting(index_schema.index_setting)
-    proto_sort = prepare_sort(index_schema.index_sorts)
-
-    proto_index_schema =
-      IndexSchema.new(
-        index_sort: proto_sort,
-        field_schemas: proto_field_schemas,
-        index_setting: proto_index_setting
-      )
-
-    request =
-      CreateSearchIndexRequest.new(
-        schema: proto_index_schema,
-        table_name: table_name,
-        index_name: index_name
-      )
-
-    CreateSearchIndexRequest.encode(request)
+  ```elixir
+  defmodule MyApp.Tablestore do
+    use ExAliyunOts, instance: :my_instance
   end
+  ```
 
-  def remote_create_search_index(instance, request_body) do
-    instance
-    |> Http.client("/CreateSearchIndex", request_body, &CreateSearchIndexResponse.decode/1)
-    |> Http.post()
-  end
+  This automatically defines some search functions in `MyApp.Tablestore` module, we can use them as helpers when invoke `MyApp.Tablestore.search/3`, here are some examples:
 
-  def request_to_search(%Search.SearchRequest{
-        table_name: table_name,
-        index_name: index_name,
-        columns_to_get: %Search.ColumnsToGet{
-          return_type: return_type,
-          column_names: column_names
-        },
-        search_query: search_query,
-      }) do
-    proto_search_query =
-      SearchQuery.new(
-        offset: search_query.offset,
-        limit: search_query.limit,
-        query: prepare_query(search_query.query),
-        sort: prepare_sort(search_query.sort),
-        collapse: prepare_collapse(search_query.collapse),
-        aggs: prepare_aggs(search_query.aggs),
-        group_bys: prepare_group_bys(search_query.group_bys),
-        get_total_count: search_query.get_total_count,
-        token: search_query.token
-      )
-    proto_columns_to_get =
-      ColumnsToGet.new(
-        return_type: return_type,
-        column_names: column_names
-      )
-    request =
-      SearchRequest.new(
-        table_name: table_name,
-        index_name: index_name,
-        columns_to_get: proto_columns_to_get,
-        search_query: SearchQuery.encode(proto_search_query)
-      )
-    SearchRequest.encode(request)
-  end
+  ```
+  import MyApp.Tablestore
 
-  def remote_search(instance, request_body) do
-    result =
-      instance
-      |> Http.client("/Search", request_body, &decode_search_response/1)
-      |> Http.post()
-    result
-  end
-
-  def request_to_delete_search_index(%Search.DeleteSearchIndexRequest{
-        table_name: table_name,
-        index_name: index_name
-      }) do
-    [table_name: table_name, index_name: index_name]
-    |> DeleteSearchIndexRequest.new()
-    |> DeleteSearchIndexRequest.encode()
-  end
-
-  def remote_delete_search_index(instance, request_body) do
-    instance
-    |> Http.client("/DeleteSearchIndex", request_body, &DeleteSearchIndexResponse.decode/1)
-    |> Http.post()
-  end
-
-  def request_to_list_search_index(table_name) do
-    ListSearchIndexRequest.new(table_name: table_name) |> ListSearchIndexRequest.encode()
-  end
-
-  def remote_list_search_index(instance, request_body) do
-    instance
-    |> Http.client("/ListSearchIndex", request_body, &ListSearchIndexResponse.decode/1)
-    |> Http.post()
-  end
-
-  def request_to_describe_search_index(%Search.DescribeSearchIndexRequest{
-        table_name: table_name,
-        index_name: index_name
-      }) do
-    [table_name: table_name, index_name: index_name]
-    |> DescribeSearchIndexRequest.new()
-    |> DescribeSearchIndexRequest.encode()
-  end
-
-  def remote_describe_search_index(instance, request_body) do
-    instance
-    |> Http.client("/DescribeSearchIndex", request_body, &DescribeSearchIndexResponse.decode/1)
-    |> Http.post()
-  end
-
-  defp term_to_bytes(term) when is_bitstring(term) do
-    <<@variant_type_string, byte_size(term)::little-integer-size(32), term::binary>>
-  end
-  defp term_to_bytes(term) when is_integer(term) do
-    <<@variant_type_integer, term::little-integer-size(64)>>
-  end
-  defp term_to_bytes(term) when is_float(term) do
-    <<@variant_type_double, term::float-little>>
-  end
-  defp term_to_bytes(true) do
-    <<@variant_type_boolean, 1>>
-  end
-  defp term_to_bytes(false) do
-    <<@variant_type_boolean, 0>>
-  end
-  defp term_to_bytes(term) do
-    raise ExAliyunOts.RuntimeError, "invalid type of term: #{inspect term}, please use string/integer/float/boolean."
-  end
-
-  defp agg_missing_to_bytes(nil) do
-    nil
-  end
-  defp agg_missing_to_bytes(missing) when is_integer(missing) do
-    term_to_bytes(missing)
-  end
-  defp agg_missing_to_bytes(missing) when is_float(missing) do
-    term_to_bytes(missing)
-  end
-  defp agg_missing_to_bytes(missing) do
-    raise ExAliyunOts.RuntimeError, "invalid missing value of aggregation: #{inspect missing}, please use integer or float for it."
-  end
-
-  defp iterate_all_field_schemas(var_field_schema) do
-    field_type = var_field_schema.field_type
-    sub_field_schemas = var_field_schema.field_schemas
-    size_sub_field_schemas = length(sub_field_schemas)
-
-    if field_type == FieldType.nested() and (size_sub_field_schemas == 0 and size_sub_field_schemas > 25) do
-      raise ExAliyunOts.RuntimeError, "Invalid nested type field schema with : #{size_sub_field_schemas} sub field schemas, the valid range size of sub field schemas is [1, 25]"
-    end
-
-    proto_field_schema =
-      FieldSchema.new(
-        field_name: var_field_schema.field_name,
-        field_type: var_field_schema.field_type,
-        index: var_field_schema.index,
-        doc_values: var_field_schema.enable_sort_and_agg,
-        store: var_field_schema.store
-      )
-
-    cond do
-      field_type == FieldType.nested() ->
-        prepared_sub_field_schemas =
-          Enum.map(sub_field_schemas, fn sub_field_schema ->
-            if sub_field_schema.field_type == FieldType.nested() do
-              raise ExAliyunOts.RuntimeError, "Mapping depth in the nested attribute column only supports one level, cannot nest the nested type of field schema as the sub field schemas"
-            else
-              iterate_all_field_schemas(sub_field_schema)
-            end
-          end)
-        # nested field schema not supports `:index` | `:store` | `:doc_values` definition
-        proto_field_schema
-        |> Map.put(:field_schemas, prepared_sub_field_schemas)
-        |> Map.put(:index, nil)
-        |> Map.put(:store, nil)
-        |> Map.put(:doc_values, nil)
-
-      field_type == FieldType.text() ->
-        Map.put(proto_field_schema, :doc_values, false)
-      true ->
-        Map.put(proto_field_schema, :is_array, var_field_schema.is_array)
-    end
-  end
-
-  defp prepare_sort([]) do
-    nil
-  end
-  defp prepare_sort(nil) do
-    nil
-  end
-  defp prepare_sort(sorters) when is_list(sorters) do
-    prepared_sorters =
-      sorters
-      |> Enum.map(&prepare_sorter/1)
-      |> Enum.filter(fn sorter -> sorter != nil end)
-    Sort.new(sorter: prepared_sorters)
-  end
-
-  defp prepare_sorter(%Search.PrimaryKeySort{order: order}) do
-    assert_valid_sort_order(order)
-    Sorter.new(pk_sort: PrimaryKeySort.new(order: order))
-  end
-  defp prepare_sorter(%Search.FieldSort{field_name: field_name, order: order, mode: mode, nested_filter: nested_filter}) do
-    assert_valid_sort_order(order)
-    assert_valid_sort_mode(mode)
-
-    nested_filter = prepare_sorter_nested_filter(nested_filter)
-
-    Sorter.new(field_sort: FieldSort.new(field_name: field_name, order: order, mode: mode, nested_filter: nested_filter))
-  end
-  defp prepare_sorter(%Search.GeoDistanceSort{field_name: field_name, order: order, points: points, distance_type: distance_type, mode: mode, nested_filter: nested_filter}) do
-    assert_valid_sort_order(order)
-    assert_valid_sort_mode(mode)
-    assert_valid_geo_points(points)
-
-    nested_filter = prepare_sorter_nested_filter(nested_filter)
-
-    Sorter.new(geo_distance_sort: GeoDistanceSort.new(field_name: field_name, order: order, points: points, distance_type: distance_type, mode: mode, nested_filter: nested_filter))
-  end
-  defp prepare_sorter(%Search.ScoreSort{order: order}) do
-    assert_valid_sort_order(order)
-    Sorter.new(score_sort: ScoreSort.new(order: order))
-  end
-  defp prepare_sorter(sorter) do
-    error(fn ->
-      [
-        "** ",
-        inspect(sorter),
-        " sorter is not implemented yet."
+  search "table", "index_name",
+    search_query: [
+      query: match_query("age", 28),
+      sort: [
+        field_sort("age", order: :desc)
       ]
-    end)
-    nil
+    ]
+
+  search "table", "index_name",
+    search_query: [
+      query: exists_query("column_a"),
+      group_bys: [
+        group_by_field("group_name", "column_b",
+          sub_group_bys: [
+            group_by_range("group_name_1", "column_d", [{0, 10}, {10, 20}])
+          ],
+          sort: [
+            group_key_sort(:desc)
+          ]
+        ),
+        group_by_field("group_name2", "column_c")
+      ],
+      aggs: [
+        agg_min("aggregation_name", "column_e")
+      ]
+    ]
+  ```
+
+  Please notice:
+
+    * The statistics(via `:aggs`) and GroupBy type aggregations(via `:group_bys`) can be used at the same time;
+    * The GroupBy type aggregations support the nested sub statistics(via `:sub_aggs`) and sub GroupBy type aggregations(via `:sub_group_bys`);
+    * To ensure the performance and reduce the complexity of aggregations, there is a limition with a certain number
+    of levels for nesting.
+  """
+
+  alias ExAliyunOts.Var.Search
+
+  alias ExAliyunOts.Const.{Search.FieldType, Search.QueryType, Search.ColumnReturnType, Search.SortType, Search.AggregationType, Search.SortOrder, Search.SortMode, Search.GeoDistanceType}
+
+  require FieldType
+  require QueryType
+  require ColumnReturnType
+  require SortType
+  require AggregationType
+  require SortOrder
+  require SortMode
+  require GeoDistanceType
+
+  @doc """
+  Use MatchQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  ## Example
+
+      import MyApp.TableStore
+      search "table", "index_name",
+        search_query: [
+          query: match_query("age", 28)
+        ]
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117485.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117485.html){:target="_blank"}
+
+  ## Options
+
+    * `:minimum_should_match`, the minimum number of terms that the value of the fieldName field in a row
+    contains when Table Store returns this row in the query result, by default it's 1.
+    * `:operator`, the operator used in a logical operation, by default it's `Or`, it means that as long as several
+    terms after the participle are partially hit, they are considered hit this query.
+  """
+  @doc query: :query
+  @spec match_query(field_name :: String.t(), text :: String.t(), options :: Keyword.t()) :: map()
+  def match_query(field_name, text, options \\ []) do
+    %Search.MatchQuery{
+      field_name: field_name,
+      text: text,
+      minimum_should_match: Keyword.get(options, :minimum_should_match, 1),
+    }
   end
 
-  defp prepare_sorter_nested_filter(nil), do: nil
-  defp prepare_sorter_nested_filter(%Search.NestedFilter{path: path, filter: filter}) do
-    query = prepare_query(filter)
-    NestedFilter.new(path: path, filter: query)
+  @doc """
+  Use MatchAllQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: match_all_query()
+        ]
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117484.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117484.html){:target="_blank"}
+  """
+  @doc query: :query
+  @spec match_all_query() :: map()
+  def match_all_query() do
+    %Search.MatchAllQuery{}
   end
 
-  defp assert_valid_sort_order(SortOrder.asc()), do: :ok
-  defp assert_valid_sort_order(SortOrder.desc()), do: :ok
-  defp assert_valid_sort_order(invalid) do
-    raise ExAliyunOts.RuntimeError, "Invalid sort order: #{inspect(invalid)}, please use SortOrder.desc or SortOrder.asc."
+  @doc """
+  Use MatchPhraseQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Similar to `MatchQuery`, however, the location relationship of multiple terms after word segmentation will be considered,
+  multiple terms after word segmentation must exist in the same order and location in the row data to be hit this query.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117486.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117486.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: match_phrase_query("content", "tablestore")
+        ]
+  """
+  @doc query: :query
+  @spec match_phrase_query(field_name :: String.t(), text :: String.t()) :: map()
+  def match_phrase_query(field_name, text) do
+    %Search.MatchPhraseQuery{field_name: field_name, text: text}
   end
 
-  defp assert_valid_sort_mode(SortMode.min()), do: :ok
-  defp assert_valid_sort_mode(SortMode.max()), do: :ok
-  defp assert_valid_sort_mode(SortMode.avg()), do: :ok
-  defp assert_valid_sort_mode(nil), do: :ok
-  defp assert_valid_sort_mode(invalid) do
-    raise ExAliyunOts.RuntimeError, "Invalid sort mode: #{inspect(invalid)}, please use SortMode.min | SortMode.max | SortMode.avg for it."
+  @doc """
+  Use TermQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117488.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117488.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: term_query("age", 28)
+        ]
+  """
+  @doc query: :query
+  @spec term_query(field_name :: String.t(), term :: String.t()) :: map()
+  def term_query(field_name, term) do
+    %Search.TermQuery{field_name: field_name, term: term}
   end
 
-  defp assert_valid_score_mode(ScoreMode.none()), do: :ok
-  defp assert_valid_score_mode(ScoreMode.avg()), do: :ok
-  defp assert_valid_score_mode(ScoreMode.max()), do: :ok
-  defp assert_valid_score_mode(ScoreMode.total()), do: :ok
-  defp assert_valid_score_mode(ScoreMode.min()), do: :ok
-  defp assert_valid_score_mode(invalid) do
-    raise ExAliyunOts.RuntimeError, "Invalid score_mode: #{inspect(invalid)} for NestedQuery, please use ScoreMode.none | ScoreMode.avg | ScoreMode.max | ScoreMode.total | ScoreMode.min for it."
+  @doc """
+  Use TermsQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117493.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117493.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+      search "table", "index_name",
+        search_query: [
+          query: terms_query("age", [28, 29, 30])
+        ]
+  """
+  @doc query: :query
+  @spec terms_query(field_name :: String.t(), terms :: list()) :: map()
+  def terms_query(field_name, terms) when is_list(terms) do
+    %Search.TermsQuery{field_name: field_name, terms: terms}
   end
 
-  defp assert_valid_geo_points(points) do
-    invalid =
-      Enum.find(points, fn(point) ->
-        Utils.valid_geo_point?(point) == false
-      end)
-    if invalid != nil do
-      raise ExAliyunOts.RuntimeError, "Invalid geo point: #{inspect(invalid)}, please set it as `$latitude,$longitude` format."
-    else
-      :ok
-    end
+  @doc """
+  Use PrefixQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117495.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117495.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: prefix_query("name", "n")
+        ]
+  """
+  @doc query: :query
+  @spec prefix_query(field_name :: String.t(), prefix :: String.t()) :: map()
+  def prefix_query(field_name, prefix) do
+    %Search.PrefixQuery{field_name: field_name, prefix: prefix}
   end
 
-  defp assert_valid_geo_point(lat, lon) when is_number(lat) and is_number(lon) do
-    :ok
-  end
-  defp assert_valid_geo_point(lat, lon) do
-    raise ExAliyunOts.RuntimeError, "Invalid latitude: `#{inspect(lat)}` or longitude: `#{inspect(lon)}` for a geo point, please set them as number."
+  @doc """
+  Use RangeQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117496.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117496.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: range_query(
+            "score",
+            from: 60,
+            to: 80,
+            include_upper: false,
+            include_lower: false
+          )
+        ]
+
+  ## Options
+
+    * `:from`, the value of the start position.
+    * `:to`, the value of the end position.
+    * `:include_lower`, specifies whether to include the `:from` value in the result, available options are `true` | `false`,
+    by default it's `true`.
+    * `:include_upper`, specifies whether to include the `:to` value in the result, available options are `true` | `false`,
+    by default it's `true`.
+
+  """
+  @doc query: :query
+  @spec range_query(field_name :: String.t(), options :: Keyword.t()) :: map()
+  def range_query(field_name, options \\ []) do
+    %Search.RangeQuery{
+      field_name: field_name,
+      from: Keyword.get(options, :from),
+      to: Keyword.get(options, :to),
+      include_lower: Keyword.get(options, :include_lower, true),
+      include_upper: Keyword.get(options, :include_upper, true)
+    }
   end
 
-  defp prepare_collapse("") do
-    nil
-  end
-  defp prepare_collapse(field_name) when is_bitstring(field_name) do
-    Collapse.new(field_name: field_name)
-  end
-  defp prepare_collapse(_field_name) do
-    nil
+  @doc """
+  Use WildcardQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117497.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117497.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: wildcard_query("name", "n*")
+        ]
+  """
+  @doc query: :query
+  @spec wildcard_query(field_name :: String.t(), value :: String.t()) :: map()
+  def wildcard_query(field_name, value) do
+    %Search.WildcardQuery{field_name: field_name, value: value}
   end
 
-  defp prepare_aggs(nil), do: nil
-  defp prepare_aggs([]), do: nil
-  defp prepare_aggs(aggs) when is_list(aggs) do
-    map_aggs(aggs, [])
+  @doc """
+  Use BoolQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117498.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117498.html){:target="_blank"}
+
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: bool_query(
+            must: range_query("age", from: 20, to: 32),
+            must_not: term_query("age", 28)
+          )
+        ]
+
+  The following options can be a single `Query` or a list of `Query` to combine the "And | Or | At least"
+  serach condication.
+
+  ## Options
+
+    * `:must`, specifies the Queries that the query result must match, this option is equivalent to the `AND` operator.
+    * `:must_not`, specifies the Queries that the query result must not match, this option is equivalent to the `NOT` operator.
+    * `:should`, specifies the Queries that the query result may or may not match, this option is equivalent to the `OR` operator.
+    * `:minimum_should_match`, specifies the minimum number of `:should` that the query result must match.
+
+  """
+  @doc query: :query
+  @spec bool_query(options :: Keyword.t()) :: map()
+  def bool_query(options) do
+    map_search_options(%Search.BoolQuery{}, options)
   end
 
-  defp map_aggs(nil, []), do: nil
-  defp map_aggs([], []), do: nil
-  defp map_aggs([], result) do
-    Aggregations.new(aggs: Enum.reverse(result))
-  end
-  defp map_aggs([agg | rest], result) do
-    agg = map_agg(agg)
-    map_aggs(rest, [agg | result])
+  @doc """
+  Use NestedQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`, the target field
+  need to be a nested type, it is used to query sub documents of nested type.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/120221.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/120221.html){:target="_blank"}
+
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: nested_query(
+            "content",
+            term_query("content.header", "header1")
+          )
+        ]
+
+  ## Options
+
+    * `:score_mode`, available options have `:none` | `:avg` | `:max` | `:total` | `:min`, by default
+    it's `:none`.
+  """
+  @doc query: :query
+  @spec nested_query(path :: String.t(), query :: map() | Keyword.t(), options :: Keyword.t()) :: map()
+  def nested_query(path, query, options \\ []) do
+    options = Keyword.merge(options, [path: path, query: query])
+    map_search_options(%Search.NestedQuery{}, options)
   end
 
-  defp map_agg(%{type: type} = agg) when type == AggregationType.min do
-    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
-    |> MinAggregation.new()
-    |> MinAggregation.encode()
-    |> to_aggregation(agg.name, type)
-  end
-  defp map_agg(%{type: type} = agg) when type == AggregationType.max do
-    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
-    |> MaxAggregation.new()
-    |> MaxAggregation.encode()
-    |> to_aggregation(agg.name, type)
-  end
-  defp map_agg(%{type: type} = agg) when type == AggregationType.avg do
-    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
-    |> AvgAggregation.new()
-    |> AvgAggregation.encode()
-    |> to_aggregation(agg.name, type)
-  end
-  defp map_agg(%{type: type} = agg) when type == AggregationType.distinct_count do
-    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
-    |> DistinctCountAggregation.new()
-    |> DistinctCountAggregation.encode()
-    |> to_aggregation(agg.name, type)
-  end
-  defp map_agg(%{type: type} = agg) when type == AggregationType.sum do
-    [field_name: agg.field_name, missing: agg_missing_to_bytes(agg.missing)]
-    |> SumAggregation.new()
-    |> SumAggregation.encode()
-    |> to_aggregation(agg.name, type)
-  end
-  defp map_agg(%{type: type} = agg) when type == AggregationType.count do
-    [field_name: agg.field_name]
-    |> CountAggregation.new()
-    |> CountAggregation.encode()
-    |> to_aggregation(agg.name, type)
+  @doc """
+  Use GeoDistanceQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117500.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117500.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+      search "table", "index_name",
+        search_query: [
+          query: geo_distance_query("location", 500_000, "5,5")
+        ]
+
+  Please notice that all geographic coordinates are in "$latitude,$longitude" format.
+  """
+  @doc query: :query
+  @spec geo_distance_query(field_name :: String.t(), distance :: float() | integer(), center_point :: String.t())
+    :: map()
+  def geo_distance_query(field_name, distance, center_point) do
+    %Search.GeoDistanceQuery{
+      field_name: field_name,
+      distance: distance,
+      center_point: center_point
+    }
   end
 
-  defp to_aggregation(body, name, type) do
-    Aggregation.new([body: body, name: name, type: type])
-  end
+  @doc """
+  Use GeoBoundingBoxQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  defp prepare_group_bys(nil), do: nil
-  defp prepare_group_bys([]), do: nil
-  defp prepare_group_bys(group_bys) when is_list(group_bys) do
-    map_group_bys(group_bys, [])
-  end
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117499.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117499.html){:target="_blank"}
 
-  defp map_group_bys(nil, []), do: nil
-  defp map_group_bys([], []), do: nil
-  defp map_group_bys([], result) do
-    GroupBys.new(group_bys: Enum.reverse(result))
-  end
-  defp map_group_bys([group_by | rest], result) do
-    group_by = map_group_by(group_by)
-    map_group_bys(rest, [group_by | result])
-  end
+  ## Example
 
-  defp map_group_by(%Search.GroupByField{name: name, field_name: field_name, size: size, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, sort: sort}) do
-    sub_group_bys = map_group_bys(sub_group_bys, [])
-    sub_aggs = map_aggs(sub_aggs, [])
-    sort = map_group_by_sort(sort, [])
-    [field_name: field_name, size: size, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, sort: sort]
-    |> GroupByField.new()
-    |> GroupByField.encode()
-    |> to_group_by(name, GroupByType.field)
-  end
-  defp map_group_by(%Search.GroupByRange{name: name, field_name: field_name, ranges: ranges, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs}) when is_list(ranges) do
-    sub_group_bys = map_group_bys(sub_group_bys, [])
-    sub_aggs = map_aggs(sub_aggs, [])
-    ranges = map_group_by_ranges(ranges, [])
-    [field_name: field_name, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, ranges: ranges]
-    |> GroupByRange.new()
-    |> GroupByRange.encode()
-    |> to_group_by(name, GroupByType.range)
-  end
-  defp map_group_by(%Search.GroupByFilter{name: name, filters: filters, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs}) when is_list(filters) do
-    sub_group_bys = map_group_bys(sub_group_bys, [])
-    sub_aggs = map_aggs(sub_aggs, [])
-    filters = map_group_by_filters(filters, [])
-    [filters: filters, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs]
-    |> GroupByFilter.new()
-    |> GroupByFilter.encode()
-    |> to_group_by(name, GroupByType.filter)
-  end
-  defp map_group_by(%Search.GroupByGeoDistance{name: name, field_name: field_name, ranges: ranges, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, lat: lat, lon: lon}) do
-    assert_valid_geo_point(lat, lon)
+      import MyApp.TableStore
+      search "table", "index_name",
+        search_query: [
+          query: geo_bounding_box_query("location", "10,-10", "-10,10")
+        ]
 
-    sub_group_bys = map_group_bys(sub_group_bys, [])
-    sub_aggs = map_aggs(sub_aggs, [])
-    ranges = map_group_by_ranges(ranges, [])
-    origin = GeoPoint.new(lat: lat, lon: lon)
-    [field_name: field_name, sub_group_bys: sub_group_bys, sub_aggs: sub_aggs, ranges: ranges, origin: origin]
-    |> GroupByGeoDistance.new()
-    |> GroupByGeoDistance.encode()
-    |> to_group_by(name, GroupByType.geo_distance)
-  end
-
-  defp to_group_by(body, name, type) do
-    GroupBy.new([body: body, name: name, type: type])
-  end
-
-  defp map_group_by_sort(nil, []), do: nil
-  defp map_group_by_sort([], []), do: nil
-  defp map_group_by_sort([], result) do
-    GroupBySort.new(sorters: Enum.reverse(result))
-  end
-  defp map_group_by_sort([sorter | rest], result) do
-    sorter = map_group_by_sorter(sorter)
-    map_group_by_sort(rest, [sorter | result])
-  end
-
-  defp map_group_by_sorter(%Search.GroupKeySort{order: order}) do
-    GroupBySorter.new(group_key_sort: GroupKeySort.new(order: order))
-  end
-  defp map_group_by_sorter(%Search.RowCountSort{order: order}) do
-    GroupBySorter.new(row_count_sort: RowCountSort.new(order: order))
-  end
-  defp map_group_by_sorter(%Search.SubAggSort{sub_agg_name: sub_agg_name, order: order}) do
-    GroupBySorter.new(
-      sub_agg_sort: SubAggSort.new([sub_agg_name: sub_agg_name, order: order])
-    )
-  end
-
-  defp map_group_by_ranges(nil, []), do: nil
-  defp map_group_by_ranges([], []), do: nil
-  defp map_group_by_ranges([], result) do
-    Enum.reverse(result)
-  end
-  defp map_group_by_ranges([{from, to} | rest], result) when is_number(from) and is_number(to) do
-    range = Range.new(from: from, to: to)
-    map_group_by_ranges(rest, [range | result])
-  end
-  defp map_group_by_ranges([{from, to} | _rest], _result) do
-    raise ExAliyunOts.RuntimeError, "Invalid from: `#{inspect(from)}` or to: `#{inspect(to)}` for a range, please set them as number."
-  end
-
-  defp map_group_by_filters(nil, []), do: nil
-  defp map_group_by_filters([], []), do: nil
-  defp map_group_by_filters([], result) do
-    Enum.reverse(result)
-  end
-  defp map_group_by_filters([query | rest], result) do
-    query = prepare_query(query)
-    map_group_by_filters(rest, [query | result])
-  end
-
-  defp prepare_index_setting(setting) do
-    IndexSetting.new(
-      number_of_shards: setting.number_of_shards,
-      routing_fields: setting.routing_fields,
-      routing_partition_size: setting.routing_partition_size
-    )
-  end
-
-  defp prepare_query(%Search.MatchQuery{
-         field_name: field_name,
-         text: text,
-         minimum_should_match: minimum_should_match
-       }) do
-    proto_query = MatchQuery.new(field_name: field_name, text: text, minimum_should_match: minimum_should_match)
-    Query.new(
-      type: QueryType.match,
-      query: MatchQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.MatchAllQuery{}) do
-    proto_query = MatchAllQuery.new()
-    Query.new(
-      type: QueryType.match_all,
-      query: MatchAllQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.MatchPhraseQuery{
-         field_name: field_name,
-         text: text
-       }) do
-    proto_query = MatchPhraseQuery.new(field_name: field_name, text: text)
-    Query.new(
-      type: QueryType.match_phrase,
-      query: MatchPhraseQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.TermQuery{
-         field_name: field_name,
-         term: term
-       }) do
-    term_bytes = term_to_bytes(term)
-    proto_query = TermQuery.new(field_name: field_name, term: term_bytes)
-    Query.new(
-      type: QueryType.term,
-      query: TermQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.TermsQuery{
-         field_name: field_name,
-         terms: terms
-       }) do
-    terms_bytes = Enum.map(terms, fn(term) -> term_to_bytes(term) end)
-    proto_query = TermsQuery.new(field_name: field_name, terms: terms_bytes)
-    Query.new(
-      type: QueryType.terms,
-      query: TermsQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.PrefixQuery{
-         field_name: field_name,
-         prefix: prefix
-       }) do
-    proto_query = PrefixQuery.new(field_name: field_name, prefix: prefix)
-    Query.new(
-      type: QueryType.prefix,
-      query: PrefixQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.WildcardQuery{
-         field_name: field_name,
-         value: value
-       }) do
-    proto_query = WildcardQuery.new(field_name: field_name, value: value)
-    Query.new(
-      type: QueryType.wildcard,
-      query: WildcardQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.RangeQuery{
-         field_name: field_name,
-         from: from,
-         to: to,
-         include_lower: include_lower,
-         include_upper: include_upper
-       }) do
-    # `from` value is lower value, and `to` value is upper value.
-    # if both of them are not nil, we should set "`from` <= `to`" as expected.
-    cond do
-      from == nil and to == nil ->
-        raise ExAliyunOts.RuntimeError, "No `from` or `to` specified for range query"
-      from != nil and to != nil and from > to ->
-        raise ExAliyunOts.RuntimeError, "Require `from` value should be less than or equal to `to` value"
-      true ->
-        :ok
-    end
-
-    bytes_from = if from == nil, do: nil, else: term_to_bytes(from)
-    bytes_to = if to == nil, do: nil, else: term_to_bytes(to)
-    proto_query = RangeQuery.new(field_name: field_name, range_from: bytes_from, range_to: bytes_to, include_lower: include_lower, include_upper: include_upper)
-    Query.new(
-      type: QueryType.range,
-      query: RangeQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.BoolQuery{
-         must: must,
-         must_not: must_not,
-         filter: filter,
-         should: should,
-         minimum_should_match: minimum_should_match
-       }) do
-    must_queries = Enum.map(must, fn(query) -> prepare_query(query) end)
-    must_not_queries = Enum.map(must_not, fn(query) -> prepare_query(query) end)
-    filter_queries = Enum.map(filter, fn(query) -> prepare_query(query) end)
-
-    should_queries = Enum.map(should, fn(query) -> prepare_query(query) end)
-    should_queries_size = length(should_queries)
-
-    minimum_should_match =
-      if should_queries_size > 0 do
-        cond do
-          minimum_should_match == nil ->
-            1
-          not is_integer(minimum_should_match) ->
-            raise ExAliyunOts.RuntimeError, "Invalid minimum_should_match: #{inspect minimum_should_match}, should be integer"
-          minimum_should_match > should_queries_size ->
-            raise ExAliyunOts.RuntimeError, "Invalid minimum_should_match: #{inspect minimum_should_match}, should be less than or equal to the size of should queries (size: #{inspect minimum_should_match})"
-          true ->
-            minimum_should_match
-        end
-      else
-        # if `should_queries` is empty list, should set `minimum_should_match` as nil
-        nil
-      end
-    proto_query = BoolQuery.new(must_queries: must_queries, must_not_queries: must_not_queries, filter_queries: filter_queries, should_queries: should_queries, minimum_should_match: minimum_should_match)
-    Query.new(
-      type: QueryType.bool,
-      query: BoolQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.NestedQuery{
-         path: path,
-         query: query,
-         score_mode: score_mode
-       }) do
-
-    assert_valid_score_mode(score_mode)
-
-    proto_inner_query = prepare_query(query)
-    proto_query = NestedQuery.new(path: path, query: proto_inner_query, score_mode: score_mode)
-    Query.new(
-      type: QueryType.nested,
-      query: NestedQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.GeoDistanceQuery{
-         field_name: field_name,
-         center_point: center_point,
-         distance: distance
-       }) when is_number(distance) and distance >= 0 do
-    if Utils.valid_geo_point?(center_point) do
-      proto_query = GeoDistanceQuery.new(
-        field_name: field_name,
-        center_point: center_point,
-        distance: distance
-      )
-      Query.new(
-        type: QueryType.geo_distance,
-        query: GeoDistanceQuery.encode(proto_query)
-      )
-    else
-      raise ExAliyunOts.RuntimeError, "Invalid center_point: #{inspect(center_point)}, please set it as `$latitude,$longitude` format."
-    end
-  end
-  defp prepare_query(%Search.GeoBoundingBoxQuery{
-         field_name: field_name,
-         top_left: top_left,
-         bottom_right: bottom_right
-       }) do
-    assert_valid_geo_points([top_left, bottom_right])
-    proto_query = GeoBoundingBoxQuery.new(
+  Please notice that all geographic coordinates are in "$latitude,$longitude" format.
+  """
+  @doc query: :query
+  @spec geo_bounding_box_query(field_name :: String.t(), top_left :: String.t(), bottom_right :: String.t())
+    :: map()
+  def geo_bounding_box_query(field_name, top_left, bottom_right) do
+    %Search.GeoBoundingBoxQuery{
       field_name: field_name,
       top_left: top_left,
       bottom_right: bottom_right
-    )
-    Query.new(
-      type: QueryType.geo_bounding_box,
-      query: GeoBoundingBoxQuery.encode(proto_query)
-    )
+    }
   end
-  defp prepare_query(%Search.GeoPolygonQuery{
-         field_name: field_name,
-         points: points
-       }) do
-    assert_valid_geo_points(points)
-    proto_query = GeoPolygonQuery.new(
+
+  @doc """
+  Use GeoPolygonQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117501.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117501.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: geo_polygon_query("location", ["11,11", "0,0", "1,5"])
+        ]
+
+  Please notice that all geographic coordinates are in "$latitude,$longitude" format.
+  """
+  @doc query: :query
+  @spec geo_polygon_query(field_name :: String.t(), geo_points :: list()) :: map()
+  def geo_polygon_query(field_name, geo_points) do
+    %Search.GeoPolygonQuery{
       field_name: field_name,
+      points: geo_points
+    }
+  end
+
+  @doc """
+  Use ExistsQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/124204.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/124204.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: exists_query("values")
+        ]
+  """
+  @doc query: :query
+  @spec exists_query(field_name :: String.t()) :: map()
+  def exists_query(field_name) do
+    %Search.ExistsQuery{field_name: field_name}
+  end
+
+  @doc """
+  Calculate the minimum value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
+  option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_min("agg_name", "score")
+          ]
+        ]
+
+  The `aggregation_name` can be any business description string, when get the calculated results, we need to use
+  it to fetch them.
+
+  ## Options
+
+    * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
+    in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of minimum
+    value, by default it's `nil` (not-set).
+  """
+  @doc aggs: :aggs
+  @spec agg_min(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  def agg_min(aggregation_name, field_name, options \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.min,
+      name: aggregation_name,
+      field_name: field_name,
+      missing: Keyword.get(options, :missing)
+    }
+  end
+
+  @doc """
+  Calculate the maximum value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
+  option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_max("agg_name", "score")
+          ]
+        ]
+
+  The `aggregation_name` can be any business description string, when get the calculated results, we need to use
+  it to fetch them.
+
+  ## Options
+
+    * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
+    in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of maximum
+    value, by default it's `nil` (not-set).
+  """
+  @doc aggs: :aggs
+  @spec agg_max(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  def agg_max(aggregation_name, field_name, options \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.max,
+      name: aggregation_name,
+      field_name: field_name,
+      missing: Keyword.get(options, :missing)
+    }
+  end
+
+  @doc """
+  Calculate the average value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
+  option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_avg("agg_name", "score")
+          ]
+        ]
+
+  The `aggregation_name` can be any business description string, when get the calculated results, we need to use
+  it to fetch them.
+
+  ## Options
+
+    * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
+    in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of average
+    value, by default it's `nil` (not-set).
+  """
+  @doc aggs: :aggs
+  @spec agg_avg(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  def agg_avg(aggregation_name, field_name, options \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.avg,
+      name: aggregation_name,
+      field_name: field_name,
+      missing: Keyword.get(options, :missing)
+    }
+  end
+
+  @doc """
+  Calculate the distinct count of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
+  option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_distinct_count("agg_name", "score")
+          ]
+        ]
+
+  The `aggregation_name` can be any business description string, when get the calculated results, we need to use
+  it to fetch them.
+
+  ## Options
+
+    * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
+    in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of distinct 
+    count, by default it's `nil` (not-set).
+  """
+  @doc aggs: :aggs
+  @spec agg_distinct_count(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  def agg_distinct_count(aggregation_name, field_name, options \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.distinct_count,
+      name: aggregation_name,
+      field_name: field_name,
+      missing: Keyword.get(options, :missing)
+    }
+  end
+
+  @doc """
+  Calculate the summation of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
+  option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_sum("agg_name", "score")
+          ]
+        ]
+
+  The `aggregation_name` can be any business description string, when get the calculated results, we need to use
+  it to fetch them.
+
+  ## Options
+
+    * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
+    in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of summation
+    value, by default it's `nil` (not-set).
+  """
+  @doc aggs: :aggs
+  @spec agg_sum(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  def agg_sum(aggregation_name, field_name, options \\ []) do
+    %Search.Aggregation{
+      type: AggregationType.sum,
+      name: aggregation_name,
+      field_name: field_name,
+      missing: Keyword.get(options, :missing)
+    }
+  end
+
+  @doc """
+  Calculate the count of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
+  option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_sum("agg_name", "score")
+          ]
+        ]
+
+  The `aggregation_name` can be any business description string, when get the calculated results, we need to use
+  it to fetch them.
+
+  If the field is not existed in a row of data, then this row does not participate in the statistics of count.
+  """
+  @doc aggs: :aggs
+  @spec agg_count(aggregation_name :: String.t(), field_name :: String.t()) :: map()
+  def agg_count(aggregation_name, field_name) do
+    %Search.Aggregation{
+      type: AggregationType.count,
+      name: aggregation_name,
+      field_name: field_name,
+    }
+  end
+
+  @doc """
+  The `:group_bys` results are grouped according to the value of a field, the same value will be put into a group, finally, 
+  the value of each group and the number corresponding to the value will be returned.
+
+  We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_field("group_name", "type",
+              size: 3,
+              sub_group_bys: [
+                group_by_field("sub_gn1", "is_actived")
+              ],
+              sort: [
+                row_count_sort(:asc),
+                group_key_sort(:desc)
+              ]
+            ),
+            group_by_field("group_name2", "is_actived")
+          ]
+        ]
+
+  The `group_name` can be any business description string, when get the grouped results, we need to use
+  it to fetch them.
+
+  ## Options
+
+    * `:sort`, optional, add sorting rules for items in a group, by default, sort in descending order according to 
+    the quantity of items in the group. Support `group_key_sort/1` | `row_count_sort/1` | `sub_agg_sort/2` sort.
+    * `:size`, optional, the number of returned groups.
+    * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
+    * `:sub_aggs`, optional, add sub statistics.
+  ```
+  """
+  @doc group_bys: :group_bys
+  @spec group_by_field(group_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  def group_by_field(group_name, field_name, options \\ []) do
+    %Search.GroupByField{
+      name: group_name,
+      field_name: field_name,
+      size: Keyword.get(options, :size),
+      sub_aggs: Keyword.get(options, :sub_aggs),
+      sub_group_bys: Keyword.get(options, :sub_group_bys),
+      sort: Keyword.get(options, :sort)
+    }
+  end
+
+  @doc """
+  The `:group_bys` results are grouped according to the range of a field, if the field value is within a range,
+  it will be put into a group, finally, the number corresponding to the value will be returned.
+
+  We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_range("group_name", "price",
+              [
+                {0, 18},
+                {18, 50}
+              ],
+              sub_group_bys: [
+                group_by_field("sorted_by_type", "type",
+                  sort: [
+                    group_key_sort(:asc)
+                  ]
+                )
+              ],
+              sub_aggs: [
+                agg_distinct_count("distinct_price", "price")
+              ]
+            )
+          ]
+        ]
+
+  The `group_name` can be any business description string, when get the grouped results, we need to use
+  it to fetch them.
+
+  Please notice that each range item(as a tuple, according to {`from`, `to`}) of `ranges`, its start is greater
+  than or equal to `from`, and its ending is less than `to`, the range interval value can be integer or float.
+
+  ## Options
+
+    * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
+    * `:sub_aggs`, optional, add sub statistics.
+  """
+  @doc group_bys: :group_bys
+  @spec group_by_range(group_name :: String.t(), field_name :: String.t(), ranges :: list(),
+    options :: Keyword.t()) :: map()
+  def group_by_range(group_name, field_name, ranges, options \\ []) do
+    %Search.GroupByRange{
+      name: group_name,
+      field_name: field_name,
+      ranges: ranges,
+      sub_aggs: Keyword.get(options, :sub_aggs),
+      sub_group_bys: Keyword.get(options, :sub_group_bys),
+    }
+  end
+
+  @doc """
+  On the query results, group by filters (they're `Query` usecase), and then get the number of matched filters,
+  the order of the returned results is the same as that of the added filter(s).
+
+  We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_filter(
+              "group_name",
+              [
+                term_query("is_actived", true),
+                range_query("price", from: 50)
+              ]
+            )
+          ]
+        ]
+
+  ## Options
+
+    * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
+    * `:sub_aggs`, optional, add sub statistics.
+  """
+  @doc group_bys: :group_bys
+  @spec group_by_filter(group_name :: String.t(), filters :: list(), options :: Keyword.t()) :: map()
+  def group_by_filter(group_name, filters, options \\ []) when is_list(filters) do
+    %Search.GroupByFilter{
+      name: group_name,
+      filters: filters,
+      sub_aggs: Keyword.get(options, :sub_aggs),
+      sub_group_bys: Keyword.get(options, :sub_group_bys)
+    }
+  end
+
+  @doc """
+  The query results are grouped according to the range from a certain center geo point, if the distance difference
+  is within a certain range, it will be put into a group, and finally the number of corresponding items in each
+  range will be returned.
+
+  We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_geo_distance("test", "location",
+              [
+                {0, 100_000},
+                {100_000, 500_000},
+                {500_000, 1000_000},
+              ],
+              lon: 0,
+              lat: 0,
+              sub_aggs: [
+                agg_sum("test_sum", "value")
+              ]
+            )
+          ]
+        ]
+
+  ## Options
+
+    * `:lon`, required, the longitude of the origin center point, integer or float.
+    * `:lat`, required, the latitude of the origin center point, integer or float.
+    * `:sub_group_bys`, optional, add sub GroupBy type aggregations.
+    * `:sub_aggs`, optional, add sub statistics.
+  """
+  @doc group_bys: :group_bys
+  @spec group_by_geo_distance(group_name :: String.t(), field_name :: String.t(), ranges :: list(),
+    options :: Keyword.t()) :: map()
+  def group_by_geo_distance(group_name, field_name, ranges, options \\ []) do
+    %Search.GroupByGeoDistance{
+      name: group_name,
+      field_name: field_name,
+      ranges: ranges,
+      lon: Keyword.fetch!(options, :lon),
+      lat: Keyword.fetch!(options, :lat),
+      sub_aggs: Keyword.get(options, :sub_aggs),
+      sub_group_bys: Keyword.get(options, :sub_group_bys),
+    }
+  end
+
+  @doc """
+  Use in `group_by_field/3` scenario, in ascending/descending order of field literal.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+
+  ## Example
+
+  In the following example, the returned results will be sorted in descending order of the `"type"` field:
+
+    import MyApp.TableStore
+
+    search "table", "index_name",
+      search_query: [
+        query: ...,
+        group_bys: [
+          group_by_field(
+            "group_name",
+            "type",
+            sub_group_bys: [
+              ...
+            ],
+            sort: [
+              group_key_sort(:desc)
+            ]
+          ),
+        ]
+      ]
+  """
+  @doc sort_in_group_bys: :sort_in_group_bys
+  @spec group_key_sort(order :: :asc | :desc) :: map()
+  def group_key_sort(order)
+      when order == SortOrder.desc
+      when order == :desc do
+    %Search.GroupKeySort{order: SortOrder.desc}
+  end
+  def group_key_sort(order)
+      when order == SortOrder.asc
+      when order == :asc do
+    %Search.GroupKeySort{order: SortOrder.asc}
+  end
+  def group_key_sort(invalid) do
+    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+  end
+
+  @doc """
+  Use in `group_by_field/3` scenario, in ascending/descending order of row(s) count.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+
+  ## Example
+
+  In the following example, the returned results will be sorted in ascending order of the matched row(s):
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_field(
+              "group_name",
+              "type",
+              sub_group_bys: [
+                ...
+              ],
+              sort: [
+                row_count_sort(:asc)
+              ]
+            ),
+          ]
+        ]
+  """
+  @doc sort_in_group_bys: :sort_in_group_bys
+  @spec row_count_sort(order :: :asc | :desc) :: %Search.RowCountSort{}
+  def row_count_sort(order)
+      when order == SortOrder.desc
+      when order == :desc do
+    %Search.RowCountSort{order: SortOrder.desc}
+  end
+  def row_count_sort(order)
+      when order == SortOrder.asc
+      when order == :asc do
+    %Search.RowCountSort{order: SortOrder.asc}
+  end
+  def row_count_sort(invalid) do
+    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+  end
+
+  @doc """
+  Use in `group_by_field/3` scenario, in ascending/descending order of the value from sub statistics.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+  """
+  @doc sort_in_group_bys: :sort_in_group_bys
+  @spec sub_agg_sort(sub_agg_name :: String.t(), order :: :asc | :desc) :: map()
+  def sub_agg_sort(sub_agg_name, _)
+      when is_bitstring(sub_agg_name) == false
+      when sub_agg_name == "" do
+    raise ExAliyunOts.RuntimeError, "require sub_agg_name as a string, but input `#{inspect sub_agg_name}`"
+  end
+  def sub_agg_sort(sub_agg_name, order)
+      when order == SortOrder.desc
+      when order == :desc do
+    %Search.SubAggSort{sub_agg_name: sub_agg_name, order: SortOrder.desc}
+  end
+  def sub_agg_sort(sub_agg_name, order)
+      when is_bitstring(sub_agg_name) and order == SortOrder.asc
+      when is_bitstring(sub_agg_name) and order == :asc do
+    %Search.SubAggSort{sub_agg_name: sub_agg_name}
+  end
+  def sub_agg_sort(_sub_agg_name, invalid) do
+    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+  end
+
+  @doc """
+  Sort by the primary key(s) of row, use it in the nested `:sort` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Each search request use this sort by default.
+  """
+  @doc sort: :sort
+  @spec pk_sort(order :: :asc | :desc) :: map()
+  def pk_sort(order) do
+    %Search.PrimaryKeySort{order: map_query_sort_order(order)}
+  end
+
+  @doc """
+  Sort by the relevance score to apply the full-text indexing properly, use it in the nested `:sort` option of
+  `:search_query` option in `ExAliyunOts/search/4`.
+  """
+  @doc sort: :sort
+  @spec score_sort(order :: :asc | :desc) :: map()
+  def score_sort(order) do
+    %Search.ScoreSort{order: map_query_sort_order(order)}
+  end
+
+  @doc """
+  Sort by the value of a column, use it in the nested `:sort` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          sort: [
+            field_sort("field_a", order: :desc)
+          ]
+        ]
+
+  If there's a nested type of search index, and they are a integer or float list, we can use `:mode` to
+  sort according to the minimum/maximum/average value of the list, by default it's `:nil`.
+
+  For example, there's a nested type as "values" field, the following query will find "values" field existed
+  as matched rows, and sort by the minimum value of list items.
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: exists_query("values"),
+          sort: [
+            field_sort("values", mode: :min)
+          ]
+        ]
+
+  Still for nested type of search index, we can sort by the nested value via `:nested_filter` option, for example,
+  sort by the value of "content.header" in `:desc` order.
+
+  ## Example
+ 
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: nested_query(
+            "content",
+            [
+              exists_query("content.header")
+            ]
+          ),
+          sort: [
+            field_sort("content.header",
+              order: :desc,
+              nested_filter: nested_filter(
+                "content",
+                prefix_query("content.header", "header")
+              )
+            )
+          ]
+        ]
+
+  Please ensure that the query criteria matched will participate in sorting, if there exists any not matched case
+  will lead to uncertainty of sorting results.
+
+  ## Options
+
+    * `:mode`, optional, available options are `:min` | `:max` | `:avg`, by default it's `:nil`;
+    * `:order`, optional, available options are `:asc` | `:desc`, by default it's `:asc`;
+    * `:nested_filter`, optional, see `nested_filter/2` for details.
+  """
+  @doc sort: :sort
+  @spec field_sort(field_name :: String.t(), options :: Keyword.t()) :: map()
+  def field_sort(field_name, options \\ []) do
+    %Search.FieldSort{
+      field_name: field_name,
+      order: map_query_sort_order(Keyword.get(options, :order)),
+      mode: map_query_sort_mode(Keyword.get(options, :mode)),
+      nested_filter: Keyword.get(options, :nested_filter)
+    }
+  end
+
+  @doc """
+  Geographic distance sorting, according to the sum of distances between to the input geographical points,
+  sort by the minimum/maximum/average summation value.
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: geo_distance_query("location", 500_000, "5,5"),
+          sort: [
+            geo_distance_sort("location", ["5.14,5.21"], order: :asc)
+          ]
+        ]
+
+  The input points are a list of string, each format as "$latitude,$longitude".
+
+  ## Options
+
+    * `:order`, optional, available options are `:asc` | `:desc`;
+    * `:mode`, optional, used for nested type field within integer or float, as `:min` will sort by the minimum value of
+    items, as `:max` will sort by the maximum value of items, as `:avg` will sort by the average value of items, by default
+    it's `:nil`;
+    * `:distance_type`, optional, available options are `:arc` | `:plane`, as `:arc` means distance calculated by arc surface, as `:plane` means distance calculated by plane.
+  """
+  @doc sort: :sort
+  @spec geo_distance_sort(field_name :: String.t(), options :: list(), options :: Keyword.t()) :: map()
+  def geo_distance_sort(field_name, points, options) when is_list(points) do
+    %Search.GeoDistanceSort{
+      field_name: field_name,
+      order: map_query_sort_order(Keyword.get(options, :order)),
+      mode: map_query_sort_mode(Keyword.get(options, :mode)),
+      distance_type: map_query_sort_geo_distance_type(Keyword.get(options, :distance_type)),
       points: points
-    )
-    Query.new(
-      type: QueryType.geo_polygon,
-      query: GeoPolygonQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(%Search.ExistsQuery{
-         field_name: field_name
-       }) do
-    proto_query = ExistsQuery.new(field_name: field_name)
-    Query.new(
-      type: QueryType.exists,
-      query: ExistsQuery.encode(proto_query)
-    )
-  end
-  defp prepare_query(query) do
-    raise ExAliyunOts.RuntimeError, "Not supported query: #{inspect query}"
-  end
-
-  defp decode_search_response(response_body) do
-    response_body
-    |> SearchResponse.decode()
-    |> Map.update(:aggs, nil, &decode_aggs/1)
-    |> Map.update(:group_bys, nil, &decode_group_bys/1)
-  end
-
-  defp decode_aggs(nil), do: nil
-  defp decode_aggs(aggs) do
-    result = AggregationsResult.decode(aggs)
-    Enum.reduce(result.agg_results, %{}, &decode_agg/2)
-  end
-
-  defp decode_agg(%{type: AggregationType.avg, name: name, agg_result: agg_result}, agg_results) do
-    decoded = AvgAggregationResult.decode(agg_result)
-    sort_map_results_by_type(agg_results, :avg, name, decoded.value)
-  end
-  defp decode_agg(%{type: AggregationType.max, name: name, agg_result: agg_result}, agg_results) do
-    decoded = MaxAggregationResult.decode(agg_result)
-    sort_map_results_by_type(agg_results, :max, name, decoded.value)
-  end
-  defp decode_agg(%{type: AggregationType.min, name: name, agg_result: agg_result}, agg_results) do
-    decoded = MinAggregationResult.decode(agg_result)
-    sort_map_results_by_type(agg_results, :min, name, decoded.value)
-  end
-  defp decode_agg(%{type: AggregationType.sum, name: name, agg_result: agg_result}, agg_results) do
-    decoded = SumAggregationResult.decode(agg_result)
-    sort_map_results_by_type(agg_results, :sum, name, decoded.value)
-  end
-  defp decode_agg(%{type: AggregationType.count, name: name, agg_result: agg_result}, agg_results) do
-    decoded = CountAggregationResult.decode(agg_result)
-    sort_map_results_by_type(agg_results, :count, name, decoded.value)
-  end
-  defp decode_agg(%{type: AggregationType.distinct_count, name: name, agg_result: agg_result}, agg_results) do
-    decoded = DistinctCountAggregationResult.decode(agg_result)
-    sort_map_results_by_type(agg_results, :distinct_count, name, decoded.value)
-  end
-
-  defp decode_group_bys(nil), do: nil
-  defp decode_group_bys(group_bys) do
-    result = GroupBysResult.decode(group_bys)
-    Enum.reduce(result.group_by_results, %{}, &decode_group_by/2)
-  end
-
-  defp decode_group_by(%{type: GroupByType.field, name: name, group_by_result: group_by_result}, map_results) do
-    result = GroupByFieldResult.decode(group_by_result)
-    items = decode_sub_details(result.group_by_field_result_items, [])
-    sort_map_results_by_type(map_results, :by_field, name, items)
-  end
-  defp decode_group_by(%{type: GroupByType.range, name: name, group_by_result: group_by_result}, map_results) do
-    result = GroupByRangeResult.decode(group_by_result)
-    items = decode_sub_details(result.group_by_range_result_items, [])
-    sort_map_results_by_type(map_results, :by_range, name, items)
-  end
-  defp decode_group_by(%{type: GroupByType.filter, name: name, group_by_result: group_by_result}, map_results) do
-    result = GroupByFilterResult.decode(group_by_result)
-    items = decode_sub_details(result.group_by_filter_result_items, [])
-    sort_map_results_by_type(map_results, :by_filter, name, items)
-  end
-  defp decode_group_by(%{type: GroupByType.geo_distance, name: name, group_by_result: group_by_result}, map_results) do
-    result = GroupByGeoDistanceResult.decode(group_by_result)
-    items = decode_sub_details(result.group_by_geo_distance_result_items, [])
-    sort_map_results_by_type(map_results, :by_geo_distance, name, items)
-  end
-
-  defp decode_sub_details([], prepared) do
-    Enum.reverse(prepared)
-  end
-  defp decode_sub_details([%GroupByFieldResultItem{sub_aggs_result: sub_aggs_result, sub_group_bys_result: sub_group_bys_result} = item | rest], prepared) do
-
-    sub_aggs = decode_sub_aggs(sub_aggs_result)
-    sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
-
-    prepared_item = %{
-      key: item.key,
-      row_count: item.row_count,
-      sub_aggs: sub_aggs,
-      sub_group_bys: sub_group_bys
     }
-    decode_sub_details(rest, [prepared_item | prepared])
   end
-  defp decode_sub_details([%GroupByRangeResultItem{sub_aggs_result: sub_aggs_result, sub_group_bys_result: sub_group_bys_result} = item | rest], prepared) do
 
-    sub_aggs = decode_sub_aggs(sub_aggs_result)
-    sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
 
-    prepared_item = %{
-      from: item.from,
-      to: item.to,
-      row_count: item.row_count,
-      sub_aggs: sub_aggs,
-      sub_group_bys: sub_group_bys
+  @doc """
+  Use for the nested type field in `field_sort/2` as `:nested_filter` option, the input `filter`
+  is a Query to filter results.
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: nested_query(
+            "content",
+            [
+              exists_query("content.header")
+            ]
+          ),
+          sort: [
+            field_sort("content.header",
+              order: :desc,
+              nested_filter: nested_filter(
+                "content",
+                prefix_query("content.header", "header")
+              )
+            )
+          ]
+        ]
+
+  Please ensure that the query criteria matched will participate in sorting, if there exists any not matched case
+  will lead to uncertainty of sorting results.
+  """
+  @doc sort: :sort
+  @spec nested_filter(path :: String.t(), filter :: map()) :: map()
+  def nested_filter(path, filter) when is_map(filter) do
+    %Search.NestedFilter{
+      path: path,
+      filter: filter
     }
-    decode_sub_details(rest, [prepared_item | prepared])
-  end
-  defp decode_sub_details([%GroupByFilterResultItem{sub_aggs_result: sub_aggs_result, sub_group_bys_result: sub_group_bys_result} = item | rest], prepared) do
-
-    sub_aggs = decode_sub_aggs(sub_aggs_result)
-    sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
-
-    prepared_item = %{
-      row_count: item.row_count,
-      sub_aggs: sub_aggs,
-      sub_group_bys: sub_group_bys
-    }
-    decode_sub_details(rest, [prepared_item | prepared])
-  end
-  defp decode_sub_details([%GroupByGeoDistanceResultItem{sub_aggs_result: sub_aggs_result, sub_group_bys_result: sub_group_bys_result} = item | rest], prepared) do
-
-    sub_aggs = decode_sub_aggs(sub_aggs_result)
-    sub_group_bys = decode_sub_group_bys(sub_group_bys_result)
-
-    prepared_item = %{
-      from: item.from,
-      to: item.to,
-      row_count: item.row_count,
-      sub_aggs: sub_aggs,
-      sub_group_bys: sub_group_bys
-    }
-    decode_sub_details(rest, [prepared_item | prepared])
   end
 
-  defp decode_sub_aggs(nil), do: nil
-  defp decode_sub_aggs(sub_aggs_result) do
-    Enum.reduce(sub_aggs_result.agg_results, %{}, &decode_agg/2)
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_integer("age")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[1,2]"`.
+  """
+  @doc field_schema: :field_schema
+  @spec field_schema_integer(field_name :: String.t(), options :: Keyword.t()) :: map()
+  def field_schema_integer(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.long, field_name: field_name}, options)
   end
 
-  defp decode_sub_group_bys(nil), do: nil
-  defp decode_sub_group_bys(sub_group_bys_result) do
-    Enum.reduce(sub_group_bys_result.group_by_results, %{}, &decode_group_by/2)
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_float("price")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[1.0,2.0]"`.
+  """
+  @doc field_schema: :field_schema
+  @spec field_schema_float(field_name :: String.t(), options :: Keyword.t()) :: map()
+  def field_schema_float(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.double, field_name: field_name}, options)
   end
 
-  defp sort_map_results_by_type(results, type, name, new_result) when is_map(results) do
-    current = Map.get(results, type)
-    if current != nil do
-      Map.put(results, type, Map.put(current, name, new_result))
-    else
-      Map.put(results, type, %{name => new_result})
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_boolean("status")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[false,true,false]"`.
+  """
+  @doc field_schema: :field_schema
+  @spec field_schema_boolean(field_name :: String.t(), options :: Keyword.t()) :: map()
+  def field_schema_boolean(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.boolean, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_keyword("status")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"a\",\"b\"]"`.
+  """
+  @doc field_schema: :field_schema
+  def field_schema_keyword(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.keyword, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_text("content")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"a\",\"b\"]"`.
+    * `:analyzer`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html) |
+    [English](https://www.alibabacloud.com/help/doc-detail/120227.html).
+  """
+  @doc field_schema: :field_schema
+  def field_schema_text(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.text, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_nested(
+        "content",
+        field_schemas: [
+          field_schema_keyword("header"),
+          field_schema_keyword("body"),
+        ]
+
+  ## Options
+
+    * `:field_schemas`, required, the nested field schema(s);
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true.
+  """
+  @doc field_schema: :field_schema
+  def field_schema_nested(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.nested, field_name: field_name}, options)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+
+  ## Example
+
+      field_schema_geo_point("location")
+
+  ## Options
+
+    * `:index`, specifies whether to set as index, by default it is true;
+    * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
+    * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
+    * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"10.21,10\",\"10.31,9.98\"]"`.
+  """
+  @doc field_schema: :field_schema
+  def field_schema_geo_point(field_name, options \\ []) do
+    map_field_schema(%Search.FieldSchema{field_type: FieldType.geo_point, field_name: field_name}, options)
+  end
+
+  defp map_field_schema(%{field_type: FieldType.nested} = schema, options) when is_map(schema) do
+    schema
+    |> do_map_field_schema(options)
+    |> Map.put(:field_schemas, expect_list(Keyword.get(options, :field_schemas, [])))
+  end
+  defp map_field_schema(%{field_type: FieldType.text} = schema, options) when is_map(schema) do
+    schema
+    |> do_map_field_schema(options)
+    |> Map.put(:analyzer, Keyword.get(options, :analyzer, nil))
+  end
+  defp map_field_schema(schema, options) when is_map(schema) do
+    do_map_field_schema(schema, options)
+  end
+
+  defp do_map_field_schema(schema, options) do
+    schema
+    |> Map.put(:index, expect_boolean(Keyword.get(options, :index, true)))
+    |> Map.put(:enable_sort_and_agg, expect_boolean(Keyword.get(options, :enable_sort_and_agg, true)))
+    |> Map.put(:store, expect_boolean(Keyword.get(options, :store, true)))
+    |> Map.put(:is_array, expect_boolean_or_nil(Keyword.get(options, :is_array)))
+  end
+
+  defp expect_boolean_or_nil(nil), do: nil
+  defp expect_boolean_or_nil(value), do: expect_boolean(value)
+
+  defp expect_boolean(true), do: true
+  defp expect_boolean(false), do: false
+  defp expect_boolean(invalid) do
+    raise ExAliyunOts.RuntimeError, "Expect get a boolean value but it is invalid: #{inspect(invalid)}"
+  end
+
+  defp expect_list(items) when is_list(items), do: items
+  defp expect_list(invalid) do
+    raise ExAliyunOts.RuntimeError, "Expect get a list but it is invalid: #{inspect(invalid)}"
+  end
+
+  @doc false
+  def map_search_options(var, nil) do
+    var
+  end
+  def map_search_options(var, options) do
+    Enum.reduce(options, var, fn({key, value}, acc) ->
+      if value != nil and Map.has_key?(var, key) do
+        do_map_search_options(key, value, acc)
+      else
+        acc
+      end
+    end)
+  end
+
+  defp do_map_search_options(:search_query = key, value, var) do
+    Map.put(var, key, map_search_query(value))
+  end
+  defp do_map_search_options(:columns_to_get = key, value, var) do
+    Map.put(var, key, map_columns_to_get(value))
+  end
+  defp do_map_search_options(:sort = key, value, var) do
+    Map.put(var, key, map_query_sort(value))
+  end
+  defp do_map_search_options(:must = key, value, var) when is_list(value) do
+    # for BoolQuery within `must` items list
+    queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+    Map.put(var, key, queries)
+  end
+  defp do_map_search_options(:must = key, value, var) when is_map(value) do
+    # for BoolQuery within a single `must` item
+    Map.put(var, key, [value])
+  end
+  defp do_map_search_options(:must_not = key, value, var) when is_list(value) do
+    # for BoolQuery within `must_not` items list
+    queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+    Map.put(var, key, queries)
+  end
+  defp do_map_search_options(:must_not = key, value, var) when is_map(value) do
+    # for BoolQuery within a single `must_not` item
+    Map.put(var, key, [value])
+  end
+  defp do_map_search_options(:filter = key, value, var) when is_list(value) do
+    # for BoolQuery within `filters` items list
+    queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+    Map.put(var, key, queries)
+  end
+  defp do_map_search_options(:filters = key, value, var) when is_map(value) do
+    # for BoolQuery within a single `filters` item
+    Map.put(var, key, [value])
+  end
+  defp do_map_search_options(:should = key, value, var) when is_list(value) do
+    # for BoolQuery within `should` items list
+    queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+    Map.put(var, key, queries)
+  end
+  defp do_map_search_options(:should = key, value, var) when is_map(value) do
+    # for BoolQuery within a single `should` item
+    Map.put(var, key, [value])
+  end
+  defp do_map_search_options(:query = key, value, var) do
+    # for NestedQuery
+    Map.put(var, key, map_query_details(value))
+  end
+  defp do_map_search_options(key, value, var) do
+    Map.put(var, key, value)
+  end
+
+  defp map_search_query(search_query) when is_list(search_query) do
+    if not Keyword.keyword?(search_query), do: raise ExAliyunOts.RuntimeError, "input query: #{inspect search_query} required to be keyword"
+
+    {query, rest_search_query_options} = Keyword.pop(search_query, :query, Keyword.new())
+
+    search_query = map_search_options(%Search.SearchQuery{}, rest_search_query_options)
+
+    var_query = map_query_details(query)
+
+    Map.put(search_query, :query, var_query)
+  end
+
+    defp map_query_details([query]) when is_map(query) do
+    query
+  end
+  defp map_query_details(query) when is_list(query) do
+    query_type = Keyword.get(query, :type)
+    map_query_details(query_type, query)
+  end
+  defp map_query_details(query) when is_map(query) do
+    query
+  end
+  defp map_query_details(query) do
+    raise ExAliyunOts.RuntimeError, "Input invalid query to map query details: #{inspect query}"
+  end
+
+  defp map_query_details(QueryType.match, query) do
+    map_search_options(%Search.MatchQuery{}, query)
+  end
+  defp map_query_details(QueryType.match_all, query) do
+    map_search_options(%Search.MatchAllQuery{}, query)
+  end
+  defp map_query_details(QueryType.match_phrase, query) do
+    map_search_options(%Search.MatchPhraseQuery{}, query)
+  end
+  defp map_query_details(QueryType.term, query) do
+    map_search_options(%Search.TermQuery{}, query)
+  end
+  defp map_query_details(QueryType.terms, query) do
+    map_search_options(%Search.TermsQuery{}, query)
+  end
+  defp map_query_details(QueryType.prefix, query) do
+    map_search_options(%Search.PrefixQuery{}, query)
+  end
+  defp map_query_details(QueryType.wildcard, query) do
+    map_search_options(%Search.WildcardQuery{}, query)
+  end
+  defp map_query_details(QueryType.range, query) do
+    map_search_options(%Search.RangeQuery{}, query)
+  end
+  defp map_query_details(QueryType.bool, query) do
+    map_search_options(%Search.BoolQuery{}, query)
+  end
+  defp map_query_details(QueryType.nested, query) do
+    map_search_options(%Search.NestedQuery{}, query)
+  end
+  defp map_query_details(QueryType.geo_distance, query) do
+    map_search_options(%Search.GeoDistanceQuery{}, query)
+  end
+  defp map_query_details(QueryType.geo_bounding_box, query) do
+    map_search_options(%Search.GeoBoundingBoxQuery{}, query)
+  end
+  defp map_query_details(QueryType.geo_polygon, query) do
+    map_search_options(%Search.GeoPolygonQuery{}, query)
+  end
+  defp map_query_details(QueryType.exists, query) do
+    map_search_options(%Search.ExistsQuery{}, query)
+  end
+  defp map_query_details(_query_type, query) do
+    raise ExAliyunOts.RuntimeError, "Not supported query when map query details: #{inspect query}"
+  end
+
+  defp map_query_sort(nil), do: nil
+  defp map_query_sort(sorters) when is_list(sorters) do
+    Enum.map(sorters, &map_search_query_sorter/1)
+  end
+
+  defp map_search_query_sorter(sorter) when is_list(sorter) do
+    {sorter_type, rest_sorter_options} = Keyword.pop(sorter, :type)
+    case sorter_type do
+      SortType.field ->
+        map_search_query_sort_options(%Search.FieldSort{}, rest_sorter_options)
+      SortType.geo_distance ->
+        map_search_query_sort_options(%Search.GeoDistanceSort{}, rest_sorter_options)
+      SortType.pk ->
+        map_search_query_sort_options(%Search.PrimaryKeySort{}, rest_sorter_options)
+      SortType.score ->
+        map_search_query_sort_options(%Search.ScoreSort{}, rest_sorter_options)
+      _ ->
+        raise ExAliyunOts.RuntimeError, "invalid sorter: #{inspect sorter}"
     end
+  end
+  defp map_search_query_sorter(%Search.GeoDistanceSort{} = sorter) do
+    sorter
+  end
+  defp map_search_query_sorter(%Search.FieldSort{} = sorter) do
+    sorter
+  end
+
+  defp map_search_query_sort_options(var, nil) do
+    var
+  end
+  defp map_search_query_sort_options(var, options) do
+    Enum.reduce(options, var, fn({key, value}, acc) ->
+      if value != nil and Map.has_key?(var, key) do
+        do_map_search_query_sort_options(key, value, acc)
+      else
+        acc
+      end
+    end)
+  end
+
+  defp do_map_search_query_sort_options(:order = key, value, var) do
+    Map.put(var, key, map_query_sort_order(value))
+  end
+  defp do_map_search_query_sort_options(:type = key, value, var) do
+    Map.put(var, key, map_query_sort_type(value))
+  end
+  defp do_map_search_query_sort_options(:mode = key, value, var) do
+    Map.put(var, key, map_query_sort_mode(value))
+  end
+  defp do_map_search_query_sort_options(:distance_type = key, value, var) do
+    Map.put(var, key, map_query_sort_geo_distance_type(value))
+  end
+  defp do_map_search_query_sort_options(key, value, var) do
+    Map.put(var, key, value)
+  end
+
+  defp map_query_sort_order(nil), do: SortOrder.asc
+  defp map_query_sort_order(:asc), do: SortOrder.asc
+  defp map_query_sort_order(:desc), do: SortOrder.desc
+  defp map_query_sort_order(SortOrder.asc), do: SortOrder.asc
+  defp map_query_sort_order(SortOrder.desc), do: SortOrder.desc
+
+  defp map_query_sort_type(nil), do: nil
+  defp map_query_sort_type(:field), do: SortType.field
+  defp map_query_sort_type(:geo_distance), do: SortType.geo_distance
+  defp map_query_sort_type(:pk), do: SortType.pk
+  defp map_query_sort_type(:score), do: SortType.score
+
+  defp map_query_sort_mode(nil), do: nil
+  defp map_query_sort_mode(:min), do: SortMode.min
+  defp map_query_sort_mode(:max), do: SortMode.max
+  defp map_query_sort_mode(:avg), do: SortMode.avg
+  defp map_query_sort_mode(SortMode.min), do: SortMode.min
+  defp map_query_sort_mode(SortMode.max), do: SortMode.max
+  defp map_query_sort_mode(SortMode.avg), do: SortMode.avg
+
+  defp map_query_sort_geo_distance_type(nil), do: nil
+  defp map_query_sort_geo_distance_type(:arc), do: GeoDistanceType.arc
+  defp map_query_sort_geo_distance_type(:plane), do: GeoDistanceType.plane
+  defp map_query_sort_geo_distance_type(GeoDistanceType.arc), do: GeoDistanceType.arc
+  defp map_query_sort_geo_distance_type(GeoDistanceType.plane), do: GeoDistanceType.plane
+
+  defp map_columns_to_get(column_names) when is_list(column_names) do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.specified,
+      column_names: column_names
+    }
+  end
+  defp map_columns_to_get({return_type, column_names})
+    when return_type == :specified and is_list(column_names)
+    when return_type == ColumnReturnType.specified and is_list(column_names) do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.specified,
+      column_names: column_names
+    }
+  end
+  defp map_columns_to_get(return_type)
+    when return_type == :all
+    when return_type == ColumnReturnType.all do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.all
+    }
+  end
+  defp map_columns_to_get(return_type)
+    when return_type == :none
+    when return_type == ColumnReturnType.none do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.none
+    }
+  end
+  defp map_columns_to_get(value) do
+    raise ExAliyunOts.RuntimeError, "invalid columns_to_get for search: `#{inspect value}`"
   end
 
 end

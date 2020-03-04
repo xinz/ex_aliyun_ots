@@ -131,13 +131,13 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
           limit: 0,
           group_bys: [
             group_by_geo_distance("test", "location",
-              lat: 0,
-              lon: 0,
-              ranges: [
+              [
                 {0, 100_000},
                 {100_000, 500_000},
                 {500_000, 1000_000},
               ],
+              lon: 0,
+              lat: 0,
               sub_aggs: [
                 agg_sum("test_sum", "value")
               ]
@@ -170,12 +170,12 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
           limit: 0,
           group_bys: [
             group_by_geo_distance("test", "location",
-              lat: "lat",
-              lon: "lon",
-              ranges: [
+              [
                 {0, 100_000},
                 {100_000, 500_000}
               ],
+              lat: "lat",
+              lon: "lon",
               sub_aggs: [
                 agg_sum("test_sum", "value")
               ]
@@ -191,12 +191,12 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
           limit: 0,
           group_bys: [
             group_by_geo_distance("test", "location",
-              lat: 10,
-              lon: 10,
-              ranges: [
+              [
                 {0, 100_000},
                 {"100_000", "500_000"}
               ],
+              lat: 10,
+              lon: 10,
               sub_aggs: [
                 agg_sum("test_sum", "value")
               ]
@@ -214,12 +214,12 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
           limit: 0,
           group_bys: [
             group_by_geo_distance("test", "location",
-              lat: 10,
-              lon: 10,
-              ranges: [
+              [
                 {0, 100_000},
                 {10_000, 500_000}
               ],
+              lat: 10,
+              lon: 10,
               sub_aggs: [
                 agg_sum("test_sum", "value")
               ]

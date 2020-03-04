@@ -212,7 +212,8 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
-       when value == PKType.inf_min() do
+    when value == PKType.inf_min()
+    when value == :inf_min do
     buffer =
       <<buffer::bitstring, <<1::little-integer-size(32)>>,
         byte_to_binary(@vt_inf_min)::bitstring>>
@@ -222,7 +223,8 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
-       when value == PKType.inf_max() do
+    when value == PKType.inf_max()
+    when value == :inf_max do
     buffer =
       <<buffer::bitstring, <<1::little-integer-size(32)>>,
         byte_to_binary(@vt_inf_max)::bitstring>>

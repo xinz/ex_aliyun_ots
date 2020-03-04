@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.RuntimeError do
+  @moduledoc false
   defexception [:message, :error_code]
 
   def exception(value) do
@@ -8,6 +9,8 @@ defmodule ExAliyunOts.RuntimeError do
 end
 
 defmodule ExAliyunOts.Instance do
+  @moduledoc "Describe Alibaba TableStore instance primary information."
+
   @type t :: %__MODULE__{}
 
   defstruct [
@@ -24,6 +27,8 @@ defmodule ExAliyunOts.HTTPRequest do
 end
 
 defmodule ExAliyunOts.Error do
+  @moduledoc "Describe request error from server http response."
+
   @type t :: %__MODULE__{
           code: binary,
           message: binary,
@@ -168,7 +173,7 @@ defmodule ExAliyunOts.Var.Search do
     @moduledoc false
     alias ExAliyunOts.Const.Search.FieldType
     require FieldType
-    defstruct field_name: "", field_type: FieldType.keyword, index_options: nil, analyzer: "", index: true, enable_sort_and_agg: true, store: true, field_schemas: [], is_array: nil
+    defstruct field_name: "", field_type: FieldType.keyword, index_options: nil, analyzer: nil, index: true, enable_sort_and_agg: true, store: true, field_schemas: [], is_array: nil
   end
 
   defmodule FieldSort do

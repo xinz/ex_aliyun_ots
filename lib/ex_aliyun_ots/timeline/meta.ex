@@ -38,7 +38,7 @@ defmodule ExAliyunOts.Timeline.Meta do
       end
 
       def search(meta, options \\ []) when is_list(options) do
-        ExAliyunOts.Mixin.execute_search(
+        ExAliyunOts.search(
           meta.instance,
           meta.table_name,
           meta.index_name,
