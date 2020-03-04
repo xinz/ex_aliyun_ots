@@ -139,6 +139,10 @@ Here is a [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore)
 * Tunnel service
 * Timeline mode
 
+## Thanks
+
+Thanks very much for the help and support of the Alibaba TableStore offical support team.
+
 ## References
 
 Alibaba Tablestore product official references:
