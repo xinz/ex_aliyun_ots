@@ -443,10 +443,8 @@ defmodule ExAliyunOts do
 
   ## Options
 
-    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, here are available options:
-      - `:all`, return all fields;
-      - `:none`, do not return attribute columns;
-      - `["field1", "field2"]`, specifies the expected return fields directly;
+    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, pass a field list to specify the expected return fields
+    e.g. `["field1", "field2"]`.
     * `:start_column`, optional, specifies the start column when using for wide-row-read, the returned result contains this `:start_column`.
     * `:end_column`, optional, specifies the end column when using for wide-row-read, the returned result does not contain this `:end_column`.
     * `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
@@ -703,10 +701,8 @@ defmodule ExAliyunOts do
       than `exclusive_end_primary_keys`;
       - `:backward`, this query is performed in the order of primary key in descending, in this case, input `inclusive_start_primary_keys` should greater
       than `exclusive_end_primary_keys`.
-    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, here are available options:
-      - `:all`, return all fields;
-      - `:none`, do not return attribute columns;
-      - `["field1", "field2"]`, specifies the expected return fields directly;
+    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, pass a field list to specify the expected return fields,
+    e.g. `["field1", "field2"]`.
     * `:start_column`, optional, specifies the start column when using for wide-row-read, the returned result contains this `:start_column`.
     * `:end_column`, optional, specifies the end column when using for wide-row-read, the returned result does not contain this `:end_column`.
     * `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
