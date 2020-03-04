@@ -83,6 +83,63 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(attrs) == 2
   end
 
+  test "columns_to_get" do
+    index_name = "test_search_index"
+    {:ok, response} = 
+      search @table, index_name,
+        columns_to_get: {:specified, ["class", "name"]},
+        search_query: [
+          query: match_query("age", "28"),
+          limit: 1
+        ]
+    assert response.total_hits == 2
+    [{[{_pk_key, pk_value}], attrs}] = response.rows
+    assert pk_value == "a2"
+    assert length(attrs) == 2
+
+    {:ok, response} = 
+      search @table, index_name,
+        columns_to_get: :none,
+        search_query: [
+          query: match_query("age", "28"),
+          limit: 1
+        ]
+    
+    [{_, attrs}] = response.rows
+    assert attrs == nil
+    
+    {:ok, response} = 
+      search @table, index_name,
+        columns_to_get: :all,
+        search_query: [
+          query: match_query("age", "28"),
+          limit: 1
+        ]
+    
+    [{_, attrs}] = response.rows
+    assert length(attrs) > 2
+
+    {:ok, response} = 
+      search @table, index_name,
+        search_query: [
+          query: match_query("age", "28"),
+          limit: 1
+        ]
+    [{_, attrs_2}] = response.rows
+    assert attrs == attrs_2
+
+    {:ok, response} = 
+      search @table, index_name,
+        columns_to_get: ["class"],
+        search_query: [
+          query: match_query("age", "28"),
+          limit: 1
+        ]
+    
+    [{_, [{column_name, _, _}]}] = response.rows
+    assert column_name == "class"
+  end
+
   test "match query with match_query/3 function" do
     index_name = "test_search_index"
     {:ok, response} =

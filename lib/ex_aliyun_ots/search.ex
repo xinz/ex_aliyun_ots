@@ -1545,37 +1545,36 @@ defmodule ExAliyunOts.Search do
   defp map_query_sort_geo_distance_type(GeoDistanceType.arc), do: GeoDistanceType.arc
   defp map_query_sort_geo_distance_type(GeoDistanceType.plane), do: GeoDistanceType.plane
 
-  defp map_columns_to_get(value) when is_list(value) do
+  defp map_columns_to_get(column_names) when is_list(column_names) do
     %Search.ColumnsToGet{
       return_type: ColumnReturnType.specified,
-      column_names: value
-    }
-  end
-  defp map_columns_to_get({return_type, column_names}) when is_list(column_names) do
-    if return_type not in [
-         ColumnReturnType.all(),
-         ColumnReturnType.none(),
-         ColumnReturnType.specified()
-       ],
-       do: raise(ExAliyunOts.RuntimeError, "invalid return_type: #{inspect return_type} in columns_to_get")
-
-    %Search.ColumnsToGet{
-      return_type: return_type,
       column_names: column_names
     }
   end
-  defp map_columns_to_get(ColumnReturnType.all) do
+  defp map_columns_to_get({return_type, column_names})
+    when return_type == :specified and is_list(column_names)
+    when return_type == ColumnReturnType.specified and is_list(column_names) do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.specified,
+      column_names: column_names
+    }
+  end
+  defp map_columns_to_get(return_type)
+    when return_type == :all
+    when return_type == ColumnReturnType.all do
     %Search.ColumnsToGet{
       return_type: ColumnReturnType.all
     }
   end
-  defp map_columns_to_get(ColumnReturnType.none) do
+  defp map_columns_to_get(return_type)
+    when return_type == :none
+    when return_type == ColumnReturnType.none do
     %Search.ColumnsToGet{
       return_type: ColumnReturnType.none
     }
   end
   defp map_columns_to_get(value) do
-    raise ExAliyunOts.RuntimeError, "invalid columns_to_get for search: #{inspect value}"
+    raise ExAliyunOts.RuntimeError, "invalid columns_to_get for search: `#{inspect value}`"
   end
 
 end
