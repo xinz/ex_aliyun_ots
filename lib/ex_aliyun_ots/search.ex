@@ -875,7 +875,7 @@ defmodule ExAliyunOts.Search do
             sort: [
               group_key_sort(:desc)
             ]
-          ),
+          )
         ]
       ]
   """
@@ -919,7 +919,7 @@ defmodule ExAliyunOts.Search do
               sort: [
                 row_count_sort(:asc)
               ]
-            ),
+            )
           ]
         ]
   """

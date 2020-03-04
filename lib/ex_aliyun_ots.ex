@@ -450,10 +450,10 @@ defmodule ExAliyunOts do
     * `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
     * `:max_versions`, optional, how many versions need to return in results, by default it is 1.
     * `:time_range`, optional, read data by timestamp range, support two ways to use it:
-    *   - time_range: {start_timestamp, end_timestamp}, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
-    *   and then will return in the results.
-    *   - time_range: specail_timestamp, exactly match and then will return in the results.
-    *   - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
+      - `time_range: {start_timestamp, end_timestamp}`, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
+      and then will return in the results.
+      - `time_range: specail_timestamp`, exactly match and then will return in the results.
+      - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
     * `:transaction_id`, optional, read operation within local transaction.
   """
   @doc row: :row
@@ -490,9 +490,9 @@ defmodule ExAliyunOts do
 
   ## Options
 
-    `:condition`, required, please see `condition/1` or `condition/2` for details.
-    `:return_type`, optional, whether return the primary keys after put row, available options are `:pk` | `:none`, by default it is `:none`.
-    `:transaction_id`, optional, write operation within local transaction.
+    * `:condition`, required, please see `condition/1` or `condition/2` for details.
+    * `:return_type`, optional, whether return the primary keys after put row, available options are `:pk` | `:none`, by default it is `:none`.
+    * `:transaction_id`, optional, write operation within local transaction.
 
   """
   @doc row: :row
@@ -708,11 +708,11 @@ defmodule ExAliyunOts do
     * `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
     * `:max_versions`, optional, how many versions need to return in results, by default it is 1.
     * `:time_range`, optional, read data by timestamp range, support two ways to use it:
-    *   - `time_range: {start_timestamp, end_timestamp}`, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
-    *   and then will return in the results.
-    *   - `time_range: specail_timestamp`, exactly match and then will return in the results.
-    *   - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
-    * `:transaction_id`, optional, read operation within local transaction.
+      - `time_range: {start_timestamp, end_timestamp}`, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
+      and then will return in the results.
+      - `time_range: specail_timestamp`, exactly match and then will return in the results.
+      - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
+    *`:transaction_id`, optional, read operation within local transaction.
   """
   @doc row: :row
   @spec get_range(instance :: atom(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
