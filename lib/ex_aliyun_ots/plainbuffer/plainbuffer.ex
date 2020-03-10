@@ -672,7 +672,7 @@ defmodule ExAliyunOts.PlainBuffer do
     do_slice_rows(rest, prepared)
   end
   defp do_slice_rows([row | rest], prepared) do
-    second_last_byte = :binary.part(row, byte_size(row) - 2, 1)
+    second_last_byte = binary_part(row, byte_size(row) - 2, 1)
     prepared = do_slice_row_binary(second_last_byte, row, prepared)
     do_slice_rows(rest, prepared)
   end
@@ -712,11 +712,13 @@ defmodule ExAliyunOts.PlainBuffer do
     row_data_parts = :binary.split(values, @row_data_marker, [:global])
 
     matched_index =
-      Enum.find_index(row_data_parts, fn
-        <<>> ->
+      Enum.find_index(row_data_parts, fn(part_value) ->
+        size = byte_size(part_value)
+        if size >= 2 do
+          binary_part(part_value, size - 2, 1) == <<@tag_cell_checksum::integer>>
+        else
           false
-        part_value ->
-          :binary.part(part_value, byte_size(part_value) - 2, 1) == <<@tag_cell_checksum::integer>>
+        end
       end)
 
     debug(fn ->
@@ -1140,11 +1142,13 @@ defmodule ExAliyunOts.PlainBuffer do
       :binary.split(values, <<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>, [:global])
 
     index =
-      Enum.find_index(splited, fn
-        <<>> ->
+      Enum.find_index(splited, fn(item) ->
+        size = byte_size(item)
+        if size >= 2 do
+          binary_part(item, size - 2, 1) == <<@tag_cell_checksum::integer>>
+        else
           false
-        item ->
-          :binary.part(item, byte_size(item) - 2, 1) == <<@tag_cell_checksum::integer>>
+        end
       end)
 
     debug(fn ->
