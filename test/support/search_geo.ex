@@ -18,6 +18,8 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
     create_index(instance_key, table, index_name)
 
     insert_test_data(instance_key, table)
+
+    sleep()
   end
 
   def clean(instance_key, table, index_name) do
@@ -83,8 +85,10 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
 
       {:ok, _result} = Client.put_row(instance_key, var_put_row)
     end)
+  end
 
-    sleep = 25_000
+  defp sleep() do
+    sleep = 30_000
     Logger.info "waiting #{sleep} ms for indexing..."
     Process.sleep(sleep)
   end
