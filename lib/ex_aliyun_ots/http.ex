@@ -71,7 +71,10 @@ defmodule ExAliyunOts.Http.Middleware do
          true = _require_response_size
        ) do
     body = response.body
-    readable_result = make_response_row_readable(decoder.(body))
+    readable_result =
+      body
+      |> do_decode_success_response(decoder)
+      |> make_response_row_readable()
     {:ok, readable_result, byte_size(body)}
   end
 
@@ -82,7 +85,7 @@ defmodule ExAliyunOts.Http.Middleware do
          true = _require_response_size
        ) do
     body = response.body
-    readable_result = decoder.(body)
+    readable_result = do_decode_success_response(body, decoder)
     {:ok, readable_result, byte_size(body)}
   end
 
@@ -92,7 +95,10 @@ defmodule ExAliyunOts.Http.Middleware do
          true = _require_deserialize_row,
          false = _require_response_size
        ) do
-    readable_result = make_response_row_readable(decoder.(response.body))
+    readable_result =
+      response.body
+      |> do_decode_success_response(decoder)
+      |> make_response_row_readable()
     {:ok, readable_result}
   end
 
@@ -102,8 +108,15 @@ defmodule ExAliyunOts.Http.Middleware do
          false = _require_deserialize_row,
          false = _require_response_size
        ) do
-    readable_result = decoder.(response.body)
+    readable_result = do_decode_success_response(response.body, decoder)
     {:ok, readable_result}
+  end
+
+  defp do_decode_success_response(nil, decoder) do
+    decoder.("")
+  end
+  defp do_decode_success_response(response_body, decoder) do
+    decoder.(response_body)
   end
 
   defp decode_error_response(response) do
@@ -182,76 +195,13 @@ defmodule ExAliyunOts.Http do
 
   require ErrorType
 
-  def client(instance, "/PutRow", request_body, decoder) do
-    Tesla.client(
-      default_middleware() ++
-        [
-          {ExAliyunOts.Http.Middleware,
-           instance: instance,
-           uri: "/PutRow",
-           request_body: request_body,
-           decoder: decoder,
-           deserialize_row: true}
-        ]
-    )
-  end
+  @timeout 60_000
 
-  def client(instance, "/GetRow", request_body, decoder) do
+  def client(instance, uri, request_body, decoder, opts \\ []) do
     Tesla.client(
-      default_middleware() ++
-        [
-          {ExAliyunOts.Http.Middleware,
-           instance: instance,
-           uri: "/GetRow",
-           request_body: request_body,
-           decoder: decoder,
-           deserialize_row: true}
-        ]
+      middlewares(instance, uri, request_body, decoder),
+      adapter(opts)
     )
-  end
-
-  def client(instance, "/UpdateRow", request_body, decoder) do
-    Tesla.client(
-      default_middleware() ++
-        [
-          {ExAliyunOts.Http.Middleware,
-           instance: instance,
-           uri: "/UpdateRow",
-           request_body: request_body,
-           decoder: decoder,
-           deserialize_row: true}
-        ]
-    )
-  end
-
-  def client(instance, "/tunnel/readrecords" = uri, request_body, decoder) do
-    Tesla.client(
-      default_middleware() ++
-        [
-          {ExAliyunOts.Http.Middleware,
-           instance: instance,
-           uri: uri,
-           request_body: request_body,
-           decoder: decoder,
-           require_response_size: true}
-        ]
-    )
-  end
-
-  def client(instance, uri, request_body, decoder) do
-    Tesla.client(
-      default_middleware() ++
-        [
-          {ExAliyunOts.Http.Middleware,
-           instance: instance, uri: uri, request_body: request_body, decoder: decoder}
-        ]
-    )
-  end
-
-  defp default_middleware() do
-    [
-      {Tesla.Middleware.Retry, delay: 500, max_retries: 10, should_retry: &match_should_retry?/1}
-    ]
   end
 
   def post(client) do
@@ -346,5 +296,36 @@ defmodule ExAliyunOts.Http do
 
   defp match_should_retry?(:ok) do
     false
+  end
+
+  defp middlewares(instance, uri, request_body, decoder)
+    when uri == "/PutRow"
+    when uri == "/GetRow"
+    when uri == "/UpdateRow" do
+    [
+      default_middleware(),
+      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder, deserialize_row: true}
+    ]
+  end
+  defp middlewares(instance, "/tunnel/readrecords" = uri, request_body, decoder) do
+    [
+      default_middleware(),
+      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder, require_response_size: true}
+    ]
+  end
+  defp middlewares(instance, uri, request_body, decoder) do
+    [
+      default_middleware(),
+      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder}
+    ]
+  end
+
+  defp default_middleware() do
+    {Tesla.Middleware.Retry, delay: 500, max_retries: 10, should_retry: &match_should_retry?/1}
+  end
+
+  defp adapter(opts) do
+    timeout = Keyword.get(opts, :timeout, @timeout)
+    {Tesla.Adapter.Mint, [timeout: timeout]}
   end
 end
