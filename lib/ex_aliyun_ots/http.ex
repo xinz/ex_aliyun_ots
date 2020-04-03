@@ -326,6 +326,6 @@ defmodule ExAliyunOts.Http do
 
   defp adapter(opts) do
     timeout = Keyword.get(opts, :timeout, @timeout)
-    {Tesla.Adapter.Mint, [timeout: timeout]}
+    {Tesla.Adapter.Gun, [timeout: timeout]}
   end
 end
