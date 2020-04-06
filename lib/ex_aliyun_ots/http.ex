@@ -195,7 +195,7 @@ defmodule ExAliyunOts.Http do
 
   require ErrorType
 
-  @timeout 60_000
+  @timeout 15_000
 
   def client(instance, uri, request_body, decoder, opts \\ []) do
     Tesla.client(
@@ -326,6 +326,6 @@ defmodule ExAliyunOts.Http do
 
   defp adapter(opts) do
     timeout = Keyword.get(opts, :timeout, @timeout)
-    {Tesla.Adapter.Gun, [timeout: timeout]}
+    {Tesla.Adapter.Hackney, [recv_timeout: timeout]}
   end
 end
