@@ -375,7 +375,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp process_column_value_with_checksum({buffer, cell_checksum}, value) when is_float(value) do
     buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring>>
-    value_to_binary = <<value::float-little>>
+    value_to_binary = <<value::little-float>>
     <<long::unsigned-little-integer-64>> = value_to_binary
 
     buffer =
@@ -448,7 +448,7 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_column_value(value) when is_float(value) do
-    value_to_binary = <<value::float-little>>
+    value_to_binary = <<value::little-float>>
     [byte_to_binary(@vt_double), value_to_binary]
   end
 
@@ -1030,7 +1030,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp deserialize_process_column_value_with_checksum(
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, <<value::little-integer-size(64)>>,
+           <<@vt_integer::integer>>, <<value::signed-little-integer-size(64)>>,
            (<<timestamp_rest::binary>>)>>
        ) do
     timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
@@ -1039,7 +1039,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp deserialize_process_column_value_with_checksum(
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, (<<value::little-integer-size(64)>>)>>
+           <<@vt_integer::integer>>, (<<value::signed-little-integer-size(64)>>)>>
        ) do
     {value, nil}
   end
@@ -1053,7 +1053,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp deserialize_process_column_value_with_checksum(
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_double::integer>>, <<value::float-little>>, (<<timestamp_rest::binary>>)>>
+           <<@vt_double::integer>>, <<value::signed-little-float-size(64)>>, (<<timestamp_rest::binary>>)>>
        ) do
     timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
     {value, timestamp}
@@ -1061,7 +1061,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp deserialize_process_column_value_with_checksum(
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_double::integer>>, (<<value::float-little>>)>>
+           <<@vt_double::integer>>, (<<value::signed-little-float-size(64)>>)>>
        ) do
     {value, nil}
   end
