@@ -257,6 +257,12 @@ defmodule ExAliyunOts.Http do
     true
   end
 
+  defp match_should_retry?({:error, %Error{message: :closed}}) do
+    # May occur `:closed` failed case as an acceptable situation when use hackney adapter,
+    # just retry to ignore and resolve it.
+    true
+  end
+
   defp match_should_retry?({:error, %Error{code: ErrorType.ots_client_unknown(), message: reason} = error}) when is_atom(reason) do
     error(fn ->
       [
