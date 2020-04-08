@@ -9,7 +9,7 @@ defmodule ExAliyunOts.MixinTest.Integer do
 
   require Logger
 
-  @table "test_int"
+  @table "test_negative_number"
 
   setup_all do
 
