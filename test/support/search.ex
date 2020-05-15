@@ -26,23 +26,22 @@ defmodule ExAliyunOtsTest.Support.Search do
 
   defp initialize(instance_key, table, index_names) do
     create_table(instance_key, table)
-
+    Process.sleep(5000)
     create_index(instance_key, table, index_names)
 
     insert_test_data(instance_key, table)
   end
 
   defp initialize_group_by(instance_key, table, index_name) do
-
     create_table_for_group_by(instance_key, table)
-
+    Process.sleep(5000)
     create_search_index_for_gourp_by(instance_key, table, index_name)
 
     insert_group_by_test_data(instance_key, table)
   end
 
   defp sleep() do
-    sleep = 25_000
+    sleep = 30_000
     Logger.info "waiting #{sleep} ms for indexing..."
     Process.sleep(sleep)
   end
