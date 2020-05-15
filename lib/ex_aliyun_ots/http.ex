@@ -332,6 +332,6 @@ defmodule ExAliyunOts.Http do
 
   defp adapter(opts) do
     timeout = Keyword.get(opts, :timeout, @timeout)
-    {Tesla.Adapter.Hackney, [recv_timeout: timeout]}
+    {Tesla.Adapter.Hackney, [recv_timeout: timeout, ssl_options: [versions: [:'tlsv1.3', :'tlsv1.2']]]}
   end
 end
