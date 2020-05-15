@@ -719,8 +719,8 @@ defmodule ExAliyunOts.PlainBuffer do
         inspect(values, limit: :infinity),
         ?\n,
         "matched_index:\n",
-        ?\n,
         inspect(matched_index),
+        ?\n,
         "row_data_parts:\n"
         | inspect(row_data_parts, limit: :infinity)
       ]
@@ -871,14 +871,14 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp deserialize_process_primary_key_value(
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, <<value::little-integer-size(64)>>, (<<_rest::binary>>)>>
+           <<@vt_integer::integer>>, <<value::signed-little-integer-size(64)>>, (<<_rest::binary>>)>>
        ) do
     value
   end
 
   defp deserialize_process_primary_key_value(
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, (<<value::little-integer-size(64)>>)>>
+           <<@vt_integer::integer>>, (<<value::signed-little-integer-size(64)>>)>>
        ) do
     value
   end
