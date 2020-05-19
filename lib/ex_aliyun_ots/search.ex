@@ -860,24 +860,24 @@ defmodule ExAliyunOts.Search do
 
   In the following example, the returned results will be sorted in descending order of the `"type"` field:
 
-    import MyApp.TableStore
+      import MyApp.TableStore
 
-    search "table", "index_name",
-      search_query: [
-        query: ...,
-        group_bys: [
-          group_by_field(
-            "group_name",
-            "type",
-            sub_group_bys: [
-              ...
-            ],
-            sort: [
-              group_key_sort(:desc)
-            ]
-          )
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_field(
+              "group_name",
+              "type",
+              sub_group_bys: [
+                ...
+              ],
+              sort: [
+                group_key_sort(:desc)
+              ]
+            )
+          ]
         ]
-      ]
   """
   @doc sort_in_group_bys: :sort_in_group_bys
   @spec group_key_sort(order :: :asc | :desc) :: map()
