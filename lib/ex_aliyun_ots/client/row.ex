@@ -302,7 +302,11 @@ defmodule ExAliyunOts.Client.Row do
     BatchWriteRowRequest.encode(request)
   end
 
-  def request_to_batch_write_row(var_batch_write_row, transaction_id) do
+  def request_to_batch_write_row([var_batch_write_row], transaction_id) when is_map(var_batch_write_row) do
+    request_to_batch_write_row(var_batch_write_row, transaction_id)
+  end
+
+  def request_to_batch_write_row(var_batch_write_row, transaction_id) when is_map(var_batch_write_row) do
     table = map_table_in_batch_write_row_request(var_batch_write_row)
     request = BatchWriteRowRequest.new(tables: [table], transaction_id: transaction_id)
     BatchWriteRowRequest.encode(request)
