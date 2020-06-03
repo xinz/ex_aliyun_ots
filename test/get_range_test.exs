@@ -22,13 +22,15 @@ defmodule ExAliyunOtsTest.GetRange do
     result = Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
+    Process.sleep(10_000)
+
     condition = %Var.Condition{
       row_existence: RowExistence.ignore
     }
 
     Logger.info "inserting test data..."
     batch_write_rows =
-      for partition_key <- 1..200 do
+      for partition_key <- 1..20 do
         %Var.RowInBatchWriteRequest{
           type: OperationType.put,
           primary_keys: [{"partition_key", partition_key}, {"id", PKType.auto_increment}],
@@ -99,11 +101,11 @@ defmodule ExAliyunOtsTest.GetRange do
     var_iterate_get_range = %Var.GetRange{
       table_name: table_name,
       inclusive_start_primary_keys: [{"partition_key", 1}, {"id", PKType.inf_min}],
-      exclusive_end_primary_keys: [{"partition_key", 200}, {"id", PKType.inf_max}],
+      exclusive_end_primary_keys: [{"partition_key", 20}, {"id", PKType.inf_max}],
       limit: 100
     }
     {:ok, get_all_range_response} = Client.iterate_get_all_range(@instance_key, var_iterate_get_range)
-    assert length(get_all_range_response.rows) == 200
+    assert length(get_all_range_response.rows) == 20
     get_all_range_response.rows
     |> Enum.with_index()
     |> Enum.map(fn({{primary_keys, attribute_columns}, index}) -> 
