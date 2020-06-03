@@ -304,6 +304,16 @@ defmodule ExAliyunOts.Http do
     false
   end
 
+  defp start_local_transaction_match_should_retry?({:error, %Error{code: ErrorType.row_operation_conflict()}}) do
+    # DO NOT retry http request when start local transaction operation occurs `row_operation_conflict` error,
+    # instead, should return this error to caller immediately, because the retry operations will make the parallel requests
+    # to create local transaction both successfully one by one, this is unexpected result.
+    false
+  end
+  defp start_local_transaction_match_should_retry?(result) do
+    match_should_retry?(result)
+  end
+
   defp middlewares(instance, uri, request_body, decoder)
     when uri == "/PutRow"
     when uri == "/GetRow"
@@ -319,6 +329,12 @@ defmodule ExAliyunOts.Http do
       {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder, require_response_size: true}
     ]
   end
+  defp middlewares(instance, "/StartLocalTransaction" = uri, request_body, decoder) do
+    [
+      default_middleware(&start_local_transaction_match_should_retry?/1),
+      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder}
+    ]
+  end
   defp middlewares(instance, uri, request_body, decoder) do
     [
       default_middleware(),
@@ -326,8 +342,8 @@ defmodule ExAliyunOts.Http do
     ]
   end
 
-  defp default_middleware() do
-    {Tesla.Middleware.Retry, delay: 500, max_retries: 10, should_retry: &match_should_retry?/1}
+  defp default_middleware(should_retry \\ &match_should_retry?/1) do
+    {Tesla.Middleware.Retry, delay: 500, max_retries: 10, should_retry: should_retry}
   end
 
   defp adapter(opts) do

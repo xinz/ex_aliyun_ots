@@ -244,4 +244,45 @@ defmodule ExAliyunOts.MixinTest.Transaction do
     end)
   end
 
+  test "parallel write with local transaction" do
+    {suc, fail} =
+      [1, 2, 3]
+      |> Task.async_stream(fn(trace_id) ->
+        insert_with_transaction(trace_id, "1")
+      end, timeout: :infinity)
+      |> Enum.reduce({0, 0}, fn({:ok, result}, {suc_cnt, fail_cnt}) ->
+        case result do
+          :ok ->
+            {suc_cnt + 1, fail_cnt}
+          {:error, error} ->
+            assert error.code == "OTSRowOperationConflict"
+            {suc_cnt, fail_cnt + 1}
+        end
+      end)
+    assert suc == 1 and fail == 2
+  end
+
+  defp insert_with_transaction(trace_id, id) do
+    partition_key = {"key", "test_pw_#{id}"}
+    Logger.info "trace_id: #{trace_id} <> id: #{id}, pid: #{inspect(self())}"
+    case start_local_transaction(@table, partition_key) do
+      {:ok, response} ->
+        transaction_id = response.transaction_id
+        Logger.info("trace_id: #{trace_id} get transaction_id: #{transaction_id}")
+
+        receive do
+          :work_is_done -> :ok
+        after
+          1_000 ->
+            # mock to do some calculation
+            abort_transaction(transaction_id)
+        end
+
+        :ok
+      {:error, error} ->
+        Logger.error("trace_id: #{trace_id} get parallel write failed with error: #{inspect(error)}")
+        {:error, error}
+    end
+  end
+
 end
