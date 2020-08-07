@@ -29,7 +29,7 @@ defmodule ExAliyunOts.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:exprotobuf, "~> 1.2"},
+      {:tablestore_protos, github: "xinz/tablestore_protos"},
       {:timex, "~> 3.3"},
       {:tesla, "~> 1.3"},
       {:hackney, "~> 1.15"},
