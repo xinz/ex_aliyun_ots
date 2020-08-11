@@ -702,17 +702,19 @@ defmodule ExAliyunOts do
       - `:backward`, this query is performed in the order of primary key in descending, in this case, input `inclusive_start_primary_keys` should greater
       than `exclusive_end_primary_keys`.
     * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, pass a field list to specify the expected return fields,
-    e.g. `["field1", "field2"]`.
+      e.g. `["field1", "field2"]`.
     * `:start_column`, optional, specifies the start column when using for wide-row-read, the returned result contains this `:start_column`.
     * `:end_column`, optional, specifies the end column when using for wide-row-read, the returned result does not contain this `:end_column`.
     * `:filter`, optional, filter the return results in the server side, please see `filter/1` for details.
     * `:max_versions`, optional, how many versions need to return in results, by default it is 1.
+    * `:transaction_id`, optional, read operation within local transaction.
+    * `:limit`, optional, the maximum number of rows of data to be returned, this value must be greater than 0, whether this option is set or not, there
+      returns a maximum of 5,000 data rows and the total data size never exceeds 4 MB.
     * `:time_range`, optional, read data by timestamp range, support two ways to use it:
       - `time_range: {start_timestamp, end_timestamp}`, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
-      and then will return in the results.
+        and then will return in the results.
       - `time_range: specail_timestamp`, exactly match and then will return in the results.
       - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
-    *`:transaction_id`, optional, read operation within local transaction.
   """
   @doc row: :row
   @spec get_range(instance :: atom(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
@@ -737,7 +739,8 @@ defmodule ExAliyunOts do
   end
 
   @doc """
-  As a client SDK wrapper built on `get_range/5` to fetch a large data set by iterate.
+  As a wrapper built on `get_range/5` to fetch a full matched data set by iterate, if process a large items,
+  recommend to use `stream_range/5`.
 
   ## Example
 
@@ -763,6 +766,43 @@ defmodule ExAliyunOts do
     }
     prepared_var = map_options(var_iterate_all_range, options)
     Client.iterate_get_all_range(instance, prepared_var)
+  end
+
+  @doc """
+  As a wrapper built on `get_range/5` to create composable and lazy enumerables stream for iteration.
+
+  ## Example
+
+      import MyApp.TableStore
+
+      stream =
+        stream_range table_name1,
+          [{"key1", 1}, {"key2", :inf_min}],
+          [{"key1", 4}, {"key2", :inf_max}],
+          direction: :forward
+
+      Enum.to_list(stream, fn
+        {:ok, %{rows: rows} = response} ->
+          # process rows
+        {:error, error} ->
+          # occur error
+      end)
+
+  ## Options
+
+  Please see options of `get_range/5` for details.
+  """
+  @doc row: :row
+  @spec stream_range(instance :: atom(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
+    :: Enumerable.t()
+  def stream_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ []) do
+    var_get_range = %Var.GetRange{
+      table_name: table,
+      inclusive_start_primary_keys: inclusive_start_primary_keys,
+      exclusive_end_primary_keys: exclusive_end_primary_keys
+    }
+    prepared_var = map_options(var_get_range, options)
+    Client.stream_range(instance, prepared_var)
   end
 
   @doc """
