@@ -7,7 +7,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
 
   require Logger
 
-  test "CRUD" do
+  setup_all do
     cur_timestamp = Timex.to_unix(Timex.now())
     table_name1 = "test_mixin_table_tmp1_#{cur_timestamp}"
     table_name2 = "test_mixin_table_tmp2_#{cur_timestamp}"
@@ -21,6 +21,18 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     assert create_table1_result == :ok
     assert create_table2_result == :ok
 
+    on_exit(fn ->
+      del_table1_reslt = delete_table table_name1
+      assert del_table1_reslt == :ok
+      del_table2_reslt = delete_table table_name2
+      assert del_table2_reslt == :ok
+    end)
+
+    {:ok, %{table1: table_name1, table2: table_name2}}
+  end
+
+  test "CRUD", %{table1: table_name1, table2: table_name2} do
+    cur_timestamp = Timex.to_unix(Timex.now())
     var_name = "1"
     {:ok, response} =
       get_row table_name1, [{"key1", cur_timestamp}, {"key2", "#{cur_timestamp}"}],
@@ -161,11 +173,51 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     assert length(get_range_rows2) == 1
     {[{"key1", 4}, {"key2", _}], ^attrs_key_4} = Enum.at(get_range_rows2, 0)
 
-    {:ok, _iterate_all_range_response} =
+
+    {:error, error_iterate_all} =
+      iterate_all_range table_name1,
+        [{"key1", 4}, {"key2", PKType.inf_max}],
+        [{"key1", 1}, {"key2", PKType.inf_min}],
+        direction: :forward
+
+    assert error_iterate_all.code == "OTSParameterInvalid"
+    assert error_iterate_all.message == "Begin key must less than end key in FORWARD"
+
+    {:ok, iterate_all_range_response} =
       iterate_all_range table_name1,
         [{"key1", 1}, {"key2", PKType.inf_min}],
         [{"key1", 4}, {"key2", PKType.inf_max}],
+        limit: 1,
         direction: :forward
+
+    stream_limit_size = 2
+
+    stream =
+      stream_range table_name1,
+        [{"key1", 1}, {"key2", PKType.inf_min}],
+        [{"key1", 4}, {"key2", PKType.inf_max}],
+        direction: :forward,
+        limit: 2
+
+    all_rows_from_stream =
+      Enum.reduce(stream, [], fn({:ok, response}, acc) ->
+        assert length(response.rows) <= stream_limit_size
+        acc ++ response.rows
+      end)
+
+    assert iterate_all_range_response.rows == all_rows_from_stream
+
+    stream =
+      stream_range table_name1,
+        [{"key1", 4}, {"key2", PKType.inf_max}],
+        [{"key1", 1}, {"key2", PKType.inf_min}],
+        direction: :forward
+
+    Enum.map(stream, fn({:error, error}) ->
+      assert error.code == "OTSParameterInvalid"
+      assert error.message == "Begin key must less than end key in FORWARD"
+    end)
+
 
     {_key, _value, start_timestamp} = List.first(attrs_key_1)
     {_key, _value, end_timestamp} = List.first(attrs_key_2)
@@ -198,10 +250,6 @@ defmodule ExAliyunOts.MixinTest.CRUD do
     {[{"key1", 4}, {"key2", _}], nil} = Enum.at(get_range_rows, 2)
 
     assert attrs_key_1 == q3_attrs_key_1
-
-    del_table1_reslt = delete_table table_name1
-    assert del_table1_reslt == :ok
-    del_table2_reslt = delete_table table_name2
-    assert del_table2_reslt == :ok
   end
+
 end

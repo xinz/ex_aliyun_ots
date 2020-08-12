@@ -77,6 +77,10 @@ defmodule ExAliyunOts.Compiler do
         ExAliyunOts.get_range(@instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts)
       end
 
+      def stream_range(table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts \\ []) do
+        ExAliyunOts.stream_range(@instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts)
+      end
+
       def iterate_all_range(table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts \\ []) do
         ExAliyunOts.iterate_all_range(@instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts)
       end

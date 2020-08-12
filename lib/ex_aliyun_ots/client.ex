@@ -55,9 +55,12 @@ defmodule ExAliyunOts.Client do
     remote_get_range(Config.get(instance_key), encoded_request)
   end
 
+  def stream_range(instance_key, var_get_range) do
+    remote_stream_range(Config.get(instance_key), var_get_range)
+  end
+
   def iterate_get_all_range(instance_key, var_get_range) do
-    encoded_request = Row.request_to_get_range(var_get_range)
-    iterate_remote_get_range(Config.get(instance_key), encoded_request, var_get_range, nil)
+    iterate_remote_get_range(Config.get(instance_key), var_get_range)
   end
 
   def batch_get_row(instance_key, vars_batch_get_row) when is_list(vars_batch_get_row) do
@@ -178,46 +181,62 @@ defmodule ExAliyunOts.Client do
     end
   end
 
-  defp iterate_remote_get_range(instance, request_body, var_get_range, summarized_response, next_start_primary_key \\ nil) do
-    response_result =
-      if next_start_primary_key == nil do
-        Row.remote_get_range(instance, request_body)
-      else
+  defp remote_stream_range(instance, var_get_range) do
+    request_body = Row.request_to_get_range(var_get_range)
+    Stream.unfold("initialize", fn
+      "initialize" ->
+        response = Row.remote_get_range(instance, request_body)
+        decode_rows_per_get_range_response(response)
+      nil ->
+        nil
+      next_start_primary_key ->
         request_body_with_next_start_primary_key = Row.request_to_get_range(var_get_range, next_start_primary_key)
-        Row.remote_get_range(instance, request_body_with_next_start_primary_key)
-      end
-
-    case response_result do
-      {:ok, get_range_response} ->
-        new_next_start_primary_key = get_range_response.next_start_primary_key
-        if new_next_start_primary_key == nil do
-          iterated_response = sum_get_range_response(get_range_response, summarized_response)
-          {:ok, %{iterated_response | rows: decode_rows(iterated_response.rows)}}
-        else
-          updated_summarized_response = sum_get_range_response(get_range_response, summarized_response)
-          iterate_remote_get_range(instance, request_body, var_get_range, updated_summarized_response, new_next_start_primary_key)
-        end
-      _ ->
-        response_result
-    end
+        response = Row.remote_get_range(instance, request_body_with_next_start_primary_key)
+        decode_rows_per_get_range_response(response)
+    end)
   end
 
-  defp sum_get_range_response(response, nil) do
-    %{response | rows: [response.rows]}
+  defp iterate_remote_get_range(instance, var_get_range) do
+    instance
+    |> remote_stream_range(var_get_range)
+    |> Enum.reduce(nil, fn
+      {:ok, response}, nil ->
+        response = merge_get_range_response(response, nil)
+        {:ok, response}
+      {:ok, response}, {:ok, acc} ->
+        response = merge_get_range_response(response, acc)
+        {:ok, response}
+      {:error, _error} = response, _acc ->
+        response
+    end)
   end
-  defp sum_get_range_response(response, summarized_response) do
+
+  defp decode_rows_per_get_range_response({:ok, %{next_start_primary_key: next_start_primary_key} = response}) do
+    {
+      {:ok, %{response | rows: decode_rows(response.rows)}},
+      next_start_primary_key
+    }
+  end
+  defp decode_rows_per_get_range_response({:error, _error} = response) do
+    {response, nil}
+  end
+
+  defp merge_get_range_response(response, nil) do
+    %{response | rows: response.rows}
+  end
+  defp merge_get_range_response(response, %{consumed: consumed, rows: merged_rows} = merged_response) do
     cu = response.consumed.capacity_unit
     consumed_read = cu.read
     consumed_write = cu.write
     rows = response.rows
 
-    summarized_cu = summarized_response.consumed.capacity_unit
+    summarized_cu = consumed.capacity_unit
     updated_cu = %{summarized_cu | read: (summarized_cu.read + consumed_read), write: (summarized_cu.write + consumed_write)}
-    updated_consumed = %{summarized_response.consumed | capacity_unit: updated_cu}
+    updated_consumed = %{consumed | capacity_unit: updated_cu}
 
-    summarized_response
+    merged_response
     |> Map.put(:consumed, updated_consumed)
-    |> Map.put(:rows, summarized_response.rows ++ [rows])
+    |> Map.put(:rows, merged_rows ++ rows)
     |> Map.put(:next_start_primary_key, response.next_start_primary_key)
   end
 
