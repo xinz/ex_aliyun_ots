@@ -915,6 +915,10 @@ defmodule ExAliyunOts do
       - `ExAliyunOts.Search.field_schema_text/2`
       - `ExAliyunOts.Search.field_schema_nested/2`
       - `ExAliyunOts.Search.field_schema_geo_point/2`
+    * `:index_sorts`, optional, a list of predefined sort-index schema fields, please see the following helper functions:
+      - `ExAliyunOts.Search.pk_sort/1`
+      - `ExAliyunOts.Search.field_sort/2`
+      - `ExAliyunOts.Search.geo_distance_sort/3`
   """
   @doc search: :search
   @spec create_search_index(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
@@ -925,7 +929,8 @@ defmodule ExAliyunOts do
         table_name: table,
         index_name: index_name,
         index_schema: %Var.Search.IndexSchema{
-          field_schemas: Keyword.fetch!(options, :field_schemas)
+          field_schemas: Keyword.fetch!(options, :field_schemas),
+          index_sorts: Keyword.get(options, :index_sorts)
         }
       }
     Client.create_search_index(instance, var_request)
