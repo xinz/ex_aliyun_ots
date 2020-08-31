@@ -2,7 +2,7 @@ defmodule ExAliyunOtsTest.Tunnel.Backoff do
   use ExUnit.Case
 
   alias ExAliyunOts.Tunnel.Backoff
-  
+
   test "reset backoff" do
     backoff = Backoff.new()
     Process.sleep(100)
@@ -16,8 +16,9 @@ defmodule ExAliyunOtsTest.Tunnel.Backoff do
     test_cases_size = Enum.to_list(test_cases) |> length()
 
     backoff = Backoff.new()
-    {result, final_backoff} = 
-      Enum.map_reduce(test_cases, backoff, fn(_i, acc) -> 
+
+    {result, final_backoff} =
+      Enum.map_reduce(test_cases, backoff, fn _i, acc ->
         {backoff, ms} = Backoff.next_backoff_ms(acc)
         {{backoff, ms}, backoff}
       end)
@@ -26,7 +27,7 @@ defmodule ExAliyunOtsTest.Tunnel.Backoff do
 
     interval_ms_list =
       result
-      |> Enum.map(fn({backoff, _ms}) ->
+      |> Enum.map(fn {backoff, _ms} ->
         backoff.current_interval_ms
       end)
 
@@ -38,7 +39,7 @@ defmodule ExAliyunOtsTest.Tunnel.Backoff do
     assert MapSet.size(interval_ms_set) < test_cases_size
 
     result
-    |> Enum.each(fn({_backoff, ms}) ->
+    |> Enum.each(fn {_backoff, ms} ->
       assert is_integer(ms) == true
     end)
   end

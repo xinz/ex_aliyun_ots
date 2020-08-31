@@ -68,9 +68,9 @@ defmodule ExAliyunOts.Client do
     Row.remote_batch_get_row(Config.get(instance_key), encoded_request)
   end
 
-  def batch_write_row(instance_key, var_batch_write_row, options \\ [transaction_id: nil]) 
-    when is_map(var_batch_write_row) and is_list(options)
-    when is_list(var_batch_write_row) and is_list(options) do
+  def batch_write_row(instance_key, var_batch_write_row, options \\ [transaction_id: nil])
+      when is_map(var_batch_write_row) and is_list(options)
+      when is_list(var_batch_write_row) and is_list(options) do
     transaction_id = Keyword.get(options, :transaction_id, nil)
     encoded_request = Row.request_to_batch_write_row(var_batch_write_row, transaction_id)
     Row.remote_batch_write_row(Config.get(instance_key), encoded_request)
@@ -83,9 +83,11 @@ defmodule ExAliyunOts.Client do
 
   def search(instance_key, var_search_request) do
     encoded_request = Search.request_to_search(var_search_request)
+
     case Search.remote_search(Config.get(instance_key), encoded_request) do
       {:ok, search_result_response} ->
         {:ok, %{search_result_response | rows: decode_rows(search_result_response.rows)}}
+
       error_result ->
         error_result
     end
@@ -173,9 +175,11 @@ defmodule ExAliyunOts.Client do
 
   defp remote_get_range(instance, request_body) do
     result = Row.remote_get_range(instance, request_body)
+
     case result do
       {:ok, get_range_response} ->
         {:ok, %{get_range_response | rows: decode_rows(get_range_response.rows)}}
+
       _ ->
         result
     end
@@ -183,14 +187,19 @@ defmodule ExAliyunOts.Client do
 
   defp remote_stream_range(instance, var_get_range) do
     request_body = Row.request_to_get_range(var_get_range)
+
     Stream.unfold("initialize", fn
       "initialize" ->
         response = Row.remote_get_range(instance, request_body)
         decode_rows_per_get_range_response(response)
+
       nil ->
         nil
+
       next_start_primary_key ->
-        request_body_with_next_start_primary_key = Row.request_to_get_range(var_get_range, next_start_primary_key)
+        request_body_with_next_start_primary_key =
+          Row.request_to_get_range(var_get_range, next_start_primary_key)
+
         response = Row.remote_get_range(instance, request_body_with_next_start_primary_key)
         decode_rows_per_get_range_response(response)
     end)
@@ -203,20 +212,25 @@ defmodule ExAliyunOts.Client do
       {:ok, response}, nil ->
         response = merge_get_range_response(response, nil)
         {:ok, response}
+
       {:ok, response}, {:ok, acc} ->
         response = merge_get_range_response(response, acc)
         {:ok, response}
+
       {:error, _error} = response, _acc ->
         response
     end)
   end
 
-  defp decode_rows_per_get_range_response({:ok, %{next_start_primary_key: next_start_primary_key} = response}) do
+  defp decode_rows_per_get_range_response(
+         {:ok, %{next_start_primary_key: next_start_primary_key} = response}
+       ) do
     {
       {:ok, %{response | rows: decode_rows(response.rows)}},
       next_start_primary_key
     }
   end
+
   defp decode_rows_per_get_range_response({:error, _error} = response) do
     {response, nil}
   end
@@ -224,14 +238,24 @@ defmodule ExAliyunOts.Client do
   defp merge_get_range_response(response, nil) do
     %{response | rows: response.rows}
   end
-  defp merge_get_range_response(response, %{consumed: consumed, rows: merged_rows} = merged_response) do
+
+  defp merge_get_range_response(
+         response,
+         %{consumed: consumed, rows: merged_rows} = merged_response
+       ) do
     cu = response.consumed.capacity_unit
     consumed_read = cu.read
     consumed_write = cu.write
     rows = response.rows
 
     summarized_cu = consumed.capacity_unit
-    updated_cu = %{summarized_cu | read: (summarized_cu.read + consumed_read), write: (summarized_cu.write + consumed_write)}
+
+    updated_cu = %{
+      summarized_cu
+      | read: summarized_cu.read + consumed_read,
+        write: summarized_cu.write + consumed_write
+    }
+
     updated_consumed = %{consumed | capacity_unit: updated_cu}
 
     merged_response
@@ -243,13 +267,19 @@ defmodule ExAliyunOts.Client do
   defp decode_rows(binary_rows) when is_bitstring(binary_rows) do
     PlainBuffer.deserialize_rows(binary_rows)
   end
+
   defp decode_rows(binary_rows_list) when is_list(binary_rows_list) do
-    stream = Task.async_stream(binary_rows_list, fn(rows) ->
-      PlainBuffer.deserialize_rows(rows)
-    end, timeout: :infinity)
-    Enum.reduce(stream, [], fn({:ok, readable_rows}, acc) ->
+    stream =
+      Task.async_stream(
+        binary_rows_list,
+        fn rows ->
+          PlainBuffer.deserialize_rows(rows)
+        end,
+        timeout: :infinity
+      )
+
+    Enum.reduce(stream, [], fn {:ok, readable_rows}, acc ->
       acc ++ readable_rows
     end)
   end
-
 end

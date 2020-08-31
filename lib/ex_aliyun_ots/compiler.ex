@@ -22,7 +22,6 @@ defmodule ExAliyunOts.Compiler do
 
   defp table_functions() do
     quote do
-
       def create_table(table, pk_keys, opts \\ []) do
         ExAliyunOts.create_table(@instance, table, pk_keys, opts)
       end
@@ -42,13 +41,11 @@ defmodule ExAliyunOts.Compiler do
       def describe_table(table) do
         ExAliyunOts.describe_table(@instance, table)
       end
-
     end
   end
 
   defp row_functions() do
     quote do
-
       def batch_get(requests) do
         ExAliyunOts.batch_get(@instance, requests)
       end
@@ -74,23 +71,49 @@ defmodule ExAliyunOts.Compiler do
       end
 
       def get_range(table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts \\ []) do
-        ExAliyunOts.get_range(@instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts)
+        ExAliyunOts.get_range(
+          @instance,
+          table,
+          inclusive_start_primary_keys,
+          exclusive_end_primary_keys,
+          opts
+        )
       end
 
-      def stream_range(table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts \\ []) do
-        ExAliyunOts.stream_range(@instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts)
+      def stream_range(
+            table,
+            inclusive_start_primary_keys,
+            exclusive_end_primary_keys,
+            opts \\ []
+          ) do
+        ExAliyunOts.stream_range(
+          @instance,
+          table,
+          inclusive_start_primary_keys,
+          exclusive_end_primary_keys,
+          opts
+        )
       end
 
-      def iterate_all_range(table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts \\ []) do
-        ExAliyunOts.iterate_all_range(@instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts)
+      def iterate_all_range(
+            table,
+            inclusive_start_primary_keys,
+            exclusive_end_primary_keys,
+            opts \\ []
+          ) do
+        ExAliyunOts.iterate_all_range(
+          @instance,
+          table,
+          inclusive_start_primary_keys,
+          exclusive_end_primary_keys,
+          opts
+        )
       end
-
     end
   end
 
   defp row_batch_helper_functions() do
     quote do
-
       def get(table, pk_keys, opts \\ []) do
         ExAliyunOts.get(table, pk_keys, opts)
       end
@@ -106,13 +129,11 @@ defmodule ExAliyunOts.Compiler do
       def write_delete(pk_keys, opts \\ []) do
         ExAliyunOts.write_delete(pk_keys, opts)
       end
-
     end
   end
 
   defp local_transaction_functions() do
     quote do
-
       def start_local_transaction(table, partition_key) do
         ExAliyunOts.start_local_transaction(@instance, table, partition_key)
       end
@@ -124,13 +145,11 @@ defmodule ExAliyunOts.Compiler do
       def abort_transaction(transaction_id) do
         ExAliyunOts.abort_transaction(@instance, transaction_id)
       end
-
     end
   end
 
   defp search_functions() do
     quote do
-
       def create_search_index(table, index_name, opts \\ []) do
         ExAliyunOts.create_search_index(@instance, table, index_name, opts)
       end
@@ -150,13 +169,11 @@ defmodule ExAliyunOts.Compiler do
       def describe_search_index(table, index_name) do
         ExAliyunOts.describe_search_index(@instance, table, index_name)
       end
-
     end
   end
 
   defp search_create_index_helper_functions() do
     quote do
-
       defdelegate field_schema_integer(field_name, opts \\ []), to: Search
 
       defdelegate field_schema_float(field_name, options \\ []), to: Search
@@ -170,13 +187,11 @@ defmodule ExAliyunOts.Compiler do
       defdelegate field_schema_nested(field_name, options \\ []), to: Search
 
       defdelegate field_schema_geo_point(field_name, options \\ []), to: Search
-
     end
   end
 
   defp search_helper_functions() do
     quote do
-
       defdelegate match_query(field_name, text, opts \\ []), to: Search
 
       defdelegate match_all_query(), to: Search
@@ -246,8 +261,6 @@ defmodule ExAliyunOts.Compiler do
       defdelegate geo_distance_sort(field_name, points, opts), to: Search
 
       defdelegate nested_filter(path, filter), to: Search
-
     end
   end
-
 end

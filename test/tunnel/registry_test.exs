@@ -7,7 +7,6 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
   import EntryChannel
 
   test "registry worker operation" do
-
     client_pid = self()
 
     new_result1 = Registry.new_worker(entry_worker(tunnel_id: "tunnel_id0"))
@@ -23,11 +22,13 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
 
     Registry.remove_worker("tunnel_id0")
 
-    Registry.new_worker(entry_worker(
-      tunnel_id: "tunnel_id1",
-      client_id: "client_id1",
-      pid: client_pid
-    ))
+    Registry.new_worker(
+      entry_worker(
+        tunnel_id: "tunnel_id1",
+        client_id: "client_id1",
+        pid: client_pid
+      )
+    )
 
     index_tunnel_id = EntryWorker.index(:tunnel_id)
     index_client_id = EntryWorker.index(:client_id)
@@ -37,23 +38,25 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
     subscriber_pid = self()
     ref = Process.monitor(subscriber_pid)
 
-    Registry.new_worker(entry_worker(
-      tunnel_id: "tunnel_id2",
-      client_id: "client_id2",
-      pid: client_pid,
-      meta: %{
-        client_tag: "client_tag2"
-      },
-      subscriber: {ref, self()}
-    ))
+    Registry.new_worker(
+      entry_worker(
+        tunnel_id: "tunnel_id2",
+        client_id: "client_id2",
+        pid: client_pid,
+        meta: %{
+          client_tag: "client_tag2"
+        },
+        subscriber: {ref, self()}
+      )
+    )
 
     updated_meta = %{
       client_tag: "updated_tag2",
       key: 1
     }
+
     update_result = Registry.update_worker("tunnel_id1", [{:meta, updated_meta}])
     assert update_result == true
-
 
     subscriber1 = Registry.subscriber("tunnel_id1")
     assert subscriber1 == nil
@@ -66,7 +69,6 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
 
     rm_subscriber_result = Registry.remove_subscriber(ref, Process.spawn(fn -> :ok end, [:link]))
     assert rm_subscriber_result == false
-
 
     [_tunnel_id, _client_id, _worker_pid, meta, _subscriber] = Registry.worker("tunnel_id1")
     assert meta == updated_meta
@@ -84,32 +86,36 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
     assert meta1 == meta2
   end
 
-
   test "registry channel operation" do
-
     assert EntryChannel.index(:channel_id) == 1
     assert EntryChannel.index(:tunnel_id) == 2
     assert EntryChannel.index(:client_id) == 3
     tunnel_id = "tunnel_id1"
     channel_pid = Process.spawn(fn -> :ok end, [:link])
-    Registry.new_channel(entry_channel(
-      channel_id: "channel_id1",
-      tunnel_id: tunnel_id,
-      client_id: "client_id1",
-      pid: channel_pid,
-      status: "OPEN",
-      version: 1
-    ))
+
+    Registry.new_channel(
+      entry_channel(
+        channel_id: "channel_id1",
+        tunnel_id: tunnel_id,
+        client_id: "client_id1",
+        pid: channel_pid,
+        status: "OPEN",
+        version: 1
+      )
+    )
 
     channel_pid2 = Process.spawn(fn -> :ok end, [:link])
-    Registry.new_channel(entry_channel(
-      channel_id: "channel_id2",
-      tunnel_id: tunnel_id,
-      client_id: "client_id1",
-      pid: channel_pid2,
-      status: "OPEN",
-      version: 2
-    ))
+
+    Registry.new_channel(
+      entry_channel(
+        channel_id: "channel_id2",
+        tunnel_id: tunnel_id,
+        client_id: "client_id1",
+        pid: channel_pid2,
+        status: "OPEN",
+        version: 2
+      )
+    )
 
     fake_channel_pid = Process.spawn(fn -> :ok end, [:link])
 
@@ -124,7 +130,8 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
 
     channels = Registry.channels(tunnel_id)
     assert length(channels) == 2
-    Enum.map(channels, fn(c) ->
+
+    Enum.map(channels, fn c ->
       [_channel_id, ^tunnel_id, "client_id1", _pid, "OPEN", 2] = c
     end)
 
@@ -133,7 +140,5 @@ defmodule ExAliyunOtsTest.Tunnel.Registry do
 
     remove_result = Registry.remove_channel(fake_channel_pid)
     assert remove_result == true
-
   end
-
 end

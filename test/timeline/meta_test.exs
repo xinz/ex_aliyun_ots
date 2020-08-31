@@ -58,7 +58,13 @@ defmodule ExAliyunOts.TimelineMateTest do
       assert map.name == "t1" and map.num == 100 and map.type == "M1"
       assert map.id == "1001"
 
-      timeline_meta = new(table_name: table_name, index_name: index_name, identifier: identifier, info: [name: "updated_t1", num: 101, type: "M1u"])
+      timeline_meta =
+        new(
+          table_name: table_name,
+          index_name: index_name,
+          identifier: identifier,
+          info: [name: "updated_t1", num: 101, type: "M1u"]
+        )
 
       {:ok, _response} = update(timeline_meta)
 
@@ -75,12 +81,13 @@ defmodule ExAliyunOts.TimelineMateTest do
           new(table_name: table_name, index_name: index_name),
           search_query: [
             query: [
-              type: QueryType.match,
+              type: QueryType.match(),
               field_name: "name",
               text: "updated_t1"
-            ],
+            ]
           ]
         )
+
       assert response.is_all_succeeded == true
 
       {:ok, _response} = delete(timeline_meta)
@@ -90,6 +97,5 @@ defmodule ExAliyunOts.TimelineMateTest do
       assert response.row == nil
       assert Utils.row_to_map(response.row) == %{}
     end
-
   end
 end

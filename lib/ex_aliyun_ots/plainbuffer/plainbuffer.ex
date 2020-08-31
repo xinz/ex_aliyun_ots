@@ -63,21 +63,26 @@ defmodule ExAliyunOts.PlainBuffer do
   def serialize_column_value(value) when is_boolean(value) do
     [byte_to_binary(@vt_boolean), boolean_to_integer(value)]
   end
+
   def serialize_column_value(value) when is_integer(value) do
     [byte_to_binary(@vt_integer), <<value::little-integer-size(64)>>]
   end
+
   def serialize_column_value(value) when is_binary(value) do
     value_size = byte_size(value)
     [byte_to_binary(@vt_string), <<value_size::little-integer-size(32)>>, value]
   end
+
   def serialize_column_value(value) when is_bitstring(value) do
     value_size = byte_size(value)
     [byte_to_binary(@vt_blob), <<value_size::little-integer-size(32)>>, value]
   end
+
   def serialize_column_value(value) when is_float(value) do
     value_to_binary = <<value::little-float>>
     [byte_to_binary(@vt_double), value_to_binary]
   end
+
   def serialize_column_value(value) do
     raise ExAliyunOts.RuntimeError, "Unsupported column for value: #{inspect(value)}"
   end
@@ -154,6 +159,7 @@ defmodule ExAliyunOts.PlainBuffer do
   defp do_primary_keys([], buffer, row_checksum) do
     {buffer, row_checksum}
   end
+
   defp do_primary_keys([primary_key | rest], buffer, row_checksum) do
     {buffer, row_checksum} = primary_key_column(primary_key, {buffer, row_checksum})
     do_primary_keys(rest, buffer, row_checksum)
@@ -167,6 +173,7 @@ defmodule ExAliyunOts.PlainBuffer do
   defp do_columns([], buffer, row_checksum) do
     {buffer, row_checksum}
   end
+
   defp do_columns([column | rest], buffer, row_checksum) do
     {buffer, row_checksum} = process_column(column, {buffer, row_checksum})
     do_columns(rest, buffer, row_checksum)
@@ -229,8 +236,8 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
-    when value == PKType.inf_min()
-    when value == :inf_min do
+       when value == PKType.inf_min()
+       when value == :inf_min do
     buffer =
       <<buffer::bitstring, <<1::little-integer-size(32)>>,
         byte_to_binary(@vt_inf_min)::bitstring>>
@@ -240,8 +247,8 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
-    when value == PKType.inf_max()
-    when value == :inf_max do
+       when value == PKType.inf_max()
+       when value == :inf_max do
     buffer =
       <<buffer::bitstring, <<1::little-integer-size(32)>>,
         byte_to_binary(@vt_inf_max)::bitstring>>
@@ -361,6 +368,7 @@ defmodule ExAliyunOts.PlainBuffer do
       cell_checksum
       |> CRC.crc_int8(@vt_boolean)
       |> CRC.crc_int8(1)
+
     {
       boolean_value_to_buffer(buffer, true),
       cell_checksum
@@ -372,6 +380,7 @@ defmodule ExAliyunOts.PlainBuffer do
       cell_checksum
       |> CRC.crc_int8(@vt_boolean)
       |> CRC.crc_int8(0)
+
     {
       boolean_value_to_buffer(buffer, false),
       cell_checksum
@@ -645,31 +654,51 @@ defmodule ExAliyunOts.PlainBuffer do
   defp do_slice_rows([<<>> | rest], prepared) do
     do_slice_rows(rest, prepared)
   end
+
   defp do_slice_rows([row | rest], prepared) do
     second_last_byte = binary_part(row, byte_size(row) - 2, 1)
     prepared = do_slice_row_binary(second_last_byte, row, prepared)
     do_slice_rows(rest, prepared)
   end
 
-  defp do_slice_row_binary(<<@tag_row_checksum::integer>>, row, %{processing: <<>>, rows: rows} = result) do
+  defp do_slice_row_binary(
+         <<@tag_row_checksum::integer>>,
+         row,
+         %{processing: <<>>, rows: rows} = result
+       ) do
     row = deserialize_raw_rows(row)
     Map.put(result, :rows, [row | rows])
   end
-  defp do_slice_row_binary(<<@tag_row_checksum::integer>>, row, %{processing: processing, rows: rows} = result) do
-    row = deserialize_raw_rows(<<processing::bitstring, @pk_tag_marker::bitstring, row::bitstring>>)
+
+  defp do_slice_row_binary(
+         <<@tag_row_checksum::integer>>,
+         row,
+         %{processing: processing, rows: rows} = result
+       ) do
+    row =
+      deserialize_raw_rows(<<processing::bitstring, @pk_tag_marker::bitstring, row::bitstring>>)
+
     result
     |> Map.put(:rows, [row | rows])
     |> Map.put(:processing, <<>>)
   end
+
   defp do_slice_row_binary(_, row, %{processing: <<>>} = result) do
     Map.put(result, :processing, row)
   end
+
   defp do_slice_row_binary(_, row, %{processing: processing} = result) do
-    Map.put(result, :processing, <<processing::bitstring, @pk_tag_marker::bitstring, row::bitstring>>)
+    Map.put(
+      result,
+      :processing,
+      <<processing::bitstring, @pk_tag_marker::bitstring, row::bitstring>>
+    )
   end
 
   defp deserialize_raw_rows(row_values) do
-    {primary_keys, attribute_columns} = deserialize_row_data(<<@pk_tag_marker, row_values::bitstring>>)
+    {primary_keys, attribute_columns} =
+      deserialize_row_data(<<@pk_tag_marker, row_values::bitstring>>)
+
     debug(fn ->
       [
         "\nprimary_keys:\s",
@@ -679,6 +708,7 @@ defmodule ExAliyunOts.PlainBuffer do
         inspect(attribute_columns)
       ]
     end)
+
     {primary_keys, attribute_columns}
   end
 
@@ -703,12 +733,22 @@ defmodule ExAliyunOts.PlainBuffer do
     deserialize_row_data_with_match_index(matched_index, values, row_data_parts)
   end
 
-  defp deserialize_row_data_with_match_index(nil, <<(<<@tag_row_pk::integer>>), primary_keys_binary_rest::binary>>, _) do
+  defp deserialize_row_data_with_match_index(
+         nil,
+         <<(<<@tag_row_pk::integer>>), primary_keys_binary_rest::binary>>,
+         _
+       ) do
     {deserialize_process_primary_keys(primary_keys_binary_rest), nil}
   end
-  defp deserialize_row_data_with_match_index(nil, <<(<<@tag_row_data::integer>>), attribute_columns_binary_rest::binary>>, _) do
+
+  defp deserialize_row_data_with_match_index(
+         nil,
+         <<(<<@tag_row_data::integer>>), attribute_columns_binary_rest::binary>>,
+         _
+       ) do
     {nil, deserialize_process_columns(attribute_columns_binary_rest)}
   end
+
   defp deserialize_row_data_with_match_index(nil, values, _) do
     debug(fn ->
       [
@@ -719,14 +759,15 @@ defmodule ExAliyunOts.PlainBuffer do
 
     nil
   end
-  defp deserialize_row_data_with_match_index(matched_index, _values, row_data_parts) do
 
+  defp deserialize_row_data_with_match_index(matched_index, _values, row_data_parts) do
     {pks, attribute_columns} = Enum.split(row_data_parts, matched_index + 1)
 
     primary_keys_binary = Enum.join(pks, @row_data_marker)
 
     attribute_columns_binary =
-      <<@tag_cell::integer, @tag_cell_name::integer, Enum.join(attribute_columns, @row_data_marker)::bitstring>>
+      <<@tag_cell::integer, @tag_cell_name::integer,
+        Enum.join(attribute_columns, @row_data_marker)::bitstring>>
 
     primary_keys_binary =
       case primary_keys_binary do
@@ -742,7 +783,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
     {
       deserialize_process_primary_keys(primary_keys_binary),
-      deserialize_process_columns(attribute_columns_binary),
+      deserialize_process_columns(attribute_columns_binary)
     }
   end
 
@@ -755,8 +796,8 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp do_deserialize_process_primary_keys(
-         <<(<<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>), primary_key_size::little-integer-size(32), rest::binary>> =
-           primary_keys,
+         <<(<<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>),
+           primary_key_size::little-integer-size(32), rest::binary>> = primary_keys,
          result
        ) do
     debug(fn ->
@@ -844,7 +885,8 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp deserialize_process_primary_key_value(
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, <<value::signed-little-integer-size(64)>>, (<<_rest::binary>>)>>
+           <<@vt_integer::integer>>, <<value::signed-little-integer-size(64)>>,
+           (<<_rest::binary>>)>>
        ) do
     value
   end
@@ -904,7 +946,11 @@ defmodule ExAliyunOts.PlainBuffer do
     attribute_columns |> do_deserialize_process_columns([]) |> Enum.reverse()
   end
 
-  defp do_deserialize_process_columns(<<(<<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>), column_name_size::little-integer-size(32), rest::binary>>, result) do
+  defp do_deserialize_process_columns(
+         <<(<<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>),
+           column_name_size::little-integer-size(32), rest::binary>>,
+         result
+       ) do
     column_name = binary_part(rest, 0, column_name_size)
 
     rest_value_and_other_columns =
@@ -926,8 +972,7 @@ defmodule ExAliyunOts.PlainBuffer do
           ]
         end)
 
-        {column_value, timestamp} =
-          deserialize_process_column_value_with_checksum(value_binary)
+        {column_value, timestamp} = deserialize_process_column_value_with_checksum(value_binary)
 
         result = [{column_name, column_value, timestamp} | result]
 
@@ -941,7 +986,8 @@ defmodule ExAliyunOts.PlainBuffer do
         do_deserialize_process_columns(other_attribute_columns, result)
 
       nil ->
-        {column_value, timestamp} = deserialize_process_column_value_with_checksum(rest_value_and_other_columns)
+        {column_value, timestamp} =
+          deserialize_process_column_value_with_checksum(rest_value_and_other_columns)
 
         debug(fn ->
           [
@@ -956,6 +1002,7 @@ defmodule ExAliyunOts.PlainBuffer do
         [{column_name, column_value, timestamp} | result]
     end
   end
+
   defp do_deserialize_process_columns(_, result) do
     result
   end
@@ -1026,7 +1073,8 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp deserialize_process_column_value_with_checksum(
          <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_double::integer>>, <<value::signed-little-float-size(64)>>, (<<timestamp_rest::binary>>)>>
+           <<@vt_double::integer>>, <<value::signed-little-float-size(64)>>,
+           (<<timestamp_rest::binary>>)>>
        ) do
     timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
     {value, timestamp}
@@ -1136,8 +1184,8 @@ defmodule ExAliyunOts.PlainBuffer do
   defp match_tag_cell_checksum?(<<>>), do: false
   defp match_tag_cell_checksum?(<<_>>), do: false
   defp match_tag_cell_checksum?(<<@tag_cell_checksum::integer, _>>), do: true
+
   defp match_tag_cell_checksum?(binary) do
     binary_part(binary, byte_size(binary) - 2, 1) == <<@tag_cell_checksum::integer>>
   end
-
 end

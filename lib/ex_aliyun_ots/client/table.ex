@@ -25,8 +25,7 @@ defmodule ExAliyunOts.Client.Table do
   require PKType
 
   def request_to_create_table(var_create_table) do
-    primary_key_list =
-      Enum.map(var_create_table.primary_keys, &map_primary_key_schema/1)
+    primary_key_list = Enum.map(var_create_table.primary_keys, &map_primary_key_schema/1)
 
     table_meta =
       TableMeta.new(table_name: var_create_table.table_name, primary_key: primary_key_list)
@@ -65,6 +64,7 @@ defmodule ExAliyunOts.Client.Table do
       "create_table result: ",
       inspect(result)
     ])
+
     result
   end
 
@@ -82,6 +82,7 @@ defmodule ExAliyunOts.Client.Table do
       "list_table result: ",
       inspect(result)
     ])
+
     result
   end
 
@@ -99,6 +100,7 @@ defmodule ExAliyunOts.Client.Table do
       "delete_table result: ",
       inspect(result)
     ])
+
     result
   end
 
@@ -134,6 +136,7 @@ defmodule ExAliyunOts.Client.Table do
       "update_table result: ",
       inspect(result)
     ])
+
     result
   end
 
@@ -151,6 +154,7 @@ defmodule ExAliyunOts.Client.Table do
       "describe_table result: ",
       inspect(result)
     ])
+
     result
   end
 
@@ -203,35 +207,45 @@ defmodule ExAliyunOts.Client.Table do
   end
 
   defp map_primary_key_schema({key_name, :integer}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.integer)
+    PrimaryKeySchema.new(name: key_name, type: PKType.integer())
   end
+
   defp map_primary_key_schema({key_name, :string}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.string)
+    PrimaryKeySchema.new(name: key_name, type: PKType.string())
   end
+
   defp map_primary_key_schema({key_name, :binary}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.binary)
+    PrimaryKeySchema.new(name: key_name, type: PKType.binary())
   end
+
   defp map_primary_key_schema({key_name, :auto_increment}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.integer, option: PKType.auto_increment)
+    PrimaryKeySchema.new(name: key_name, type: PKType.integer(), option: PKType.auto_increment())
   end
+
   defp map_primary_key_schema({key_name, _, :auto_increment}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.integer, option: PKType.auto_increment)
+    PrimaryKeySchema.new(name: key_name, type: PKType.integer(), option: PKType.auto_increment())
   end
-  defp map_primary_key_schema({key_name, PKType.integer}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.integer)
+
+  defp map_primary_key_schema({key_name, PKType.integer()}) do
+    PrimaryKeySchema.new(name: key_name, type: PKType.integer())
   end
-  defp map_primary_key_schema({key_name, PKType.string}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.string)
+
+  defp map_primary_key_schema({key_name, PKType.string()}) do
+    PrimaryKeySchema.new(name: key_name, type: PKType.string())
   end
-  defp map_primary_key_schema({key_name, PKType.binary}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.binary)
+
+  defp map_primary_key_schema({key_name, PKType.binary()}) do
+    PrimaryKeySchema.new(name: key_name, type: PKType.binary())
   end
-  defp map_primary_key_schema({key_name, PKType.auto_increment}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.integer, option: PKType.auto_increment)
+
+  defp map_primary_key_schema({key_name, PKType.auto_increment()}) do
+    PrimaryKeySchema.new(name: key_name, type: PKType.integer(), option: PKType.auto_increment())
   end
-  defp map_primary_key_schema({key_name, _, PKType.auto_increment}) do
-    PrimaryKeySchema.new(name: key_name, type: PKType.integer, option: PKType.auto_increment)
+
+  defp map_primary_key_schema({key_name, _, PKType.auto_increment()}) do
+    PrimaryKeySchema.new(name: key_name, type: PKType.integer(), option: PKType.auto_increment())
   end
+
   defp map_primary_key_schema(primary_key) do
     raise ExAliyunOts.RuntimeError, "Invalid primary_key #{inspect(primary_key)}"
   end

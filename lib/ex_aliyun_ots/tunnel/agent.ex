@@ -32,13 +32,12 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
   end
 
   def process(conn) do
-    Agent.cast(conn, fn(state) ->
+    Agent.cast(conn, fn state ->
       state
       |> read_records()
       |> process_records()
     end)
   end
-
 
   defp read_records(state) do
     token = state.token
@@ -102,11 +101,12 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
       end
     else
       Logger.info(fn ->
-          [
-            "Channel is finished, it will be closed, token: ",
-            inspect(token)
-          ]
-        end)
+        [
+          "Channel is finished, it will be closed, token: ",
+          inspect(token)
+        ]
+      end)
+
       {nil, state}
     end
   end
@@ -125,14 +125,20 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
 
     case Registry.subscriber(state.tunnel_id) do
       nil ->
-        Logger.info "Not found subscriber for tunnel_id: #{inspect(state.tunnel_id)} consume records, so will not invoke checkpoint"
+        Logger.info(
+          "Not found subscriber for tunnel_id: #{inspect(state.tunnel_id)} consume records, so will not invoke checkpoint"
+        )
+
         state
 
       {_ref, subscriber_pid} ->
-
         GenServer.call(subscriber_pid, {:record_event, {records, next_token}}, :infinity)
 
-        Logger.info "Start checkpointer after consume records for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}, next_token: #{inspect next_token}"
+        Logger.info(
+          "Start checkpointer after consume records for tunnel_id: #{state.tunnel_id} / client_id: #{
+            state.client_id
+          } / channel_id: #{state.channel_id}, next_token: #{inspect(next_token)}"
+        )
 
         checkpointer = %Checkpointer{
           tunnel_id: state.tunnel_id,
@@ -155,17 +161,23 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
             |> Checkpointer.checkpoint()
           end
 
-        Logger.info "Finish process_records in agent for tunnel_id: #{state.tunnel_id} / client_id: #{state.client_id} / channel_id: #{state.channel_id}"
+        Logger.info(
+          "Finish process_records in agent for tunnel_id: #{state.tunnel_id} / client_id: #{
+            state.client_id
+          } / channel_id: #{state.channel_id}"
+        )
 
         state
         |> Map.put(:token, next_token)
         |> Map.put(:sequence_number, updated_sequence_number)
     end
   end
+
   defp process_records({:tunnel_expired, state}) do
     state
   end
-  defp process_records({:nil, state}) do
+
+  defp process_records({nil, state}) do
     state
   end
 
@@ -175,5 +187,4 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
 
   defp stream_channel_expired?("OTSTunnelServerUnavailable"), do: true
   defp stream_channel_expired?(_error_code), do: false
-
 end

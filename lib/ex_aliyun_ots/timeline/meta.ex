@@ -237,7 +237,6 @@ defmodule ExAliyunOts.Timeline.Meta do
           "Fail to change timeline meta: #{inspect(meta)} with info: #{inspect(info)}"
   end
 
-
   def insert(%__MODULE__{
         instance: instance,
         identifier: identifier,

@@ -7,7 +7,6 @@ defmodule ExAliyunOts.MixinTest.SecondaryIndexTest do
   @index_name "TestIndex"
 
   test "global secondary index test" do
-
     {:ok, item} = get_row(@index_name, [{"name", "namea"}, {"key", "1"}])
     assert item != nil
 
@@ -19,5 +18,4 @@ defmodule ExAliyunOts.MixinTest.SecondaryIndexTest do
     [{"name", "namea"}, {"key", key}] = pks
     assert key == "1"
   end
-
 end

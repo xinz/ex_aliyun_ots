@@ -68,7 +68,15 @@ defmodule ExAliyunOts do
 
   alias ExAliyunOts.{Var, Client}
 
-  alias ExAliyunOts.Const.{OperationType, ReturnType, RowExistence, FilterType, ComparatorType, LogicOperator, Direction}
+  alias ExAliyunOts.Const.{
+    OperationType,
+    ReturnType,
+    RowExistence,
+    FilterType,
+    ComparatorType,
+    LogicOperator,
+    Direction
+  }
 
   require OperationType
   require ReturnType
@@ -84,17 +92,17 @@ defmodule ExAliyunOts do
     opts = Macro.prewalk(opts, &Macro.expand(&1, __CALLER__))
 
     quote do
-
       @instance Keyword.get(unquote(opts), :instance)
 
       use ExAliyunOts.Constants
 
-      import ExAliyunOts, only: [
-        filter: 1,
-        condition: 1,
-        condition: 2,
-        pagination: 1
-      ]
+      import ExAliyunOts,
+        only: [
+          filter: 1,
+          condition: 1,
+          condition: 2,
+          pagination: 1
+        ]
 
       @before_compile ExAliyunOts.Compiler
     end
@@ -179,7 +187,6 @@ defmodule ExAliyunOts do
     map_condition(existence)
   end
 
-
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/44573.html) | [English](https://www.alibabacloud.com/help/doc-detail/44573.html)
 
@@ -199,8 +206,9 @@ defmodule ExAliyunOts do
   def pagination(options) do
     offset = Keyword.get(options, :offset)
     limit = Keyword.get(options, :limit)
+
     %Var.Filter{
-      filter_type: FilterType.column_pagination,
+      filter_type: FilterType.column_pagination(),
       filter: %Var.ColumnPaginationFilter{offset: offset, limit: limit}
     }
   end
@@ -257,13 +265,19 @@ defmodule ExAliyunOts do
       - `:expiration_time`, the expiration time of stream.
   """
   @doc table: :table
-  @spec create_table(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec create_table(
+          instance :: atom(),
+          table :: String.t(),
+          pk_keys :: list(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def create_table(instance, table, pk_keys, options \\ []) do
     var_create_table = %Var.CreateTable{
       table_name: table,
       primary_keys: pk_keys
     }
+
     prepared_var = map_options(var_create_table, options)
     Client.create_table(instance, prepared_var)
   end
@@ -278,8 +292,8 @@ defmodule ExAliyunOts do
       delete_table("table_name")
   """
   @doc table: :table
-  @spec delete_table(instance :: atom(), table :: String.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec delete_table(instance :: atom(), table :: String.t()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def delete_table(instance, table) do
     Client.delete_table(instance, table)
   end
@@ -294,8 +308,8 @@ defmodule ExAliyunOts do
       list_table()
   """
   @doc table: :table
-  @spec list_table(instance :: atom())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec list_table(instance :: atom()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def list_table(instance) do
     Client.list_table(instance)
   end
@@ -317,12 +331,13 @@ defmodule ExAliyunOts do
     Please see options of `create_table/4`.
   """
   @doc table: :table
-  @spec update_table(instance :: atom(), table :: String.t(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec update_table(instance :: atom(), table :: String.t(), options :: Keyword.t()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def update_table(instance, table, options \\ []) do
     var_update_table = %Var.UpdateTable{
       table_name: table
     }
+
     prepared_var = map_options(var_update_table, options)
     Client.update_table(instance, prepared_var)
   end
@@ -337,8 +352,8 @@ defmodule ExAliyunOts do
       describe_table(table_name)
   """
   @doc table: :table
-  @spec describe_table(instance :: atom(), table :: String.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec describe_table(instance :: atom(), table :: String.t()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def describe_table(instance, table) do
     Client.describe_table(instance, table)
   end
@@ -363,8 +378,8 @@ defmodule ExAliyunOts do
   The batch get operation can be considered as a collection of mulitple `get/3` operations.
   """
   @doc row: :row
-  @spec batch_get(instance :: atom(), requests :: list())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec batch_get(instance :: atom(), requests :: list()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def batch_get(instance, requests) do
     Client.batch_get_row(instance, requests)
   end
@@ -373,7 +388,7 @@ defmodule ExAliyunOts do
   Official document in [Chinese](https://help.aliyun.com/document_detail/27311.html) | [English](https://www.alibabacloud.com/help/doc-detail/27311.html)
 
   ## Example
-  
+
       import MyApp.TableStore
 
       batch_write [
@@ -399,24 +414,28 @@ defmodule ExAliyunOts do
   The batch write operation can be considered as a collection of mulitple `write_put/3`, `write_update/2` and `write_delete/2` operations.
   """
   @doc row: :row
-  @spec batch_write(instance :: atom(), requests :: list(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec batch_write(instance :: atom(), requests :: list(), options :: Keyword.t()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def batch_write(instance, requests, options \\ [])
+
   def batch_write(instance, requests, options) when is_list(requests) do
     batch_write_requests =
-      Enum.map(requests, fn({table, write_rows}) ->
+      Enum.map(requests, fn {table, write_rows} ->
         %Var.BatchWriteRequest{
           table_name: table,
           rows: write_rows
         }
       end)
+
     Client.batch_write_row(instance, batch_write_requests, options)
   end
+
   def batch_write(instance, {table, write_rows}, options) do
     batch_write_request = %Var.BatchWriteRequest{
       table_name: table,
       rows: write_rows
     }
+
     Client.batch_write_row(instance, batch_write_request, options)
   end
 
@@ -457,13 +476,19 @@ defmodule ExAliyunOts do
     * `:transaction_id`, optional, read operation within local transaction.
   """
   @doc row: :row
-  @spec get_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec get_row(
+          instance :: atom(),
+          table :: String.t(),
+          pk_keys :: list(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def get_row(instance, table, pk_keys, options \\ []) do
     var_get_row = %Var.GetRow{
       table_name: table,
       primary_keys: pk_keys
     }
+
     prepared_var = map_options(var_get_row, options)
     Client.get_row(instance, prepared_var)
   end
@@ -496,14 +521,20 @@ defmodule ExAliyunOts do
 
   """
   @doc row: :row
-  @spec put_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec put_row(
+          instance :: atom(),
+          table :: String.t(),
+          pk_keys :: list(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def put_row(instance, table, pk_keys, attrs, options \\ []) do
     var_put_row = %Var.PutRow{
       table_name: table,
       primary_keys: pk_keys,
-      attribute_columns: attrs,
+      attribute_columns: attrs
     }
+
     prepared_var = map_options(var_put_row, options)
     Client.put_row(instance, prepared_var)
   end
@@ -553,13 +584,18 @@ defmodule ExAliyunOts do
     * `:transaction_id`, optional, write operation within local transaction.
   """
   @doc row: :row
-  @spec update_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec update_row(
+          instance :: atom(),
+          table :: String.t(),
+          pk_keys :: list(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def update_row(instance, table, pk_keys, options \\ []) do
     prepared_var =
       %Var.UpdateRow{
         table_name: table,
-        primary_keys: pk_keys,
+        primary_keys: pk_keys
       }
       |> map_options(options)
       |> Map.put(:updates, map_updates(options))
@@ -589,13 +625,19 @@ defmodule ExAliyunOts do
     * `:transaction_id`, optional, write operation within local transaction.
   """
   @doc row: :row
-  @spec delete_row(instance :: atom(), table :: String.t(), pk_keys :: list(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec delete_row(
+          instance :: atom(),
+          table :: String.t(),
+          pk_keys :: list(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def delete_row(instance, table, pk_keys, options \\ []) do
     var_delete_row = %Var.DeleteRow{
       table_name: table,
       primary_keys: pk_keys
     }
+
     prepared_var = map_options(var_delete_row, options)
     Client.delete_row(instance, prepared_var)
   end
@@ -612,8 +654,9 @@ defmodule ExAliyunOts do
   def get(table, pk_keys, options \\ []) do
     var_get_row = %Var.GetRow{
       table_name: table,
-      primary_keys: pk_keys,
+      primary_keys: pk_keys
     }
+
     map_options(var_get_row, options)
   end
 
@@ -628,10 +671,11 @@ defmodule ExAliyunOts do
   @spec write_put(pk_keys :: list(), attrs :: list(), options :: Keyword.t()) :: map()
   def write_put(pk_keys, attrs, options \\ []) do
     var_batch_put_row = %Var.RowInBatchWriteRequest{
-      type: OperationType.put,
+      type: OperationType.put(),
       primary_keys: pk_keys,
-      updates: attrs,
+      updates: attrs
     }
+
     map_options(var_batch_put_row, options)
   end
 
@@ -646,10 +690,11 @@ defmodule ExAliyunOts do
   @spec write_update(pk_keys :: list(), options :: Keyword.t()) :: map()
   def write_update(pk_keys, options \\ []) do
     var_batch_update_row = %Var.RowInBatchWriteRequest{
-      type: OperationType.update,
+      type: OperationType.update(),
       primary_keys: pk_keys,
       updates: map_updates(options)
     }
+
     map_options(var_batch_update_row, options)
   end
 
@@ -664,9 +709,10 @@ defmodule ExAliyunOts do
   @spec write_delete(pk_keys :: list(), options :: Keyword.t()) :: map()
   def write_delete(pk_keys, options \\ []) do
     var_batch_delete_row = %Var.RowInBatchWriteRequest{
-      type: OperationType.delete,
-      primary_keys: pk_keys,
+      type: OperationType.delete(),
+      primary_keys: pk_keys
     }
+
     map_options(var_batch_delete_row, options)
   end
 
@@ -717,23 +763,52 @@ defmodule ExAliyunOts do
       - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
   """
   @doc row: :row
-  @spec get_range(instance :: atom(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ [])
-  def get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_list(inclusive_start_primary_keys) do
+  @spec get_range(
+          instance :: atom(),
+          inclusive_start_primary_keys :: list(),
+          exclusive_end_primary_keys :: list(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  def get_range(
+        instance,
+        table,
+        inclusive_start_primary_keys,
+        exclusive_end_primary_keys,
+        options \\ []
+      )
+
+  def get_range(
+        instance,
+        table,
+        inclusive_start_primary_keys,
+        exclusive_end_primary_keys,
+        options
+      )
+      when is_list(inclusive_start_primary_keys) do
     var_get_range = %Var.GetRange{
       table_name: table,
       inclusive_start_primary_keys: inclusive_start_primary_keys,
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
+
     prepared_var = map_options(var_get_range, options)
     Client.get_range(instance, prepared_var, nil)
   end
-  def get_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options) when is_binary(inclusive_start_primary_keys) do
+
+  def get_range(
+        instance,
+        table,
+        inclusive_start_primary_keys,
+        exclusive_end_primary_keys,
+        options
+      )
+      when is_binary(inclusive_start_primary_keys) do
     var_get_range = %Var.GetRange{
       table_name: table,
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
+
     prepared_var = map_options(var_get_range, options)
     Client.get_range(instance, prepared_var, inclusive_start_primary_keys)
   end
@@ -756,14 +831,27 @@ defmodule ExAliyunOts do
   Please see options of `get_range/5` for details.
   """
   @doc row: :row
-  @spec iterate_all_range(instance :: atom(), table :: String.t(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def iterate_all_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ []) do
+  @spec iterate_all_range(
+          instance :: atom(),
+          table :: String.t(),
+          inclusive_start_primary_keys :: list(),
+          exclusive_end_primary_keys :: list(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  def iterate_all_range(
+        instance,
+        table,
+        inclusive_start_primary_keys,
+        exclusive_end_primary_keys,
+        options \\ []
+      ) do
     var_iterate_all_range = %Var.GetRange{
       table_name: table,
       inclusive_start_primary_keys: inclusive_start_primary_keys,
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
+
     prepared_var = map_options(var_iterate_all_range, options)
     Client.iterate_get_all_range(instance, prepared_var)
   end
@@ -793,14 +881,26 @@ defmodule ExAliyunOts do
   Please see options of `get_range/5` for details.
   """
   @doc row: :row
-  @spec stream_range(instance :: atom(), inclusive_start_primary_keys :: list(), exclusive_end_primary_keys :: list(), options :: Keyword.t())
-    :: Enumerable.t()
-  def stream_range(instance, table, inclusive_start_primary_keys, exclusive_end_primary_keys, options \\ []) do
+  @spec stream_range(
+          instance :: atom(),
+          inclusive_start_primary_keys :: list(),
+          exclusive_end_primary_keys :: list(),
+          options :: Keyword.t()
+        ) ::
+          Enumerable.t()
+  def stream_range(
+        instance,
+        table,
+        inclusive_start_primary_keys,
+        exclusive_end_primary_keys,
+        options \\ []
+      ) do
     var_get_range = %Var.GetRange{
       table_name: table,
       inclusive_start_primary_keys: inclusive_start_primary_keys,
       exclusive_end_primary_keys: exclusive_end_primary_keys
     }
+
     prepared_var = map_options(var_get_range, options)
     Client.stream_range(instance, prepared_var)
   end
@@ -847,13 +947,19 @@ defmodule ExAliyunOts do
       - `["field1", "field2"]`, specifies the expected return attribute column fields.
   """
   @doc search: :search
-  @spec search(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec search(
+          instance :: atom(),
+          table :: String.t(),
+          index_name :: String.t(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def search(instance, table, index_name, options) do
     var_search_request = %Var.Search.SearchRequest{
       table_name: table,
       index_name: index_name
     }
+
     prepared_var = ExAliyunOts.Search.map_search_options(var_search_request, options)
     Client.search(instance, prepared_var)
   end
@@ -868,8 +974,8 @@ defmodule ExAliyunOts do
       list_search_index("table")
   """
   @doc search: :search
-  @spec list_search_index(instance :: atom(), table :: String.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec list_search_index(instance :: atom(), table :: String.t()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def list_search_index(instance, table) do
     Client.list_search_index(instance, table)
   end
@@ -921,18 +1027,23 @@ defmodule ExAliyunOts do
       - `ExAliyunOts.Search.geo_distance_sort/3`
   """
   @doc search: :search
-  @spec create_search_index(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec create_search_index(
+          instance :: atom(),
+          table :: String.t(),
+          index_name :: String.t(),
+          options :: Keyword.t()
+        ) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def create_search_index(instance, table, index_name, options) do
-    var_request =
-      %Var.Search.CreateSearchIndexRequest{
-        table_name: table,
-        index_name: index_name,
-        index_schema: %Var.Search.IndexSchema{
-          field_schemas: Keyword.fetch!(options, :field_schemas),
-          index_sorts: Keyword.get(options, :index_sorts)
-        }
+    var_request = %Var.Search.CreateSearchIndexRequest{
+      table_name: table,
+      index_name: index_name,
+      index_schema: %Var.Search.IndexSchema{
+        field_schemas: Keyword.fetch!(options, :field_schemas),
+        index_sorts: Keyword.get(options, :index_sorts)
       }
+    }
+
     Client.create_search_index(instance, var_request)
   end
 
@@ -946,13 +1057,14 @@ defmodule ExAliyunOts do
       delete_search_index("table", "index_name")
   """
   @doc search: :search
-  @spec delete_search_index(instance :: atom(), table :: String.t(), index_name :: String.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec delete_search_index(instance :: atom(), table :: String.t(), index_name :: String.t()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def delete_search_index(instance, table, index_name) do
     var_delete_request = %Var.Search.DeleteSearchIndexRequest{
       table_name: table,
       index_name: index_name
     }
+
     Client.delete_search_index(instance, var_delete_request)
   end
 
@@ -966,13 +1078,14 @@ defmodule ExAliyunOts do
       describe_search_index("table", "index_name")
   """
   @doc search: :search
-  @spec describe_search_index(instance :: atom(), table :: String.t(), index_name :: String.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec describe_search_index(instance :: atom(), table :: String.t(), index_name :: String.t()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def describe_search_index(instance, table, index_name) do
     var_describe_request = %Var.Search.DescribeSearchIndexRequest{
       table_name: table,
       index_name: index_name
     }
+
     Client.describe_search_index(instance, var_describe_request)
   end
 
@@ -987,13 +1100,14 @@ defmodule ExAliyunOts do
       start_local_transaction("table", partition_key)
   """
   @doc local_transaction: :local_transaction
-  @spec start_local_transaction(instance :: atom(), table :: String.t(), partition_key :: tuple())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec start_local_transaction(instance :: atom(), table :: String.t(), partition_key :: tuple()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def start_local_transaction(instance, table, partition_key) do
     var_start_local_transaction = %Var.Transaction.StartLocalTransactionRequest{
       table_name: table,
       partition_key: partition_key
     }
+
     Client.start_local_transaction(instance, var_start_local_transaction)
   end
 
@@ -1007,8 +1121,8 @@ defmodule ExAliyunOts do
       commit_transaction("transaction_id")
   """
   @doc local_transaction: :local_transaction
-  @spec commit_transaction(instance :: atom(), transaction_id :: String.t())
-    :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec commit_transaction(instance :: atom(), transaction_id :: String.t()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def commit_transaction(instance, transaction_id) do
     Client.commit_transaction(instance, transaction_id)
   end
@@ -1030,86 +1144,109 @@ defmodule ExAliyunOts do
   @doc false
   def map_condition(:ignore) do
     %Var.Condition{
-      row_existence: RowExistence.ignore
+      row_existence: RowExistence.ignore()
     }
   end
+
   def map_condition(:expect_exist) do
     %Var.Condition{
-      row_existence: RowExistence.expect_exist
+      row_existence: RowExistence.expect_exist()
     }
   end
+
   def map_condition(:expect_not_exist) do
     %Var.Condition{
-      row_existence: RowExistence.expect_not_exist
+      row_existence: RowExistence.expect_not_exist()
     }
   end
+
   def map_condition(existence) do
-    raise ExAliyunOts.RuntimeError, "Invalid existence: #{inspect existence} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
+    raise ExAliyunOts.RuntimeError,
+          "Invalid existence: #{inspect(existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
   end
 
   @doc false
   def expressions_to_filter({:and, _, expressions}, binding) do
     %Var.Filter{
-      filter_type: FilterType.composite_column,
+      filter_type: FilterType.composite_column(),
       filter: %Var.CompositeColumnValueFilter{
-        combinator: LogicOperator.and,
-        sub_filters: Enum.map(expressions, fn(expr) -> 
-          expressions_to_filter(expr, binding)
-        end)
+        combinator: LogicOperator.and(),
+        sub_filters:
+          Enum.map(expressions, fn expr ->
+            expressions_to_filter(expr, binding)
+          end)
       }
     }
   end
+
   def expressions_to_filter({:not, _, expressions}, binding) do
     %Var.Filter{
-      filter_type: FilterType.composite_column,
+      filter_type: FilterType.composite_column(),
       filter: %Var.CompositeColumnValueFilter{
-        combinator: LogicOperator.not,
-        sub_filters: Enum.map(expressions, fn(expr) -> 
-          expressions_to_filter(expr, binding)
-        end)
+        combinator: LogicOperator.not(),
+        sub_filters:
+          Enum.map(expressions, fn expr ->
+            expressions_to_filter(expr, binding)
+          end)
       }
     }
   end
+
   def expressions_to_filter({:or, _, expressions}, binding) do
     %Var.Filter{
-      filter_type: FilterType.composite_column,
+      filter_type: FilterType.composite_column(),
       filter: %Var.CompositeColumnValueFilter{
-        combinator: LogicOperator.or,
-        sub_filters: Enum.map(expressions, fn(expr) ->
-          expressions_to_filter(expr, binding)
-        end)
+        combinator: LogicOperator.or(),
+        sub_filters:
+          Enum.map(expressions, fn expr ->
+            expressions_to_filter(expr, binding)
+          end)
       }
     }
   end
+
   def expressions_to_filter({:==, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.eq, column_name, column_value, binding)
+    prepare_single_column_value_filter(ComparatorType.eq(), column_name, column_value, binding)
   end
+
   def expressions_to_filter({:>, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.gt, column_name, column_value, binding)
+    prepare_single_column_value_filter(ComparatorType.gt(), column_name, column_value, binding)
   end
+
   def expressions_to_filter({:>=, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.ge, column_name, column_value, binding)
+    prepare_single_column_value_filter(ComparatorType.ge(), column_name, column_value, binding)
   end
+
   def expressions_to_filter({:!=, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.not_eq, column_name, column_value, binding)
+    prepare_single_column_value_filter(
+      ComparatorType.not_eq(),
+      column_name,
+      column_value,
+      binding
+    )
   end
+
   def expressions_to_filter({:<, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.lt, column_name, column_value, binding)
+    prepare_single_column_value_filter(ComparatorType.lt(), column_name, column_value, binding)
   end
+
   def expressions_to_filter({:<=, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.le, column_name, column_value, binding)
+    prepare_single_column_value_filter(ComparatorType.le(), column_name, column_value, binding)
   end
 
   defp prepare_single_column_value_filter(comparator, column_name, column_value, binding) do
     {column_name, options} = check_signal_col_val_filter_options(column_name)
+
     filter = %Var.SingleColumnValueFilter{
       comparator: comparator,
       column_name: column_name,
-      column_value: map_filter_column_value(column_value, binding),
+      column_value: map_filter_column_value(column_value, binding)
     }
+
     filter_with_options = map_options(filter, options)
+
     %Var.Filter{
-      filter_type: FilterType.single_column,
+      filter_type: FilterType.single_column(),
       filter: filter_with_options
     }
   end
@@ -1118,42 +1255,53 @@ defmodule ExAliyunOts do
     case Regex.run(@regex_filter_options, column_content) do
       nil ->
         {column_content, nil}
+
       [_, column_name, options_str] ->
         {options, _} = Code.eval_string(options_str)
         {column_name, options}
+
       _ ->
-        raise ExAliyunOts.RuntimeError, "filter expression: #{inspect column_content}"
+        raise ExAliyunOts.RuntimeError, "filter expression: #{inspect(column_content)}"
     end
   end
 
   defp map_filter_column_value({column_value_bound_var, _, _} = ast, binding) do
     prepared = Keyword.get(binding, column_value_bound_var)
+
     if prepared == nil do
-      raise ExAliyunOts.RuntimeError, "Invalid expression `#{Macro.to_string(ast)}` in context, please use a variable refer the value in filter expression."
+      raise ExAliyunOts.RuntimeError,
+            "Invalid expression `#{Macro.to_string(ast)}` in context, please use a variable refer the value in filter expression."
     else
       prepared
     end
   end
+
   defp map_filter_column_value(column_value, _binding) do
     column_value
   end
 
   defp map_options(var, nil), do: var
+
   defp map_options(var, options) do
     options
     |> Keyword.keys()
-    |> Enum.reduce(var, fn(key, acc) ->
+    |> Enum.reduce(var, fn key, acc ->
       value = Keyword.get(options, key)
+
       if value != nil and Map.has_key?(var, key) do
         case key do
           :return_type ->
             Map.put(acc, key, map_return_type(value))
+
           :direction ->
             Map.put(acc, key, map_direction(value))
+
           :stream_spec ->
             Map.put(acc, key, map_stream_spec(value))
+
           :time_range ->
             Map.put(acc, key, map_time_range(value))
+
           _ ->
             Map.put(acc, key, value)
         end
@@ -1163,23 +1311,25 @@ defmodule ExAliyunOts do
     end)
   end
 
-  defp map_return_type(nil), do: ReturnType.none
-  defp map_return_type(:none), do: ReturnType.none
-  defp map_return_type(:pk), do: ReturnType.pk
-  defp map_return_type(:after_modify), do: ReturnType.after_modify
-  defp map_return_type(ReturnType.none), do: ReturnType.none
-  defp map_return_type(ReturnType.pk), do: ReturnType.pk
-  defp map_return_type(ReturnType.after_modify), do: ReturnType.after_modify
+  defp map_return_type(nil), do: ReturnType.none()
+  defp map_return_type(:none), do: ReturnType.none()
+  defp map_return_type(:pk), do: ReturnType.pk()
+  defp map_return_type(:after_modify), do: ReturnType.after_modify()
+  defp map_return_type(ReturnType.none()), do: ReturnType.none()
+  defp map_return_type(ReturnType.pk()), do: ReturnType.pk()
+  defp map_return_type(ReturnType.after_modify()), do: ReturnType.after_modify()
+
   defp map_return_type(invalid_return_type) do
-    raise ExAliyunOts.RuntimeError, "invalid return_type: #{inspect invalid_return_type}"
+    raise ExAliyunOts.RuntimeError, "invalid return_type: #{inspect(invalid_return_type)}"
   end
 
-  defp map_direction(:backward), do: Direction.backward
-  defp map_direction(:forward), do: Direction.forward
-  defp map_direction(Direction.backward), do: Direction.backward
-  defp map_direction(Direction.forward), do: Direction.forward
+  defp map_direction(:backward), do: Direction.backward()
+  defp map_direction(:forward), do: Direction.forward()
+  defp map_direction(Direction.backward()), do: Direction.backward()
+  defp map_direction(Direction.forward()), do: Direction.forward()
+
   defp map_direction(invalid_direction) do
-    raise ExAliyunOts.RuntimeError, "invalid direction: #{inspect invalid_direction}"
+    raise ExAliyunOts.RuntimeError, "invalid direction: #{inspect(invalid_direction)}"
   end
 
   defp map_stream_spec(values) do
@@ -1191,13 +1341,16 @@ defmodule ExAliyunOts do
   defp map_time_range(specific_time) when is_integer(specific_time) do
     %Var.TimeRange{specific_time: specific_time}
   end
-  defp map_time_range({start_time, end_time}) when is_integer(start_time) and is_integer(end_time) do
+
+  defp map_time_range({start_time, end_time})
+       when is_integer(start_time) and is_integer(end_time) do
     %Var.TimeRange{start_time: start_time, end_time: end_time}
   end
 
   defp map_updates(options) do
-    Enum.reduce([:delete, :delete_all, :put, :increment], %{}, fn(update_operation, acc) ->
+    Enum.reduce([:delete, :delete_all, :put, :increment], %{}, fn update_operation, acc ->
       {matched_update, _rest_opts} = Keyword.pop(options, update_operation)
+
       if matched_update != nil do
         Map.put(acc, map_operation_type(update_operation), matched_update)
       else
@@ -1206,16 +1359,16 @@ defmodule ExAliyunOts do
     end)
   end
 
-  defp map_operation_type(:put), do: OperationType.put
-  defp map_operation_type(:delete), do: OperationType.delete
-  defp map_operation_type(:delete_all), do: OperationType.delete_all
-  defp map_operation_type(:increment), do: OperationType.increment
-  defp map_operation_type(OperationType.put), do: OperationType.put
-  defp map_operation_type(OperationType.delete), do: OperationType.delete
-  defp map_operation_type(OperationType.delete_all), do: OperationType.delete_all
-  defp map_operation_type(OperationType.increment), do: OperationType.increment
-  defp map_operation_type(invalid_operation_type) do
-    raise ExAliyunOts.RuntimeError, "invalid operation_type: #{inspect invalid_operation_type}"
-  end
+  defp map_operation_type(:put), do: OperationType.put()
+  defp map_operation_type(:delete), do: OperationType.delete()
+  defp map_operation_type(:delete_all), do: OperationType.delete_all()
+  defp map_operation_type(:increment), do: OperationType.increment()
+  defp map_operation_type(OperationType.put()), do: OperationType.put()
+  defp map_operation_type(OperationType.delete()), do: OperationType.delete()
+  defp map_operation_type(OperationType.delete_all()), do: OperationType.delete_all()
+  defp map_operation_type(OperationType.increment()), do: OperationType.increment()
 
+  defp map_operation_type(invalid_operation_type) do
+    raise ExAliyunOts.RuntimeError, "invalid operation_type: #{inspect(invalid_operation_type)}"
+  end
 end

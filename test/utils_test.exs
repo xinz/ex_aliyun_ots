@@ -31,8 +31,7 @@ defmodule ExAliyunOtsTest.UtilsTest do
     assert Utils.valid_geo_point?(",10.01") == false
     assert Utils.valid_geo_point?("23") == false
     assert Utils.valid_geo_point?("31,") == false
-    assert Utils.valid_geo_point?("-1,") == false 
-    assert Utils.valid_geo_point?(",-1") == false 
+    assert Utils.valid_geo_point?("-1,") == false
+    assert Utils.valid_geo_point?(",-1") == false
   end
-
 end

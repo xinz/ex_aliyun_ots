@@ -43,7 +43,6 @@ defmodule ExAliyunOts.Tunnel.Channel do
     {:ok, status, channel}
   end
 
-
   @spec update(
           channel :: pid(),
           remote_channel :: channel()
@@ -63,11 +62,8 @@ defmodule ExAliyunOts.Tunnel.Channel do
         ChannelStatus.open(),
         channel
       ) do
-
     Logger.info(
-      ">>>>>>>>>>>>>>> update in channel_status open, remote_channel: #{
-        inspect(remote_channel)
-      }"
+      ">>>>>>>>>>>>>>> update in channel_status open, remote_channel: #{inspect(remote_channel)}"
     )
 
     remote_channel_status = remote_channel.status
@@ -87,7 +83,6 @@ defmodule ExAliyunOts.Tunnel.Channel do
         ChannelStatus.closing(),
         channel
       ) do
-
     Logger.info(
       ">>>>>>>>>>>>>>> update in channel_status closing, remote_channel: #{
         inspect(remote_channel)
@@ -104,11 +99,8 @@ defmodule ExAliyunOts.Tunnel.Channel do
         ChannelStatus.close(),
         channel
       ) do
-
     Logger.info(
-      ">>>>>>>>>>>>>>> update in channel_status close, remote_channel: #{
-        inspect(remote_channel)
-      }"
+      ">>>>>>>>>>>>>>> update in channel_status close, remote_channel: #{inspect(remote_channel)}"
     )
 
     merge(remote_channel, channel.pid, ChannelStatus.close())
@@ -122,7 +114,6 @@ defmodule ExAliyunOts.Tunnel.Channel do
         channel_status,
         channel
       ) do
-
     Logger.info(
       "** update unexpected channel_status: #{inspect(channel_status)} with remote_channel: #{
         inspect(remote_channel)
@@ -135,7 +126,6 @@ defmodule ExAliyunOts.Tunnel.Channel do
   end
 
   def terminate(reason, state, channel) do
-
     Agent.stop(channel.agent)
 
     Registry.remove_channel(channel.pid)
@@ -162,10 +152,11 @@ defmodule ExAliyunOts.Tunnel.Channel do
          ChannelStatus.open() = _remote_channel_status,
          from
        ) do
-    Logger.info "process readrecords and checkpoint for open channel"
+    Logger.info("process readrecords and checkpoint for open channel")
     Agent.process(agent)
     {:next_state, ChannelStatus.open(), channel, [{:reply, from, :ok}]}
   end
+
   defp process_channel(
          channel,
          _agent,
@@ -178,6 +169,7 @@ defmodule ExAliyunOts.Tunnel.Channel do
     Registry.inc_channel_version(channel.pid)
     {:next_state, ChannelStatus.close(), channel, [{:reply, from, :ok}]}
   end
+
   defp process_channel(
          channel,
          _agent,
@@ -215,5 +207,4 @@ defmodule ExAliyunOts.Tunnel.Channel do
 
     Registry.update_channel(pid, updates)
   end
-
 end

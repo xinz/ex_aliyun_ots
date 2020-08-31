@@ -49,6 +49,7 @@ defmodule ExAliyunOts.Client.Tunnel do
         inspect(result)
       ]
     end)
+
     result
   end
 
@@ -70,6 +71,7 @@ defmodule ExAliyunOts.Client.Tunnel do
         inspect(result)
       ]
     end)
+
     result
   end
 
@@ -89,6 +91,7 @@ defmodule ExAliyunOts.Client.Tunnel do
         inspect(result)
       ]
     end)
+
     result
   end
 
@@ -110,11 +113,13 @@ defmodule ExAliyunOts.Client.Tunnel do
         inspect(result)
       ]
     end)
+
     result
   end
 
   def request_to_connect_tunnel(opts) do
     config = ClientConfig.new(timeout: opts[:timeout], client_tag: opts[:client_tag])
+
     ConnectRequest.new(
       tunnel_id: opts[:tunnel_id],
       client_config: config
@@ -134,14 +139,16 @@ defmodule ExAliyunOts.Client.Tunnel do
         inspect(result)
       ]
     end)
+
     result
   end
 
   def request_to_heartbeat(opts) do
     channels =
-      Enum.map(Keyword.get(opts, :channels, []), fn(channel) ->
+      Enum.map(Keyword.get(opts, :channels, []), fn channel ->
         Channel.new(channel)
       end)
+
     HeartbeatRequest.new(
       tunnel_id: opts[:tunnel_id],
       client_id: opts[:client_id],
@@ -155,12 +162,14 @@ defmodule ExAliyunOts.Client.Tunnel do
       instance
       |> Http.client("/tunnel/heartbeat", request_body, &HeartbeatResponse.decode/1)
       |> Http.post()
+
     debug(fn ->
       [
         "heartbeat result: ",
         inspect(result)
       ]
     end)
+
     result
   end
 
@@ -175,12 +184,14 @@ defmodule ExAliyunOts.Client.Tunnel do
       instance
       |> Http.client("/tunnel/shutdown", request_body, &ShutdownResponse.decode/1)
       |> Http.post()
+
     debug(fn ->
       [
         "shutdown result: ",
         inspect(result)
       ]
     end)
+
     result
   end
 
@@ -195,12 +206,14 @@ defmodule ExAliyunOts.Client.Tunnel do
       instance
       |> Http.client("/tunnel/getcheckpoint", request_body, &GetCheckpointResponse.decode/1)
       |> Http.post()
+
     debug(fn ->
       [
         "get checkpoint result: ",
         inspect(result)
       ]
     end)
+
     result
   end
 
@@ -215,24 +228,30 @@ defmodule ExAliyunOts.Client.Tunnel do
       instance
       |> Http.client("/tunnel/readrecords", request_body, &decode_readrecords_response/1)
       |> Http.post()
+
     debug(fn ->
       [
         "readrecords result: ",
         inspect(result)
       ]
     end)
+
     result
   end
 
   defp decode_readrecords_response(response_body) do
     response = ReadRecordsResponse.decode(response_body)
+
     readable_records =
       response.records
-      |> Task.async_stream(fn(record) ->
-        readable_record = PlainBuffer.deserialize_row(record.record)
-        Map.put(record, :record, readable_record)
-      end, timeout: :infinity)
-      |> Enum.map(fn({:ok, record}) -> record end)
+      |> Task.async_stream(
+        fn record ->
+          readable_record = PlainBuffer.deserialize_row(record.record)
+          Map.put(record, :record, readable_record)
+        end,
+        timeout: :infinity
+      )
+      |> Enum.map(fn {:ok, record} -> record end)
 
     Map.put(response, :records, readable_records)
   end
@@ -248,13 +267,14 @@ defmodule ExAliyunOts.Client.Tunnel do
       instance
       |> Http.client("/tunnel/checkpoint", request_body, &CheckpointResponse.decode/1)
       |> Http.post()
+
     debug(fn ->
       [
         "checkpoint result: ",
         inspect(result)
       ]
     end)
+
     result
   end
-
 end

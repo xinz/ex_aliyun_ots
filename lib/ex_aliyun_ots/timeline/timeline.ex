@@ -234,7 +234,9 @@ defmodule ExAliyunOts.Timeline do
       })
       when fields == [] or length(fields) > @fields_max_size do
     raise ExAliyunOts.RuntimeError,
-          "Invalid fields size as #{length(fields)}, please keep its size greater than 0 and less or equal to #{@fields_max_size}."
+          "Invalid fields size as #{length(fields)}, please keep its size greater than 0 and less or equal to #{
+            @fields_max_size
+          }."
   end
 
   def create(timeline) do
@@ -506,14 +508,15 @@ defmodule ExAliyunOts.Timeline do
           """
   end
 
-  def update(_timeline, %Entry{sequence_id: sequence_id}) when sequence_id == nil or is_integer(sequence_id) != true do
+  def update(_timeline, %Entry{sequence_id: sequence_id})
+      when sequence_id == nil or is_integer(sequence_id) != true do
     raise ExAliyunOts.RuntimeError,
-          "Fail to update timeline with invalid sequence_id: #{inspect sequence_id}, expect it is a integer."
+          "Fail to update timeline with invalid sequence_id: #{inspect(sequence_id)}, expect it is a integer."
   end
 
   def update(_timeline, %Entry{message: message}) when not is_valid_input_columns(message) do
     raise ExAliyunOts.RuntimeError,
-          "Fail to update timeline with invalid message: #{inspect message}, expect it is a list or map."
+          "Fail to update timeline with invalid message: #{inspect(message)}, expect it is a list or map."
   end
 
   def update(
@@ -532,7 +535,9 @@ defmodule ExAliyunOts.Timeline do
 
   def update(timeline, entry) do
     raise ExAliyunOts.RuntimeError,
-          "Fail to update invalid timeline: #{inspect(timeline)}, or invalid entry: #{inspect(entry)}."
+          "Fail to update invalid timeline: #{inspect(timeline)}, or invalid entry: #{
+            inspect(entry)
+          }."
   end
 
   def get(
@@ -598,23 +603,32 @@ defmodule ExAliyunOts.Timeline do
       table_name: table_name,
       primary_keys: primary_keys,
       updates: %{
-        OperationType.put => Utils.attrs_to_row(message)
+        OperationType.put() => Utils.attrs_to_row(message)
       },
       condition: %Var.Condition{
         row_existence: RowExistence.ignore()
       }
     }
+
     Client.update_row(instance, var_update_row)
   end
 
   defp do_get(instance, table_name, primary_keys, options) do
     columns_to_get = Keyword.get(options, :columns_to_get, [])
-    if not is_list(columns_to_get), do: raise ExAliyunOts.RuntimeError, "Invalid columns_to_get: #{inspect(columns_to_get)} using GetRow, expect it is a list."
+
+    if not is_list(columns_to_get),
+      do:
+        raise(
+          ExAliyunOts.RuntimeError,
+          "Invalid columns_to_get: #{inspect(columns_to_get)} using GetRow, expect it is a list."
+        )
+
     var_get_row = %Var.GetRow{
       table_name: table_name,
       primary_keys: primary_keys,
       columns_to_get: columns_to_get
     }
+
     Client.get_row(instance, var_get_row)
   end
 
@@ -623,9 +637,10 @@ defmodule ExAliyunOts.Timeline do
       table_name: table_name,
       primary_keys: primary_keys,
       condition: %Var.Condition{
-        row_existence: RowExistence.ignore
+        row_existence: RowExistence.ignore()
       }
     }
+
     Client.delete_row(instance, var_delete_row)
   end
 
@@ -666,5 +681,4 @@ defmodule ExAliyunOts.Timeline do
       return_type: ReturnType.pk()
     }
   end
-
 end

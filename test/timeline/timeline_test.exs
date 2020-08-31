@@ -38,7 +38,12 @@ defmodule ExAliyunOts.TimelineTest do
   end
 
   test "add field" do
-    t = new(table_name: "table_name", index_name: "index_name") |> add_field("field_name1", :string) |> add_field("field_name2", :integer) |> add_field("field_name3", :binary)
+    t =
+      new(table_name: "table_name", index_name: "index_name")
+      |> add_field("field_name1", :string)
+      |> add_field("field_name2", :integer)
+      |> add_field("field_name3", :binary)
+
     assert length(t.fields) == 3
 
     assert_raise ExAliyunOts.RuntimeError, ~r/Allow up to 3 fields to be added/, fn ->
@@ -58,12 +63,14 @@ defmodule ExAliyunOts.TimelineTest do
   test "create fail case" do
     # field(s) and index_schema are required
     t = new(table_name: "table_name", index_name: "index_name")
+
     assert_raise ExAliyunOts.RuntimeError, ~r/Invalid fields size as 0/, fn ->
       create(t)
     end
 
     # index_schema is required
     t = add_field(t, "field_name1", :string)
+
     assert_raise ExAliyunOts.RuntimeError, ~r/Fail to create with invalid timeline/, fn ->
       create(t)
     end
@@ -77,17 +84,21 @@ defmodule ExAliyunOts.TimelineTest do
         },
         %Search.FieldSchema{
           field_name: "created_at",
-          field_type: FieldType.long
+          field_type: FieldType.long()
         },
         %Search.FieldSchema{
           field_name: "is_actived",
-          field_type: FieldType.boolean
+          field_type: FieldType.boolean()
         }
       ]
     }
 
     t =
-      [table_name: "timeline_test1", index_name: "timeline_test1_index", index_schema: index_schema]
+      [
+        table_name: "timeline_test1",
+        index_name: "timeline_test1_index",
+        index_schema: index_schema
+      ]
       |> new()
       |> add_field("id", :string)
 
@@ -98,7 +109,11 @@ defmodule ExAliyunOts.TimelineTest do
     assert drop_result == :ok
 
     t2 =
-      [table_name: "timeline_test2", index_name: "timeline_test2_index", index_schema: index_schema]
+      [
+        table_name: "timeline_test2",
+        index_name: "timeline_test2_index",
+        index_schema: index_schema
+      ]
       |> new()
       |> change_seq_id(:manual, "custom_seq_id")
 
@@ -140,11 +155,11 @@ defmodule ExAliyunOts.TimelineTest do
         },
         %Search.FieldSchema{
           field_name: "created_at",
-          field_type: FieldType.long
+          field_type: FieldType.long()
         },
         %Search.FieldSchema{
           field_name: "is_actived",
-          field_type: FieldType.boolean
+          field_type: FieldType.boolean()
         }
       ]
     }
@@ -161,7 +176,12 @@ defmodule ExAliyunOts.TimelineTest do
     index_name2 = "timeline_test2_index"
 
     t2 =
-      [table_name: table_name2, index_name: index_name2, index_schema: index_schema, seq_id_generation: :manual]
+      [
+        table_name: table_name2,
+        index_name: index_name2,
+        index_schema: index_schema,
+        seq_id_generation: :manual
+      ]
       |> new()
       |> add_field("id", :string)
 
@@ -183,8 +203,14 @@ defmodule ExAliyunOts.TimelineTest do
     assert value == id_value and is_integer(value2)
 
     manual_seq_id = Timeline.generate_sequence_id()
-    timeline2 = new(table_name: table_name2, identifier: [{"id", id_value}], seq_id_generation: :manual)
-    entry = %Entry{message: [name: "test name2", created_at: 999, is_actived: false], sequence_id: manual_seq_id}
+
+    timeline2 =
+      new(table_name: table_name2, identifier: [{"id", id_value}], seq_id_generation: :manual)
+
+    entry = %Entry{
+      message: [name: "test name2", created_at: 999, is_actived: false],
+      sequence_id: manual_seq_id
+    }
 
     {store_status2, response2} = store(timeline2, entry)
 
@@ -192,7 +218,7 @@ defmodule ExAliyunOts.TimelineTest do
     {pks, nil} = response2.row
     [{"id", value}, {"sequence_id", value2}] = pks
     assert value == id_value and value2 == manual_seq_id
-    
+
     :ok = drop(t)
     :ok = drop(t2)
   end
@@ -205,11 +231,11 @@ defmodule ExAliyunOts.TimelineTest do
         },
         %Search.FieldSchema{
           field_name: "created_at",
-          field_type: FieldType.long
+          field_type: FieldType.long()
         },
         %Search.FieldSchema{
           field_name: "is_actived",
-          field_type: FieldType.boolean
+          field_type: FieldType.boolean()
         }
       ]
     }
@@ -226,7 +252,12 @@ defmodule ExAliyunOts.TimelineTest do
     index_name2 = "timeline_test2_index"
 
     t2 =
-      [table_name: table_name2, index_name: index_name2, index_schema: index_schema, seq_id_generation: :manual]
+      [
+        table_name: table_name2,
+        index_name: index_name2,
+        index_schema: index_schema,
+        seq_id_generation: :manual
+      ]
       |> new()
       |> add_field("id", :string)
 
@@ -237,7 +268,9 @@ defmodule ExAliyunOts.TimelineTest do
     assert create_result2 == :ok
 
     timeline1 = new(table_name: table_name, identifier: [{"id", "1"}])
-    timeline2 = new(table_name: table_name2, identifier: [{"id", "100"}], seq_id_generation: :manual)
+
+    timeline2 =
+      new(table_name: table_name2, identifier: [{"id", "100"}], seq_id_generation: :manual)
 
     writes = [
       %BatchWrite{
@@ -246,7 +279,10 @@ defmodule ExAliyunOts.TimelineTest do
       },
       %BatchWrite{
         timeline: timeline2,
-        entry: %Entry{message: [name: "test name2", created_at: 2, is_actived: false], sequence_id: Timeline.generate_sequence_id()}
+        entry: %Entry{
+          message: [name: "test name2", created_at: 2, is_actived: false],
+          sequence_id: Timeline.generate_sequence_id()
+        }
       }
     ]
 
@@ -267,8 +303,10 @@ defmodule ExAliyunOts.TimelineTest do
           }
         ]
       }
+
       table_name = "timeline_scan_test"
       index_name = "timeline_scan_test_index"
+
       t =
         [table_name: table_name, index_name: index_name, index_schema: index_schema]
         |> new()
@@ -287,10 +325,10 @@ defmodule ExAliyunOts.TimelineTest do
       table_name = "timeline_scan_test"
 
       timeline = new(table_name: table_name, identifier: [{"id", "100"}])
-      entry1 = %Entry{message: [name: "test1", attr2: "attr2_1", is_enable: true]} 
-      entry2 = %Entry{message: [name: "test2", attr2: "attr2_2", is_enable: false]} 
-      entry3 = %Entry{message: [name: "test3", attr2: "attr2_3", is_enable: false]} 
-      entry4 = %Entry{message: [name: "test4", attr2: "attr2_4", is_enable: true]} 
+      entry1 = %Entry{message: [name: "test1", attr2: "attr2_1", is_enable: true]}
+      entry2 = %Entry{message: [name: "test2", attr2: "attr2_2", is_enable: false]}
+      entry3 = %Entry{message: [name: "test3", attr2: "attr2_3", is_enable: false]}
+      entry4 = %Entry{message: [name: "test4", attr2: "attr2_4", is_enable: true]}
 
       {:ok, response1} = store(timeline, entry1)
       {[{"id", "100"}, {"sequence_id", seq1}], nil} = response1.row
@@ -346,7 +384,8 @@ defmodule ExAliyunOts.TimelineTest do
 
       assert next_start_primary_key != nil
 
-      {:ok, response} = scan_forward(timeline, seq1, seq4, next_start_primary_key: next_start_primary_key)
+      {:ok, response} =
+        scan_forward(timeline, seq1, seq4, next_start_primary_key: next_start_primary_key)
 
       assert length(response.rows) == 2 and response.next_start_primary_key == nil
 
@@ -378,16 +417,14 @@ defmodule ExAliyunOts.TimelineTest do
 
       assert next_start_primary_key != nil
 
-      {:ok, response} = scan_backward(timeline, seq4, seq1, next_start_primary_key: next_start_primary_key)
+      {:ok, response} =
+        scan_backward(timeline, seq4, seq1, next_start_primary_key: next_start_primary_key)
 
       assert length(response.rows) == 2 and response.next_start_primary_key == nil
-
     end
-
   end
 
   describe "timeline CRUD operations" do
-
     setup do
       index_schema = %Search.IndexSchema{
         field_schemas: [
@@ -396,8 +433,10 @@ defmodule ExAliyunOts.TimelineTest do
           }
         ]
       }
+
       table_name = "timeline_update_test"
       index_name = "timeline_update_test_index"
+
       t =
         [table_name: table_name, index_name: index_name, index_schema: index_schema]
         |> new()
@@ -423,16 +462,18 @@ defmodule ExAliyunOts.TimelineTest do
       {:ok, response} = store(timeline, entry1)
       {[{"id", "1"}, {"sequence_id", sequence_id}], nil} = response.row
 
-      assert_raise ExAliyunOts.RuntimeError, ~r/Fail to update timeline with invalid sequence_id/, fn ->
-        update(timeline, %Entry{message: [name: "newtest1", new_field: 97.1, num: 1]})
-      end
+      assert_raise ExAliyunOts.RuntimeError,
+                   ~r/Fail to update timeline with invalid sequence_id/,
+                   fn ->
+                     update(timeline, %Entry{message: [name: "newtest1", new_field: 97.1, num: 1]})
+                   end
 
       {:ok, search_response} =
         search(
           new(table_name: table_name, index_name: index_name),
           search_query: [
             query: [
-              type: QueryType.match,
+              type: QueryType.match(),
               field_name: "name",
               text: "test1"
             ]
@@ -441,13 +482,18 @@ defmodule ExAliyunOts.TimelineTest do
 
       assert search_response.is_all_succeeded == true
 
-      {:ok, _update_response} = update(timeline, %Entry{message: [name: "newtest1", new_field: 97.1, num: 1], sequence_id: sequence_id})
+      {:ok, _update_response} =
+        update(timeline, %Entry{
+          message: [name: "newtest1", new_field: 97.1, num: 1],
+          sequence_id: sequence_id
+        })
 
       {:ok, getrow_response} = get(timeline, sequence_id)
 
       map = Utils.row_to_map(getrow_response.row)
 
-      assert map.new_field == 97.1 and map.name == "newtest1" and map.num == 1 and map.id == "1" and map.type == "t1" and map.sequence_id == sequence_id
+      assert map.new_field == 97.1 and map.name == "newtest1" and map.num == 1 and map.id == "1" and
+               map.type == "t1" and map.sequence_id == sequence_id
 
       {:ok, _delete_response} = delete(timeline, sequence_id)
 
@@ -455,6 +501,5 @@ defmodule ExAliyunOts.TimelineTest do
 
       assert getrow_response.row == nil
     end
-
   end
 end

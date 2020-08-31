@@ -13,6 +13,7 @@ defmodule ExAliyunOtsTest.Sequence do
     var_new = %Var.NewSequence{
       name: @sequence_name
     }
+
     result = Sequence.create(@instance_key, var_new)
     assert result == :ok
 
@@ -27,16 +28,22 @@ defmodule ExAliyunOtsTest.Sequence do
 
   test "next value" do
     concurrency_size = 30
-    stream = Task.async_stream(1..concurrency_size, fn(_index) -> 
-      var_next = %Var.GetSequenceNextValue{
-        name: @sequence_name,
-      }
-      Sequence.next_value(@instance_key, var_next)
-    end, timeout: :infinity)
 
-    result = Enum.map(stream, fn({:ok, item}) -> item end) |> MapSet.new()
+    stream =
+      Task.async_stream(
+        1..concurrency_size,
+        fn _index ->
+          var_next = %Var.GetSequenceNextValue{
+            name: @sequence_name
+          }
+
+          Sequence.next_value(@instance_key, var_next)
+        end,
+        timeout: :infinity
+      )
+
+    result = Enum.map(stream, fn {:ok, item} -> item end) |> MapSet.new()
     assert MapSet.size(result) == concurrency_size
-    assert Enum.sort(result) == Enum.map(1..concurrency_size, fn(item) -> item end)
+    assert Enum.sort(result) == Enum.map(1..concurrency_size, fn item -> item end)
   end
-
 end

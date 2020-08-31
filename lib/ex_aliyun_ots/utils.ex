@@ -15,9 +15,8 @@ defmodule ExAliyunOts.Utils do
     defguard is_valid_table_ttl(value) when is_integer(value) and (value == -1 or value >= 86_400)
 
     defguard is_valid_input_columns(columns) when is_list(columns) or is_map(columns)
-
   end
-  
+
   def valid_geo_point?(point) when is_bitstring(point) do
     Regex.match?(@geo_point_reg, point)
   end
@@ -41,7 +40,7 @@ defmodule ExAliyunOts.Utils do
   end
 
   def row_to_map(row) do
-    raise ExAliyunOts.RuntimeError, "Fail to transfer invalid row: #{inspect row} to map."
+    raise ExAliyunOts.RuntimeError, "Fail to transfer invalid row: #{inspect(row)} to map."
   end
 
   def attrs_to_row(attrs) when is_list(attrs) do
@@ -53,17 +52,18 @@ defmodule ExAliyunOts.Utils do
   end
 
   def attrs_to_row(attrs) do
-    raise ExAliyunOts.RuntimeError, "Fail to transfer invalid attributes: #{inspect attrs} to row attributes column(s), expect it is a Map or Keyword."
+    raise ExAliyunOts.RuntimeError,
+          "Fail to transfer invalid attributes: #{inspect(attrs)} to row attributes column(s), expect it is a Map or Keyword."
   end
 
   defp do_reduce_pks(acc, items) do
-    Enum.reduce(items, acc, fn({k, v}, acc) ->
+    Enum.reduce(items, acc, fn {k, v}, acc ->
       Map.put(acc, String.to_atom(k), v)
     end)
   end
 
   defp do_reduce_attrs(acc, items) do
-    Enum.reduce(items, acc, fn({k, v, _ts}, acc) ->
+    Enum.reduce(items, acc, fn {k, v, _ts}, acc ->
       Map.put(acc, String.to_atom(k), v)
     end)
   end
@@ -71,6 +71,7 @@ defmodule ExAliyunOts.Utils do
   defp value_to_attribute_column(value) when is_map(value) or is_list(value) do
     Jason.encode!(value)
   end
+
   defp value_to_attribute_column(value) do
     value
   end
@@ -79,12 +80,13 @@ defmodule ExAliyunOts.Utils do
     value = value_to_attribute_column(value)
     if value == nil, do: acc, else: acc ++ [{Atom.to_string(key), value}]
   end
+
   defp assemble_attribute_column({key, value}, acc) when is_bitstring(key) do
     value = value_to_attribute_column(value)
     if value == nil, do: acc, else: acc ++ [{key, value}]
   end
+
   defp assemble_attribute_column(_, acc) do
     acc
   end
-
 end

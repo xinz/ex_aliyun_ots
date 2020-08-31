@@ -12,12 +12,14 @@ defmodule ExAliyunOts.Config do
   end
 
   ## Callback
-  
+
   def init(instances) do
     ets = :ets.new(__MODULE__, [:set, :named_table, read_concurrency: true])
+
     for {instance_key, instance_info} <- instances do
       :ets.insert(__MODULE__, {instance_key, instance_info})
     end
+
     {:ok, ets}
   end
 
@@ -25,9 +27,9 @@ defmodule ExAliyunOts.Config do
     case :ets.lookup(__MODULE__, instance_key) do
       [] ->
         {:reply, nil, ets}
+
       [{^instance_key, info}] ->
         {:reply, info, ets}
     end
   end
-
 end

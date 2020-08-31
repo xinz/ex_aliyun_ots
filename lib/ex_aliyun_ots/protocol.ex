@@ -23,14 +23,15 @@ defmodule ExAliyunOts.Protocol do
   import ExAliyunOts.Logger, only: [debug: 1]
 
   def add_x_ots_to_headers(instance, uri, request_body) when uri in @tunnel_uris do
-    md5 = :crypto.hash(:md5, request_body) |> Base.encode64
+    md5 = :crypto.hash(:md5, request_body) |> Base.encode64()
 
     instance
     |> request(uri, request_body)
     |> prepare_x_ots_headers(md5, @tunnel_api_version)
   end
+
   def add_x_ots_to_headers(instance, uri, request_body) do
-    md5 = :crypto.hash(:md5, request_body) |> Base.encode16 |> Base.encode64
+    md5 = :crypto.hash(:md5, request_body) |> Base.encode16() |> Base.encode64()
 
     instance
     |> request(uri, request_body)
@@ -41,8 +42,10 @@ defmodule ExAliyunOts.Protocol do
     # see https://en.wikipedia.org/wiki/ASCII#ASCII_printable_characters
     binary
     |> :binary.bin_to_list()
-    |> Enum.filter(fn(x) -> x >= @printable_ascii_beginning_dec and x <= @printable_ascii_end_dec end)
-    |> List.to_string
+    |> Enum.filter(fn x ->
+      x >= @printable_ascii_beginning_dec and x <= @printable_ascii_end_dec
+    end)
+    |> List.to_string()
   end
 
   defp request(instance, uri, request_body) do
@@ -56,6 +59,7 @@ defmodule ExAliyunOts.Protocol do
   defp prepare_x_ots_headers(request, md5, api_version) do
     date = Timex.format!(Timex.now(), "%Y-%m-%dT%H:%M:%S.000Z", :strftime)
     instance = request.instance
+
     headers = [
       {"x-ots-date", date},
       {"x-ots-apiversion", api_version},
@@ -63,8 +67,10 @@ defmodule ExAliyunOts.Protocol do
       {"x-ots-accesskeyid", instance.access_key_id},
       {"x-ots-contentmd5", md5}
     ]
+
     signature = to_signature(request, headers)
     prepared_headers = headers ++ [{"x-ots-signature", signature}]
+
     debug(fn ->
       [
         "calculated signature: ",
@@ -74,12 +80,14 @@ defmodule ExAliyunOts.Protocol do
         | inspect(prepared_headers)
       ]
     end)
+
     prepared_headers
   end
 
   defp to_signature(request, headers) do
     headers_str = headers_to_str(headers)
     data_to_sign = "#{request.uri}\n#{request.method}\n\n#{headers_str}\n"
+
     debug(fn ->
       [
         "using data: ",
@@ -87,24 +95,26 @@ defmodule ExAliyunOts.Protocol do
         " to signature"
       ]
     end)
+
     Base.encode64(:crypto.hmac(:sha, request.instance.access_key_secret, data_to_sign))
   end
 
   defp headers_to_str(headers) do
     headers
-    |> Enum.reduce([], fn({header_key, header_value}, acc) ->
+    |> Enum.reduce([], fn {header_key, header_value}, acc ->
       downcase_header_key = String.downcase(header_key)
-      if String.starts_with?(downcase_header_key, "x-ots-") and downcase_header_key != "x-ots-signature" do
+
+      if String.starts_with?(downcase_header_key, "x-ots-") and
+           downcase_header_key != "x-ots-signature" do
         [{downcase_header_key, header_value} | acc]
       else
         acc
       end
     end)
-    |> Enum.sort(fn({k1, _v1}, {k2, _v2}) -> k1 <= k2 end)
-    |> Enum.map(fn({header_key, header_value}) -> 
+    |> Enum.sort(fn {k1, _v1}, {k2, _v2} -> k1 <= k2 end)
+    |> Enum.map(fn {header_key, header_value} ->
       "#{header_key}:#{String.trim(header_value)}"
     end)
     |> Enum.join("\n")
   end
-
 end

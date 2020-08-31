@@ -7,7 +7,7 @@ defmodule ExAliyunOts.Mixfile do
       version: "0.6.9",
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
-      start_permanent: Mix.env == :prod,
+      start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
       deps: deps(),
@@ -63,21 +63,20 @@ defmodule ExAliyunOts.Mixfile do
         "README.md"
       ],
       groups_for_functions: [
-        "Query": & &1[:query] == :query,
-        "Sort": & &1[:sort] == :sort,
-        "Aggregation": & &1[:aggs] == :aggs,
-        "GroupBy": & &1[:group_bys] == :group_bys,
-        "Define Field Schema": & &1[:field_schema] == :field_schema,
-        "Sort in GroupByField": & &1[:sort_in_group_bys] == :sort_in_group_bys,
-        "Table": & &1[:table] == :table,
-        "Row": & &1[:row] == :row,
-        "Local Transaction": & &1[:local_transaction] == :local_transaction,
-        "Search": & &1[:search] == :search,
+        Query: &(&1[:query] == :query),
+        Sort: &(&1[:sort] == :sort),
+        Aggregation: &(&1[:aggs] == :aggs),
+        GroupBy: &(&1[:group_bys] == :group_bys),
+        "Define Field Schema": &(&1[:field_schema] == :field_schema),
+        "Sort in GroupByField": &(&1[:sort_in_group_bys] == :sort_in_group_bys),
+        Table: &(&1[:table] == :table),
+        Row: &(&1[:row] == :row),
+        "Local Transaction": &(&1[:local_transaction] == :local_transaction),
+        Search: &(&1[:search] == :search)
       ]
     ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
-
 end

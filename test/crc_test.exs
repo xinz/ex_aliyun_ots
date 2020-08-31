@@ -8,5 +8,4 @@ defmodule ExAliyunOtsTest.CRC do
     assert ExAliyunOts.CRC.crc_int64(0, 2) == 38
     assert ExAliyunOts.CRC.crc_string(0, "abc1") == 13
   end
-
 end

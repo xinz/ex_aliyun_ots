@@ -1,5 +1,4 @@
 defmodule ExAliyunOts.MixinTest.SearchGeo do
-
   use ExUnit.Case
 
   @instance_key EDCEXTestInstance
@@ -24,26 +23,28 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
 
   test "geo_distance_query" do
     {:ok, response} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: [
-            type: QueryType.geo_distance,
+            type: QueryType.geo_distance(),
             field_name: "location",
             distance: 500_000,
             center_point: "5,5"
           ]
         ]
+      )
 
     assert response.total_hits == 2
 
     {:ok, response} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: geo_distance_query("location", 500_000, "5,5"),
           sort: [
             [type: :geo_distance, field_name: "location", order: :asc, points: ["5.14,5.21"]]
           ]
         ]
+      )
 
     assert response.total_hits == 2
     [row1, _] = response.rows
@@ -51,44 +52,50 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
     assert id == "a4"
 
     {:ok, response2} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: geo_distance_query("location", 500_000, "5,5"),
           sort: [
             geo_distance_sort("location", ["5.14,5.21"], order: :asc)
           ]
         ]
+      )
 
     assert response2.rows == response.rows
   end
 
   test "geo_bounding_box_query" do
     {:ok, response} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: geo_bounding_box_query("location", "10,-10", "-10,10")
         ]
+      )
+
     assert response.total_hits == 6
 
     {:ok, response2} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: [
             field_name: "location",
-            type: QueryType.geo_bounding_box,
+            type: QueryType.geo_bounding_box(),
             top_left: "10,-10",
             bottom_right: "-10,10"
           ]
         ]
+      )
+
     assert response2.rows == response.rows
   end
 
   test "geo_polygon_query" do
     {:ok, response} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: geo_polygon_query("location", ["11,11", "0,0", "1,5"])
         ]
+      )
 
     # Geolocation point falls on the edge of the specified polygon won't be in 
     # the matched case, e.g. "0,0" is not included in the following result.
@@ -99,22 +106,25 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
     assert id1 == "a2" and id2 == "a4"
 
     {:ok, response2} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: [
-            type: QueryType.geo_polygon,
+            type: QueryType.geo_polygon(),
             field_name: "location",
             points: ["11,11", "0,0", "1,5"]
           ]
         ]
+      )
 
     assert response2.rows == response.rows
 
-    {:ok, response} = 
-      search @table, @index,
+    {:ok, response} =
+      search(@table, @index,
         search_query: [
           query: geo_polygon_query("location", ["11,11", "-0.1,-0.1", "1,5"])
         ]
+      )
+
     assert response.total_hits == 3
     [row1, row2, row3] = response.rows
     {[{"id", id1}], _} = row1
@@ -125,16 +135,18 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
 
   test "group_by_geo_distance" do
     {:ok, response} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: match_all_query(),
           limit: 0,
           group_bys: [
-            group_by_geo_distance("test", "location",
+            group_by_geo_distance(
+              "test",
+              "location",
               [
                 {0, 100_000},
                 {100_000, 500_000},
-                {500_000, 1000_000},
+                {500_000, 1000_000}
               ],
               lon: 0,
               lat: 0,
@@ -144,6 +156,7 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
             )
           ]
         ]
+      )
 
     group_result = Map.get(response.group_bys.by_geo_distance, "test")
     assert length(group_result) == 3
@@ -164,12 +177,14 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
 
   test "invalid input group_by_geo_distance" do
     assert_raise ExAliyunOts.RuntimeError, ~r/Invalid latitude: `.*` or longitude: `.*`/, fn ->
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: match_all_query(),
           limit: 0,
           group_bys: [
-            group_by_geo_distance("test", "location",
+            group_by_geo_distance(
+              "test",
+              "location",
               [
                 {0, 100_000},
                 {100_000, 500_000}
@@ -182,15 +197,18 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
             )
           ]
         ]
+      )
     end
 
     assert_raise ExAliyunOts.RuntimeError, ~r/Invalid from: `.*` or to: `.*`/, fn ->
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: match_all_query(),
           limit: 0,
           group_bys: [
-            group_by_geo_distance("test", "location",
+            group_by_geo_distance(
+              "test",
+              "location",
               [
                 {0, 100_000},
                 {"100_000", "500_000"}
@@ -203,17 +221,20 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
             )
           ]
         ]
+      )
     end
   end
 
   test "ranges can overlap" do
     {:ok, response} =
-      search @table, @index,
+      search(@table, @index,
         search_query: [
           query: match_all_query(),
           limit: 0,
           group_bys: [
-            group_by_geo_distance("test", "location",
+            group_by_geo_distance(
+              "test",
+              "location",
               [
                 {0, 100_000},
                 {10_000, 500_000}
@@ -226,9 +247,9 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
             )
           ]
         ]
+      )
 
     group_result = Map.get(response.group_bys.by_geo_distance, "test")
     assert length(group_result) == 2
   end
-
 end

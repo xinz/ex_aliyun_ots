@@ -53,7 +53,16 @@ defmodule ExAliyunOts.Search do
 
   alias ExAliyunOts.Var.Search
 
-  alias ExAliyunOts.Const.{Search.FieldType, Search.QueryType, Search.ColumnReturnType, Search.SortType, Search.AggregationType, Search.SortOrder, Search.SortMode, Search.GeoDistanceType}
+  alias ExAliyunOts.Const.{
+    Search.FieldType,
+    Search.QueryType,
+    Search.ColumnReturnType,
+    Search.SortType,
+    Search.AggregationType,
+    Search.SortOrder,
+    Search.SortMode,
+    Search.GeoDistanceType
+  }
 
   require FieldType
   require QueryType
@@ -90,7 +99,7 @@ defmodule ExAliyunOts.Search do
     %Search.MatchQuery{
       field_name: field_name,
       text: text,
-      minimum_should_match: Keyword.get(options, :minimum_should_match, 1),
+      minimum_should_match: Keyword.get(options, :minimum_should_match, 1)
     }
   end
 
@@ -264,7 +273,7 @@ defmodule ExAliyunOts.Search do
   Official document in [Chinese](https://help.aliyun.com/document_detail/117498.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117498.html){:target="_blank"}
 
   ## Example
- 
+
       import MyApp.TableStore
 
       search "table", "index_name",
@@ -299,7 +308,7 @@ defmodule ExAliyunOts.Search do
   Official document in [Chinese](https://help.aliyun.com/document_detail/120221.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/120221.html){:target="_blank"}
 
   ## Example
- 
+
       import MyApp.TableStore
 
       search "table", "index_name",
@@ -316,9 +325,10 @@ defmodule ExAliyunOts.Search do
     it's `:none`.
   """
   @doc query: :query
-  @spec nested_query(path :: String.t(), query :: map() | Keyword.t(), options :: Keyword.t()) :: map()
+  @spec nested_query(path :: String.t(), query :: map() | Keyword.t(), options :: Keyword.t()) ::
+          map()
   def nested_query(path, query, options \\ []) do
-    options = Keyword.merge(options, [path: path, query: query])
+    options = Keyword.merge(options, path: path, query: query)
     map_search_options(%Search.NestedQuery{}, options)
   end
 
@@ -338,8 +348,12 @@ defmodule ExAliyunOts.Search do
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
   @doc query: :query
-  @spec geo_distance_query(field_name :: String.t(), distance :: float() | integer(), center_point :: String.t())
-    :: map()
+  @spec geo_distance_query(
+          field_name :: String.t(),
+          distance :: float() | integer(),
+          center_point :: String.t()
+        ) ::
+          map()
   def geo_distance_query(field_name, distance, center_point) do
     %Search.GeoDistanceQuery{
       field_name: field_name,
@@ -364,8 +378,12 @@ defmodule ExAliyunOts.Search do
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
   @doc query: :query
-  @spec geo_bounding_box_query(field_name :: String.t(), top_left :: String.t(), bottom_right :: String.t())
-    :: map()
+  @spec geo_bounding_box_query(
+          field_name :: String.t(),
+          top_left :: String.t(),
+          bottom_right :: String.t()
+        ) ::
+          map()
   def geo_bounding_box_query(field_name, top_left, bottom_right) do
     %Search.GeoBoundingBoxQuery{
       field_name: field_name,
@@ -447,10 +465,11 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_min(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec agg_min(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
+          map()
   def agg_min(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
-      type: AggregationType.min,
+      type: AggregationType.min(),
       name: aggregation_name,
       field_name: field_name,
       missing: Keyword.get(options, :missing)
@@ -464,7 +483,7 @@ defmodule ExAliyunOts.Search do
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
   ## Example
- 
+
       import MyApp.TableStore
 
       search "table", "index_name",
@@ -485,10 +504,11 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_max(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec agg_max(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
+          map()
   def agg_max(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
-      type: AggregationType.max,
+      type: AggregationType.max(),
       name: aggregation_name,
       field_name: field_name,
       missing: Keyword.get(options, :missing)
@@ -523,10 +543,11 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_avg(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec agg_avg(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
+          map()
   def agg_avg(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
-      type: AggregationType.avg,
+      type: AggregationType.avg(),
       name: aggregation_name,
       field_name: field_name,
       missing: Keyword.get(options, :missing)
@@ -540,7 +561,7 @@ defmodule ExAliyunOts.Search do
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
   ## Example
- 
+
       import MyApp.TableStore
 
       search "table", "index_name",
@@ -561,10 +582,14 @@ defmodule ExAliyunOts.Search do
     count, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_distinct_count(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec agg_distinct_count(
+          aggregation_name :: String.t(),
+          field_name :: String.t(),
+          options :: Keyword.t()
+        ) :: map()
   def agg_distinct_count(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
-      type: AggregationType.distinct_count,
+      type: AggregationType.distinct_count(),
       name: aggregation_name,
       field_name: field_name,
       missing: Keyword.get(options, :missing)
@@ -599,10 +624,11 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_sum(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec agg_sum(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
+          map()
   def agg_sum(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
-      type: AggregationType.sum,
+      type: AggregationType.sum(),
       name: aggregation_name,
       field_name: field_name,
       missing: Keyword.get(options, :missing)
@@ -616,7 +642,7 @@ defmodule ExAliyunOts.Search do
   Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
 
   ## Example
- 
+
       import MyApp.TableStore
 
       search "table", "index_name",
@@ -636,9 +662,9 @@ defmodule ExAliyunOts.Search do
   @spec agg_count(aggregation_name :: String.t(), field_name :: String.t()) :: map()
   def agg_count(aggregation_name, field_name) do
     %Search.Aggregation{
-      type: AggregationType.count,
+      type: AggregationType.count(),
       name: aggregation_name,
-      field_name: field_name,
+      field_name: field_name
     }
   end
 
@@ -684,7 +710,8 @@ defmodule ExAliyunOts.Search do
     * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_field(group_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec group_by_field(group_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
+          map()
   def group_by_field(group_name, field_name, options \\ []) do
     %Search.GroupByField{
       name: group_name,
@@ -705,7 +732,7 @@ defmodule ExAliyunOts.Search do
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
 
   ## Example
- 
+
       import MyApp.TableStore
 
       search "table", "index_name",
@@ -743,15 +770,19 @@ defmodule ExAliyunOts.Search do
     * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_range(group_name :: String.t(), field_name :: String.t(), ranges :: list(),
-    options :: Keyword.t()) :: map()
+  @spec group_by_range(
+          group_name :: String.t(),
+          field_name :: String.t(),
+          ranges :: list(),
+          options :: Keyword.t()
+        ) :: map()
   def group_by_range(group_name, field_name, ranges, options \\ []) do
     %Search.GroupByRange{
       name: group_name,
       field_name: field_name,
       ranges: ranges,
       sub_aggs: Keyword.get(options, :sub_aggs),
-      sub_group_bys: Keyword.get(options, :sub_group_bys),
+      sub_group_bys: Keyword.get(options, :sub_group_bys)
     }
   end
 
@@ -787,7 +818,8 @@ defmodule ExAliyunOts.Search do
     * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_filter(group_name :: String.t(), filters :: list(), options :: Keyword.t()) :: map()
+  @spec group_by_filter(group_name :: String.t(), filters :: list(), options :: Keyword.t()) ::
+          map()
   def group_by_filter(group_name, filters, options \\ []) when is_list(filters) do
     %Search.GroupByFilter{
       name: group_name,
@@ -807,7 +839,7 @@ defmodule ExAliyunOts.Search do
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
 
   ## Example
- 
+
       import MyApp.TableStore
 
       search "table", "index_name",
@@ -837,8 +869,12 @@ defmodule ExAliyunOts.Search do
     * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_geo_distance(group_name :: String.t(), field_name :: String.t(), ranges :: list(),
-    options :: Keyword.t()) :: map()
+  @spec group_by_geo_distance(
+          group_name :: String.t(),
+          field_name :: String.t(),
+          ranges :: list(),
+          options :: Keyword.t()
+        ) :: map()
   def group_by_geo_distance(group_name, field_name, ranges, options \\ []) do
     %Search.GroupByGeoDistance{
       name: group_name,
@@ -847,7 +883,7 @@ defmodule ExAliyunOts.Search do
       lon: Keyword.fetch!(options, :lon),
       lat: Keyword.fetch!(options, :lat),
       sub_aggs: Keyword.get(options, :sub_aggs),
-      sub_group_bys: Keyword.get(options, :sub_group_bys),
+      sub_group_bys: Keyword.get(options, :sub_group_bys)
     }
   end
 
@@ -882,17 +918,20 @@ defmodule ExAliyunOts.Search do
   @doc sort_in_group_bys: :sort_in_group_bys
   @spec group_key_sort(order :: :asc | :desc) :: map()
   def group_key_sort(order)
-      when order == SortOrder.desc
+      when order == SortOrder.desc()
       when order == :desc do
-    %Search.GroupKeySort{order: SortOrder.desc}
+    %Search.GroupKeySort{order: SortOrder.desc()}
   end
+
   def group_key_sort(order)
-      when order == SortOrder.asc
+      when order == SortOrder.asc()
       when order == :asc do
-    %Search.GroupKeySort{order: SortOrder.asc}
+    %Search.GroupKeySort{order: SortOrder.asc()}
   end
+
   def group_key_sort(invalid) do
-    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+    raise ExAliyunOts.RuntimeError,
+          "invalid sort order: #{inspect(invalid)}, please use `:desc` or `:asc`"
   end
 
   @doc """
@@ -926,17 +965,20 @@ defmodule ExAliyunOts.Search do
   @doc sort_in_group_bys: :sort_in_group_bys
   @spec row_count_sort(order :: :asc | :desc) :: %Search.RowCountSort{}
   def row_count_sort(order)
-      when order == SortOrder.desc
+      when order == SortOrder.desc()
       when order == :desc do
-    %Search.RowCountSort{order: SortOrder.desc}
+    %Search.RowCountSort{order: SortOrder.desc()}
   end
+
   def row_count_sort(order)
-      when order == SortOrder.asc
+      when order == SortOrder.asc()
       when order == :asc do
-    %Search.RowCountSort{order: SortOrder.asc}
+    %Search.RowCountSort{order: SortOrder.asc()}
   end
+
   def row_count_sort(invalid) do
-    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+    raise ExAliyunOts.RuntimeError,
+          "invalid sort order: #{inspect(invalid)}, please use `:desc` or `:asc`"
   end
 
   @doc """
@@ -949,20 +991,25 @@ defmodule ExAliyunOts.Search do
   def sub_agg_sort(sub_agg_name, _)
       when is_bitstring(sub_agg_name) == false
       when sub_agg_name == "" do
-    raise ExAliyunOts.RuntimeError, "require sub_agg_name as a string, but input `#{inspect sub_agg_name}`"
+    raise ExAliyunOts.RuntimeError,
+          "require sub_agg_name as a string, but input `#{inspect(sub_agg_name)}`"
   end
+
   def sub_agg_sort(sub_agg_name, order)
-      when order == SortOrder.desc
+      when order == SortOrder.desc()
       when order == :desc do
-    %Search.SubAggSort{sub_agg_name: sub_agg_name, order: SortOrder.desc}
+    %Search.SubAggSort{sub_agg_name: sub_agg_name, order: SortOrder.desc()}
   end
+
   def sub_agg_sort(sub_agg_name, order)
-      when is_bitstring(sub_agg_name) and order == SortOrder.asc
+      when is_bitstring(sub_agg_name) and order == SortOrder.asc()
       when is_bitstring(sub_agg_name) and order == :asc do
     %Search.SubAggSort{sub_agg_name: sub_agg_name}
   end
+
   def sub_agg_sort(_sub_agg_name, invalid) do
-    raise ExAliyunOts.RuntimeError, "invalid sort order: #{inspect invalid}, please use `:desc` or `:asc`"
+    raise ExAliyunOts.RuntimeError,
+          "invalid sort order: #{inspect(invalid)}, please use `:desc` or `:asc`"
   end
 
   @doc """
@@ -1023,7 +1070,7 @@ defmodule ExAliyunOts.Search do
   sort by the value of "content.header" in `:desc` order.
 
   ## Example
- 
+
       import MyApp.TableStore
 
       search "table", "index_name",
@@ -1092,7 +1139,8 @@ defmodule ExAliyunOts.Search do
     * `:distance_type`, optional, available options are `:arc` | `:plane`, as `:arc` means distance calculated by arc surface, as `:plane` means distance calculated by plane.
   """
   @doc sort: :sort
-  @spec geo_distance_sort(field_name :: String.t(), options :: list(), options :: Keyword.t()) :: map()
+  @spec geo_distance_sort(field_name :: String.t(), options :: list(), options :: Keyword.t()) ::
+          map()
   def geo_distance_sort(field_name, points, options) when is_list(points) do
     %Search.GeoDistanceSort{
       field_name: field_name,
@@ -1102,7 +1150,6 @@ defmodule ExAliyunOts.Search do
       points: points
     }
   end
-
 
   @doc """
   Use for the nested type field in `field_sort/2` as `:nested_filter` option, the input `filter`
@@ -1160,7 +1207,10 @@ defmodule ExAliyunOts.Search do
   @doc field_schema: :field_schema
   @spec field_schema_integer(field_name :: String.t(), options :: Keyword.t()) :: map()
   def field_schema_integer(field_name, options \\ []) do
-    map_field_schema(%Search.FieldSchema{field_type: FieldType.long, field_name: field_name}, options)
+    map_field_schema(
+      %Search.FieldSchema{field_type: FieldType.long(), field_name: field_name},
+      options
+    )
   end
 
   @doc """
@@ -1180,7 +1230,10 @@ defmodule ExAliyunOts.Search do
   @doc field_schema: :field_schema
   @spec field_schema_float(field_name :: String.t(), options :: Keyword.t()) :: map()
   def field_schema_float(field_name, options \\ []) do
-    map_field_schema(%Search.FieldSchema{field_type: FieldType.double, field_name: field_name}, options)
+    map_field_schema(
+      %Search.FieldSchema{field_type: FieldType.double(), field_name: field_name},
+      options
+    )
   end
 
   @doc """
@@ -1200,7 +1253,10 @@ defmodule ExAliyunOts.Search do
   @doc field_schema: :field_schema
   @spec field_schema_boolean(field_name :: String.t(), options :: Keyword.t()) :: map()
   def field_schema_boolean(field_name, options \\ []) do
-    map_field_schema(%Search.FieldSchema{field_type: FieldType.boolean, field_name: field_name}, options)
+    map_field_schema(
+      %Search.FieldSchema{field_type: FieldType.boolean(), field_name: field_name},
+      options
+    )
   end
 
   @doc """
@@ -1219,7 +1275,10 @@ defmodule ExAliyunOts.Search do
   """
   @doc field_schema: :field_schema
   def field_schema_keyword(field_name, options \\ []) do
-    map_field_schema(%Search.FieldSchema{field_type: FieldType.keyword, field_name: field_name}, options)
+    map_field_schema(
+      %Search.FieldSchema{field_type: FieldType.keyword(), field_name: field_name},
+      options
+    )
   end
 
   @doc """
@@ -1239,7 +1298,10 @@ defmodule ExAliyunOts.Search do
   """
   @doc field_schema: :field_schema
   def field_schema_text(field_name, options \\ []) do
-    map_field_schema(%Search.FieldSchema{field_type: FieldType.text, field_name: field_name}, options)
+    map_field_schema(
+      %Search.FieldSchema{field_type: FieldType.text(), field_name: field_name},
+      options
+    )
   end
 
   @doc """
@@ -1263,7 +1325,10 @@ defmodule ExAliyunOts.Search do
   """
   @doc field_schema: :field_schema
   def field_schema_nested(field_name, options \\ []) do
-    map_field_schema(%Search.FieldSchema{field_type: FieldType.nested, field_name: field_name}, options)
+    map_field_schema(
+      %Search.FieldSchema{field_type: FieldType.nested(), field_name: field_name},
+      options
+    )
   end
 
   @doc """
@@ -1282,19 +1347,25 @@ defmodule ExAliyunOts.Search do
   """
   @doc field_schema: :field_schema
   def field_schema_geo_point(field_name, options \\ []) do
-    map_field_schema(%Search.FieldSchema{field_type: FieldType.geo_point, field_name: field_name}, options)
+    map_field_schema(
+      %Search.FieldSchema{field_type: FieldType.geo_point(), field_name: field_name},
+      options
+    )
   end
 
-  defp map_field_schema(%{field_type: FieldType.nested} = schema, options) when is_map(schema) do
+  defp map_field_schema(%{field_type: FieldType.nested()} = schema, options)
+       when is_map(schema) do
     schema
     |> do_map_field_schema(options)
     |> Map.put(:field_schemas, expect_list(Keyword.get(options, :field_schemas, [])))
   end
-  defp map_field_schema(%{field_type: FieldType.text} = schema, options) when is_map(schema) do
+
+  defp map_field_schema(%{field_type: FieldType.text()} = schema, options) when is_map(schema) do
     schema
     |> do_map_field_schema(options)
     |> Map.put(:analyzer, Keyword.get(options, :analyzer, nil))
   end
+
   defp map_field_schema(schema, options) when is_map(schema) do
     do_map_field_schema(schema, options)
   end
@@ -1302,7 +1373,10 @@ defmodule ExAliyunOts.Search do
   defp do_map_field_schema(schema, options) do
     schema
     |> Map.put(:index, expect_boolean(Keyword.get(options, :index, true)))
-    |> Map.put(:enable_sort_and_agg, expect_boolean(Keyword.get(options, :enable_sort_and_agg, true)))
+    |> Map.put(
+      :enable_sort_and_agg,
+      expect_boolean(Keyword.get(options, :enable_sort_and_agg, true))
+    )
     |> Map.put(:store, expect_boolean(Keyword.get(options, :store, true)))
     |> Map.put(:is_array, expect_boolean_or_nil(Keyword.get(options, :is_array)))
   end
@@ -1312,11 +1386,14 @@ defmodule ExAliyunOts.Search do
 
   defp expect_boolean(true), do: true
   defp expect_boolean(false), do: false
+
   defp expect_boolean(invalid) do
-    raise ExAliyunOts.RuntimeError, "Expect get a boolean value but it is invalid: #{inspect(invalid)}"
+    raise ExAliyunOts.RuntimeError,
+          "Expect get a boolean value but it is invalid: #{inspect(invalid)}"
   end
 
   defp expect_list(items) when is_list(items), do: items
+
   defp expect_list(invalid) do
     raise ExAliyunOts.RuntimeError, "Expect get a list but it is invalid: #{inspect(invalid)}"
   end
@@ -1325,8 +1402,9 @@ defmodule ExAliyunOts.Search do
   def map_search_options(var, nil) do
     var
   end
+
   def map_search_options(var, options) do
-    Enum.reduce(options, var, fn({key, value}, acc) ->
+    Enum.reduce(options, var, fn {key, value}, acc ->
       if value != nil and Map.has_key?(var, key) do
         do_map_search_options(key, value, acc)
       else
@@ -1338,58 +1416,75 @@ defmodule ExAliyunOts.Search do
   defp do_map_search_options(:search_query = key, value, var) do
     Map.put(var, key, map_search_query(value))
   end
+
   defp do_map_search_options(:columns_to_get = key, value, var) do
     Map.put(var, key, map_columns_to_get(value))
   end
+
   defp do_map_search_options(:sort = key, value, var) do
     Map.put(var, key, map_query_sort(value))
   end
+
   defp do_map_search_options(:must = key, value, var) when is_list(value) do
     # for BoolQuery within `must` items list
-    queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+    queries = Enum.map(value, fn query -> map_query_details(query) end)
     Map.put(var, key, queries)
   end
+
   defp do_map_search_options(:must = key, value, var) when is_map(value) do
     # for BoolQuery within a single `must` item
     Map.put(var, key, [value])
   end
+
   defp do_map_search_options(:must_not = key, value, var) when is_list(value) do
     # for BoolQuery within `must_not` items list
-    queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+    queries = Enum.map(value, fn query -> map_query_details(query) end)
     Map.put(var, key, queries)
   end
+
   defp do_map_search_options(:must_not = key, value, var) when is_map(value) do
     # for BoolQuery within a single `must_not` item
     Map.put(var, key, [value])
   end
+
   defp do_map_search_options(:filter = key, value, var) when is_list(value) do
     # for BoolQuery within `filters` items list
-    queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+    queries = Enum.map(value, fn query -> map_query_details(query) end)
     Map.put(var, key, queries)
   end
+
   defp do_map_search_options(:filters = key, value, var) when is_map(value) do
     # for BoolQuery within a single `filters` item
     Map.put(var, key, [value])
   end
+
   defp do_map_search_options(:should = key, value, var) when is_list(value) do
     # for BoolQuery within `should` items list
-    queries = Enum.map(value, fn(query) -> map_query_details(query) end)
+    queries = Enum.map(value, fn query -> map_query_details(query) end)
     Map.put(var, key, queries)
   end
+
   defp do_map_search_options(:should = key, value, var) when is_map(value) do
     # for BoolQuery within a single `should` item
     Map.put(var, key, [value])
   end
+
   defp do_map_search_options(:query = key, value, var) do
     # for NestedQuery
     Map.put(var, key, map_query_details(value))
   end
+
   defp do_map_search_options(key, value, var) do
     Map.put(var, key, value)
   end
 
   defp map_search_query(search_query) when is_list(search_query) do
-    if not Keyword.keyword?(search_query), do: raise ExAliyunOts.RuntimeError, "input query: #{inspect search_query} required to be keyword"
+    if not Keyword.keyword?(search_query),
+      do:
+        raise(
+          ExAliyunOts.RuntimeError,
+          "input query: #{inspect(search_query)} required to be keyword"
+        )
 
     {query, rest_search_query_options} = Keyword.pop(search_query, :query, Keyword.new())
 
@@ -1400,89 +1495,115 @@ defmodule ExAliyunOts.Search do
     Map.put(search_query, :query, var_query)
   end
 
-    defp map_query_details([query]) when is_map(query) do
+  defp map_query_details([query]) when is_map(query) do
     query
   end
+
   defp map_query_details(query) when is_list(query) do
     query_type = Keyword.get(query, :type)
     map_query_details(query_type, query)
   end
+
   defp map_query_details(query) when is_map(query) do
     query
   end
+
   defp map_query_details(query) do
-    raise ExAliyunOts.RuntimeError, "Input invalid query to map query details: #{inspect query}"
+    raise ExAliyunOts.RuntimeError, "Input invalid query to map query details: #{inspect(query)}"
   end
 
-  defp map_query_details(QueryType.match, query) do
+  defp map_query_details(QueryType.match(), query) do
     map_search_options(%Search.MatchQuery{}, query)
   end
-  defp map_query_details(QueryType.match_all, query) do
+
+  defp map_query_details(QueryType.match_all(), query) do
     map_search_options(%Search.MatchAllQuery{}, query)
   end
-  defp map_query_details(QueryType.match_phrase, query) do
+
+  defp map_query_details(QueryType.match_phrase(), query) do
     map_search_options(%Search.MatchPhraseQuery{}, query)
   end
-  defp map_query_details(QueryType.term, query) do
+
+  defp map_query_details(QueryType.term(), query) do
     map_search_options(%Search.TermQuery{}, query)
   end
-  defp map_query_details(QueryType.terms, query) do
+
+  defp map_query_details(QueryType.terms(), query) do
     map_search_options(%Search.TermsQuery{}, query)
   end
-  defp map_query_details(QueryType.prefix, query) do
+
+  defp map_query_details(QueryType.prefix(), query) do
     map_search_options(%Search.PrefixQuery{}, query)
   end
-  defp map_query_details(QueryType.wildcard, query) do
+
+  defp map_query_details(QueryType.wildcard(), query) do
     map_search_options(%Search.WildcardQuery{}, query)
   end
-  defp map_query_details(QueryType.range, query) do
+
+  defp map_query_details(QueryType.range(), query) do
     map_search_options(%Search.RangeQuery{}, query)
   end
-  defp map_query_details(QueryType.bool, query) do
+
+  defp map_query_details(QueryType.bool(), query) do
     map_search_options(%Search.BoolQuery{}, query)
   end
-  defp map_query_details(QueryType.nested, query) do
+
+  defp map_query_details(QueryType.nested(), query) do
     map_search_options(%Search.NestedQuery{}, query)
   end
-  defp map_query_details(QueryType.geo_distance, query) do
+
+  defp map_query_details(QueryType.geo_distance(), query) do
     map_search_options(%Search.GeoDistanceQuery{}, query)
   end
-  defp map_query_details(QueryType.geo_bounding_box, query) do
+
+  defp map_query_details(QueryType.geo_bounding_box(), query) do
     map_search_options(%Search.GeoBoundingBoxQuery{}, query)
   end
-  defp map_query_details(QueryType.geo_polygon, query) do
+
+  defp map_query_details(QueryType.geo_polygon(), query) do
     map_search_options(%Search.GeoPolygonQuery{}, query)
   end
-  defp map_query_details(QueryType.exists, query) do
+
+  defp map_query_details(QueryType.exists(), query) do
     map_search_options(%Search.ExistsQuery{}, query)
   end
+
   defp map_query_details(_query_type, query) do
-    raise ExAliyunOts.RuntimeError, "Not supported query when map query details: #{inspect query}"
+    raise ExAliyunOts.RuntimeError,
+          "Not supported query when map query details: #{inspect(query)}"
   end
 
   defp map_query_sort(nil), do: nil
+
   defp map_query_sort(sorters) when is_list(sorters) do
     Enum.map(sorters, &map_search_query_sorter/1)
   end
 
   defp map_search_query_sorter(sorter) when is_list(sorter) do
     {sorter_type, rest_sorter_options} = Keyword.pop(sorter, :type)
+
     case sorter_type do
-      SortType.field ->
+      SortType.field() ->
         map_search_query_sort_options(%Search.FieldSort{}, rest_sorter_options)
-      SortType.geo_distance ->
+
+      SortType.geo_distance() ->
         map_search_query_sort_options(%Search.GeoDistanceSort{}, rest_sorter_options)
-      SortType.pk ->
+
+      SortType.pk() ->
         map_search_query_sort_options(%Search.PrimaryKeySort{}, rest_sorter_options)
-      SortType.score ->
+
+      SortType.score() ->
         map_search_query_sort_options(%Search.ScoreSort{}, rest_sorter_options)
+
       _ ->
-        raise ExAliyunOts.RuntimeError, "invalid sorter: #{inspect sorter}"
+        raise ExAliyunOts.RuntimeError, "invalid sorter: #{inspect(sorter)}"
     end
   end
+
   defp map_search_query_sorter(%Search.GeoDistanceSort{} = sorter) do
     sorter
   end
+
   defp map_search_query_sorter(%Search.FieldSort{} = sorter) do
     sorter
   end
@@ -1490,8 +1611,9 @@ defmodule ExAliyunOts.Search do
   defp map_search_query_sort_options(var, nil) do
     var
   end
+
   defp map_search_query_sort_options(var, options) do
-    Enum.reduce(options, var, fn({key, value}, acc) ->
+    Enum.reduce(options, var, fn {key, value}, acc ->
       if value != nil and Map.has_key?(var, key) do
         do_map_search_query_sort_options(key, value, acc)
       else
@@ -1503,75 +1625,82 @@ defmodule ExAliyunOts.Search do
   defp do_map_search_query_sort_options(:order = key, value, var) do
     Map.put(var, key, map_query_sort_order(value))
   end
+
   defp do_map_search_query_sort_options(:type = key, value, var) do
     Map.put(var, key, map_query_sort_type(value))
   end
+
   defp do_map_search_query_sort_options(:mode = key, value, var) do
     Map.put(var, key, map_query_sort_mode(value))
   end
+
   defp do_map_search_query_sort_options(:distance_type = key, value, var) do
     Map.put(var, key, map_query_sort_geo_distance_type(value))
   end
+
   defp do_map_search_query_sort_options(key, value, var) do
     Map.put(var, key, value)
   end
 
-  defp map_query_sort_order(nil), do: SortOrder.asc
-  defp map_query_sort_order(:asc), do: SortOrder.asc
-  defp map_query_sort_order(:desc), do: SortOrder.desc
-  defp map_query_sort_order(SortOrder.asc), do: SortOrder.asc
-  defp map_query_sort_order(SortOrder.desc), do: SortOrder.desc
+  defp map_query_sort_order(nil), do: SortOrder.asc()
+  defp map_query_sort_order(:asc), do: SortOrder.asc()
+  defp map_query_sort_order(:desc), do: SortOrder.desc()
+  defp map_query_sort_order(SortOrder.asc()), do: SortOrder.asc()
+  defp map_query_sort_order(SortOrder.desc()), do: SortOrder.desc()
 
   defp map_query_sort_type(nil), do: nil
-  defp map_query_sort_type(:field), do: SortType.field
-  defp map_query_sort_type(:geo_distance), do: SortType.geo_distance
-  defp map_query_sort_type(:pk), do: SortType.pk
-  defp map_query_sort_type(:score), do: SortType.score
+  defp map_query_sort_type(:field), do: SortType.field()
+  defp map_query_sort_type(:geo_distance), do: SortType.geo_distance()
+  defp map_query_sort_type(:pk), do: SortType.pk()
+  defp map_query_sort_type(:score), do: SortType.score()
 
   defp map_query_sort_mode(nil), do: nil
-  defp map_query_sort_mode(:min), do: SortMode.min
-  defp map_query_sort_mode(:max), do: SortMode.max
-  defp map_query_sort_mode(:avg), do: SortMode.avg
-  defp map_query_sort_mode(SortMode.min), do: SortMode.min
-  defp map_query_sort_mode(SortMode.max), do: SortMode.max
-  defp map_query_sort_mode(SortMode.avg), do: SortMode.avg
+  defp map_query_sort_mode(:min), do: SortMode.min()
+  defp map_query_sort_mode(:max), do: SortMode.max()
+  defp map_query_sort_mode(:avg), do: SortMode.avg()
+  defp map_query_sort_mode(SortMode.min()), do: SortMode.min()
+  defp map_query_sort_mode(SortMode.max()), do: SortMode.max()
+  defp map_query_sort_mode(SortMode.avg()), do: SortMode.avg()
 
   defp map_query_sort_geo_distance_type(nil), do: nil
-  defp map_query_sort_geo_distance_type(:arc), do: GeoDistanceType.arc
-  defp map_query_sort_geo_distance_type(:plane), do: GeoDistanceType.plane
-  defp map_query_sort_geo_distance_type(GeoDistanceType.arc), do: GeoDistanceType.arc
-  defp map_query_sort_geo_distance_type(GeoDistanceType.plane), do: GeoDistanceType.plane
+  defp map_query_sort_geo_distance_type(:arc), do: GeoDistanceType.arc()
+  defp map_query_sort_geo_distance_type(:plane), do: GeoDistanceType.plane()
+  defp map_query_sort_geo_distance_type(GeoDistanceType.arc()), do: GeoDistanceType.arc()
+  defp map_query_sort_geo_distance_type(GeoDistanceType.plane()), do: GeoDistanceType.plane()
 
   defp map_columns_to_get(column_names) when is_list(column_names) do
     %Search.ColumnsToGet{
-      return_type: ColumnReturnType.specified,
+      return_type: ColumnReturnType.specified(),
       column_names: column_names
     }
-  end
-  defp map_columns_to_get({return_type, column_names})
-    when return_type == :specified and is_list(column_names)
-    when return_type == ColumnReturnType.specified and is_list(column_names) do
-    %Search.ColumnsToGet{
-      return_type: ColumnReturnType.specified,
-      column_names: column_names
-    }
-  end
-  defp map_columns_to_get(return_type)
-    when return_type == :all
-    when return_type == ColumnReturnType.all do
-    %Search.ColumnsToGet{
-      return_type: ColumnReturnType.all
-    }
-  end
-  defp map_columns_to_get(return_type)
-    when return_type == :none
-    when return_type == ColumnReturnType.none do
-    %Search.ColumnsToGet{
-      return_type: ColumnReturnType.none
-    }
-  end
-  defp map_columns_to_get(value) do
-    raise ExAliyunOts.RuntimeError, "invalid columns_to_get for search: `#{inspect value}`"
   end
 
+  defp map_columns_to_get({return_type, column_names})
+       when return_type == :specified and is_list(column_names)
+       when return_type == ColumnReturnType.specified() and is_list(column_names) do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.specified(),
+      column_names: column_names
+    }
+  end
+
+  defp map_columns_to_get(return_type)
+       when return_type == :all
+       when return_type == ColumnReturnType.all() do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.all()
+    }
+  end
+
+  defp map_columns_to_get(return_type)
+       when return_type == :none
+       when return_type == ColumnReturnType.none() do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.none()
+    }
+  end
+
+  defp map_columns_to_get(value) do
+    raise ExAliyunOts.RuntimeError, "invalid columns_to_get for search: `#{inspect(value)}`"
+  end
 end

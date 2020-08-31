@@ -39,8 +39,11 @@ defmodule ExAliyunOts.Tunnel.Worker do
     case Registry.worker(tunnel_id) do
       [_tunnel_id, _client_id, worker_pid, _meta, _subscriber] ->
         GenServer.stop(worker_pid, :shutdown)
+
       nil ->
-        Logger.info("Stop worker but tunnel_id: #{inspect(tunnel_id)} is not existed from Registry")
+        Logger.info(
+          "Stop worker but tunnel_id: #{inspect(tunnel_id)} is not existed from Registry"
+        )
     end
   end
 
@@ -86,7 +89,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     tunnel_id = opts[:tunnel_id]
 
     Logger.info(fn ->
-      "Start worker #{inspect(worker_pid)} for tunnel id #{inspect tunnel_id}"
+      "Start worker #{inspect(worker_pid)} for tunnel id #{inspect(tunnel_id)}"
     end)
 
     case Registry.new_worker(entry_worker(tunnel_id: tunnel_id, pid: self())) do
@@ -99,8 +102,10 @@ defmodule ExAliyunOts.Tunnel.Worker do
             Registry.remove_worker(tunnel_id)
             {:stop, {:shutdown, :start_error}, state}
         end
+
       false ->
-        raise ExAliyunOts.RuntimeError, "Tunnel worker #{inspect(worker_pid)} has already been exitsed."
+        raise ExAliyunOts.RuntimeError,
+              "Tunnel worker #{inspect(worker_pid)} has already been exitsed."
     end
   end
 
@@ -148,18 +153,18 @@ defmodule ExAliyunOts.Tunnel.Worker do
           [
             {:client_id, client_id},
             {:meta,
-              %{
-                heartbeat_interval: heartbeat_interval,
-                heartbeat_timeout: opts[:heartbeat_timeout] * 1_000,
-                timer_ref: schedule_heartbeat(opts, heartbeat_interval),
-                last_heartbeat_time: DateTime.utc_now()
-              }
-            },
+             %{
+               heartbeat_interval: heartbeat_interval,
+               heartbeat_timeout: opts[:heartbeat_timeout] * 1_000,
+               timer_ref: schedule_heartbeat(opts, heartbeat_interval),
+               last_heartbeat_time: DateTime.utc_now()
+             }},
             {:subscriber, {ref, subscriber_pid}}
           ]
         )
 
         :ok
+
       error ->
         Logger.error("ConnectTunnel failed: #{inspect(error)} **")
         error
@@ -224,6 +229,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     {channels_to_heartbeat, local_channel_ids} =
       Enum.map_reduce(local_channels, [], fn local_channel, acc ->
         [channel_id, _tunnel_id, _client_id, _channel_pid, status, version] = local_channel
+
         {
           [channel_id: channel_id, version: version, status: status],
           [channel_id | acc]
@@ -288,7 +294,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
         :ok
 
       error ->
-
         Logger.error(fn ->
           [
             "Occur an error when heartbeat ",
@@ -321,7 +326,8 @@ defmodule ExAliyunOts.Tunnel.Worker do
   end
 
   defp remote_shutdown_tunnel(instance_key, tunnel_id, client_id) do
-    shutdown_result = Client.shutdown_tunnel(instance_key, tunnel_id: tunnel_id, client_id: client_id)
+    shutdown_result =
+      Client.shutdown_tunnel(instance_key, tunnel_id: tunnel_id, client_id: client_id)
 
     Logger.info(fn ->
       [
@@ -407,7 +413,6 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     case result do
       {:ok, response} ->
-
         start_channel(
           instance_key,
           channel_id,
@@ -437,16 +442,26 @@ defmodule ExAliyunOts.Tunnel.Worker do
     Agent.start_link(opts)
   end
 
-  defp start_channel(instance_key, channel_id, tunnel_id, client_id, status, version, token, sequence_number) do
-    {:ok, agent} = start_channel_agent(
-      tunnel_id: tunnel_id,
-      channel_id: channel_id,
-      client_id: client_id,
-      token: token,
-      instance_key: instance_key,
-      sequence_number: sequence_number
-    )
+  defp start_channel(
+         instance_key,
+         channel_id,
+         tunnel_id,
+         client_id,
+         status,
+         version,
+         token,
+         sequence_number
+       ) do
+    {:ok, agent} =
+      start_channel_agent(
+        tunnel_id: tunnel_id,
+        channel_id: channel_id,
+        client_id: client_id,
+        token: token,
+        instance_key: instance_key,
+        sequence_number: sequence_number
+      )
+
     Channel.start_link(channel_id, tunnel_id, client_id, status, version, agent)
   end
-
 end

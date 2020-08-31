@@ -54,7 +54,6 @@ defmodule ExAliyunOts.Http.Middleware do
          _require_deserialize_row,
          _require_response_size
        ) do
-
     error = %Error{
       code: ErrorType.ots_client_unknown(),
       message: reason,
@@ -71,10 +70,12 @@ defmodule ExAliyunOts.Http.Middleware do
          true = _require_response_size
        ) do
     body = response.body
+
     readable_result =
       body
       |> do_decode_success_response(decoder)
       |> make_response_row_readable()
+
     {:ok, readable_result, byte_size(body)}
   end
 
@@ -99,6 +100,7 @@ defmodule ExAliyunOts.Http.Middleware do
       response.body
       |> do_decode_success_response(decoder)
       |> make_response_row_readable()
+
     {:ok, readable_result}
   end
 
@@ -115,6 +117,7 @@ defmodule ExAliyunOts.Http.Middleware do
   defp do_decode_success_response(nil, decoder) do
     decoder.("")
   end
+
   defp do_decode_success_response(response_body, decoder) do
     decoder.(response_body)
   end
@@ -263,7 +266,10 @@ defmodule ExAliyunOts.Http do
     true
   end
 
-  defp match_should_retry?({:error, %Error{code: ErrorType.ots_client_unknown(), message: reason} = error}) when is_atom(reason) do
+  defp match_should_retry?(
+         {:error, %Error{code: ErrorType.ots_client_unknown(), message: reason} = error}
+       )
+       when is_atom(reason) do
     error(fn ->
       [
         "** ExAliyunOts occur an unknown error: ",
@@ -304,41 +310,59 @@ defmodule ExAliyunOts.Http do
     false
   end
 
-  defp start_local_transaction_match_should_retry?({:error, %Error{code: ErrorType.row_operation_conflict()}}) do
+  defp start_local_transaction_match_should_retry?(
+         {:error, %Error{code: ErrorType.row_operation_conflict()}}
+       ) do
     # DO NOT retry http request when start local transaction operation occurs `row_operation_conflict` error,
     # instead, should return this error to caller immediately, because the retry operations will make the parallel requests
     # to create local transaction both successfully one by one, this is unexpected result.
     false
   end
+
   defp start_local_transaction_match_should_retry?(result) do
     match_should_retry?(result)
   end
 
   defp middlewares(instance, uri, request_body, decoder)
-    when uri == "/PutRow"
-    when uri == "/GetRow"
-    when uri == "/UpdateRow" do
+       when uri == "/PutRow"
+       when uri == "/GetRow"
+       when uri == "/UpdateRow" do
     [
       default_middleware(),
-      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder, deserialize_row: true}
+      {ExAliyunOts.Http.Middleware,
+       instance: instance,
+       uri: uri,
+       request_body: request_body,
+       decoder: decoder,
+       deserialize_row: true}
     ]
   end
+
   defp middlewares(instance, "/tunnel/readrecords" = uri, request_body, decoder) do
     [
       default_middleware(),
-      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder, require_response_size: true}
+      {ExAliyunOts.Http.Middleware,
+       instance: instance,
+       uri: uri,
+       request_body: request_body,
+       decoder: decoder,
+       require_response_size: true}
     ]
   end
+
   defp middlewares(instance, "/StartLocalTransaction" = uri, request_body, decoder) do
     [
       default_middleware(&start_local_transaction_match_should_retry?/1),
-      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder}
+      {ExAliyunOts.Http.Middleware,
+       instance: instance, uri: uri, request_body: request_body, decoder: decoder}
     ]
   end
+
   defp middlewares(instance, uri, request_body, decoder) do
     [
       default_middleware(),
-      {ExAliyunOts.Http.Middleware, instance: instance, uri: uri, request_body: request_body, decoder: decoder}
+      {ExAliyunOts.Http.Middleware,
+       instance: instance, uri: uri, request_body: request_body, decoder: decoder}
     ]
   end
 
@@ -348,6 +372,8 @@ defmodule ExAliyunOts.Http do
 
   defp adapter(opts) do
     timeout = Keyword.get(opts, :timeout, @timeout)
-    {Tesla.Adapter.Hackney, [recv_timeout: timeout, ssl_options: [versions: [:'tlsv1.3', :'tlsv1.2']]]}
+
+    {Tesla.Adapter.Hackney,
+     [recv_timeout: timeout, ssl_options: [versions: [:"tlsv1.3", :"tlsv1.2"]]]}
   end
 end

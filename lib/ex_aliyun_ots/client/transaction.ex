@@ -39,6 +39,7 @@ defmodule ExAliyunOts.Client.Transaction do
         inspect(result)
       ]
     end)
+
     result
   end
 
@@ -56,9 +57,10 @@ defmodule ExAliyunOts.Client.Transaction do
     debug(fn ->
       [
         "commit_transaction result: ",
-        inspect(result),
+        inspect(result)
       ]
     end)
+
     result
   end
 
@@ -79,6 +81,7 @@ defmodule ExAliyunOts.Client.Transaction do
         inspect(result)
       ]
     end)
+
     result
   end
 end
