@@ -3,10 +3,10 @@ defmodule ExAliyunOts.Logger do
 
   require Logger
 
-  @debug? Application.get_env(Mix.Project.config[:app], :debug, false)
-
   def debug(fun) do
-    if @debug? do
+    enable_debug = Application.get_application(__MODULE__) |> Application.get_env(:debug, false)
+
+    if enable_debug do
       Logger.debug(fun)
     end
   end
