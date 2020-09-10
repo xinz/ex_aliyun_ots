@@ -1235,7 +1235,7 @@ defmodule ExAliyunOts do
   end
 
   defp prepare_single_column_value_filter(comparator, column_name, column_value, binding) do
-    {column_name, options} = check_signal_col_val_filter_options(column_name)
+    {column_name, options} = check_signal_col_val_filter_options(column_name, binding)
 
     filter = %Var.SingleColumnValueFilter{
       comparator: comparator,
@@ -1251,11 +1251,11 @@ defmodule ExAliyunOts do
     }
   end
 
-  defp check_signal_col_val_filter_options(column_content) do
-    case Regex.run(@regex_filter_options, column_content) do
-      nil ->
-        {column_content, nil}
-
+  defp check_signal_col_val_filter_options(column_content, binding) do
+    with column_content <- map_filter_column_value(column_content, binding),
+         nil <- Regex.run(@regex_filter_options, column_content) do
+      {column_content, nil}
+    else
       [_, column_name, options_str] ->
         {options, _} = Code.eval_string(options_str)
         {column_name, options}
