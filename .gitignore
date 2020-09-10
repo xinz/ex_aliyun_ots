@@ -30,6 +30,7 @@ erl_crash.dump
 # Other
 *.swp
 .DS_Store
+*.iml
 .idea
 node_modules
 *.sublime-project

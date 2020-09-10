@@ -30,11 +30,32 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
     end
 
     value1 = "updated_attr21"
+    class_field = "class"
+    age_field = "age"
+    name_field = "name[ignore_if_missing: true, latest_version_only: true]"
 
     filter_result =
       filter(
         ("name[ignore_if_missing: true, latest_version_only: true]" == value1 and "age" > 1) or
           "class" == "1"
+      )
+
+    filter_result_1 =
+      filter(
+        ("name[ignore_if_missing: true, latest_version_only: true]" == value1 and "age" > 1) or
+          class_field == "1"
+      )
+
+    filter_result_2 =
+      filter(
+        ("name[ignore_if_missing: true, latest_version_only: true]" == value1 and age_field > 1) or
+          class_field == "1"
+      )
+
+    filter_result_3 =
+      filter(
+        (name_field == value1 and age_field > 1) or
+          class_field == "1"
       )
 
     assert filter_result == %ExAliyunOts.Var.Filter{
@@ -83,5 +104,9 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
              },
              filter_type: :FT_COMPOSITE_COLUMN_VALUE
            }
+
+    assert filter_result == filter_result_1
+    assert filter_result == filter_result_2
+    assert filter_result == filter_result_3
   end
 end
