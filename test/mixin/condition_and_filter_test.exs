@@ -25,6 +25,11 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
              row_existence: :EXPECT_EXIST
            }
 
+    key = "attr2"
+    condition_result2 = condition(:expect_exist, key == value1)
+
+    assert condition_result == condition_result2
+
     assert_raise ExAliyunOts.RuntimeError, ~r/Invalid expression `value\(\)`/, fn ->
       condition(:expect_exist, "attr2" == value())
     end
@@ -109,4 +114,5 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
     assert filter_result == filter_result_2
     assert filter_result == filter_result_3
   end
+
 end
