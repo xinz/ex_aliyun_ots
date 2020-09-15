@@ -1,7 +1,7 @@
 defmodule ExAliyunOts.MixinTest.Filter do
   use ExUnit.Case
 
-  import ExAliyunOts.Filter
+  import ExAliyunOts
 
   @result %ExAliyunOts.Var.Filter{
     filter: %ExAliyunOts.Var.CompositeColumnValueFilter{
@@ -62,13 +62,15 @@ defmodule ExAliyunOts.MixinTest.Filter do
           "class" == "1"
       )
 
-    name_s = filter({"name", options} == value1)
+    name_expr = filter({"name", options} == value1)
 
-    filter_result_1 = filter((name_s and "age" > 1) or class_field == "1")
-    age_s = filter(age_field > 1)
-    c_f = filter(name_s and age_s)
+    filter_result_1 = filter((name_expr and "age" > 1) or class_field == "1")
 
-    filter_result_2 = filter(c_f or class_field == "1")
+    age_expr = filter(age_field > 1)
+
+    name_with_age_expr = filter(name_expr and age_expr)
+
+    filter_result_2 = filter(name_with_age_expr or class_field == "1")
 
     assert filter_result == @result
     assert filter_result_1 == @result

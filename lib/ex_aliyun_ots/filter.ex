@@ -27,7 +27,10 @@ defmodule ExAliyunOts.Filter do
 
       get_row table_name1, [{"key", "key1"}],
         columns_to_get: ["name", "level"],
-        filter: filter(({"name", ignore_if_missing: true, latest_version_only: true} == var_name and "age" > 1) or ("class" == "1"))
+        filter: filter(
+          ({"name", ignore_if_missing: true, latest_version_only: true} == var_name and "age" > 1) or
+            ("class" == "1")
+        )
 
       batch_get [
         get(
@@ -40,11 +43,11 @@ defmodule ExAliyunOts.Filter do
   ## Options
 
     * `ignore_if_missing`, used when attribute column not existed.
-      * if a attribute column is not existed, when set `[ignore_if_missing: true]` in filter expression, there will ignore this row data in the returned result;
+      * if a attribute column is not existed, when set `ignore_if_missing: true` in filter expression, there will ignore this row data in the returned result;
       * if a attribute column is existed, the returned result won't be affected no matter true or false was set.
     * `latest_version_only`, used when attribute column has multiple versions.
-      * if set `[latest_version_only: true]`, there will only check the value of the latest version is matched or not, by default it's set as `[latest_version_only: true]`;
-      * if set `[latest_version_only: false]`, there will check the value of all versions are matched or not.
+      * if set `latest_version_only: true`, there will only check the value of the latest version is matched or not, by default it's set as `latest_version_only: true`;
+      * if set `latest_version_only: false`, there will check the value of all versions are matched or not.
 
   """
   @doc row: :row
@@ -85,25 +88,38 @@ defmodule ExAliyunOts.Filter do
   end
 
   defp single_filter({comparator, _, [column_name, column_value]}) do
-    {column_name, options} =
-      case column_name do
-        {column_name, options} -> {column_name, options}
-        column_name -> {column_name, []}
-      end
 
     quote do
       require ExAliyunOts.Const.FilterType
 
-      %ExAliyunOts.Var.Filter{
-        filter_type: ExAliyunOts.Const.FilterType.single_column(),
-        filter: %ExAliyunOts.Var.SingleColumnValueFilter{
-          comparator: unquote(@comparator_mapping[comparator]),
-          column_name: unquote(column_name),
-          column_value: unquote(column_value),
-          ignore_if_missing: Keyword.get(unquote(options), :ignore_if_missing, false),
-          latest_version_only: Keyword.get(unquote(options), :latest_version_only, true)
-        }
-      }
+      comparator = unquote(@comparator_mapping[comparator])
+
+      case unquote(column_name) do
+        {column_name, column_options} ->
+          %ExAliyunOts.Var.Filter{
+            filter_type: ExAliyunOts.Const.FilterType.single_column(),
+            filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+              comparator: comparator,
+              column_name: column_name,
+              column_value: unquote(column_value),
+              ignore_if_missing: Keyword.get(column_options, :ignore_if_missing, false),
+              latest_version_only: Keyword.get(column_options, :latest_version_only, true)
+            }
+          }
+        column_name ->
+          %ExAliyunOts.Var.Filter{
+            filter_type: ExAliyunOts.Const.FilterType.single_column(),
+            filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+              comparator: comparator,
+              column_name: column_name,
+              column_value: unquote(column_value),
+              ignore_if_missing: false,
+              latest_version_only: true
+            }
+          }
+      end
     end
+
   end
+
 end

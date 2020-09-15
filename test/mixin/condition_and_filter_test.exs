@@ -84,23 +84,23 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
     value1 = "updated_attr21"
     class_field = "class"
     age_field = "age"
-    name_field = "name[ignore_if_missing: true, latest_version_only: true]"
+    name_field = {"name", ignore_if_missing: true, latest_version_only: true}
 
     filter_result =
       filter(
-        ("name[ignore_if_missing: true, latest_version_only: true]" == value1 and "age" > 1) or
+        ({"name", ignore_if_missing: true, latest_version_only: true} == value1 and "age" > 1) or
           "class" == "1"
       )
 
     filter_result_1 =
       filter(
-        ("name[ignore_if_missing: true, latest_version_only: true]" == value1 and "age" > 1) or
+        ({"name", ignore_if_missing: true, latest_version_only: true} == value1 and "age" > 1) or
           class_field == "1"
       )
 
     filter_result_2 =
       filter(
-        ("name[ignore_if_missing: true, latest_version_only: true]" == value1 and age_field > 1) or
+        ({"name", ignore_if_missing: true, latest_version_only: true} == value1 and age_field > 1) or
           class_field == "1"
       )
 

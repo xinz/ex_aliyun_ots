@@ -66,7 +66,7 @@ defmodule ExAliyunOts do
   different, because the `instance` parameter of each invoke request is NOT needed from your own ExAliyunOts module although the `ExAliyunOts` module defines it.
   """
 
-  alias ExAliyunOts.{Var, Client}
+  alias ExAliyunOts.{Var, Client, Filter}
 
   alias ExAliyunOts.Const.{
     OperationType,
@@ -115,7 +115,10 @@ defmodule ExAliyunOts do
 
       get_row table_name1, [{"key", "key1"}],
         columns_to_get: ["name", "level"],
-        filter: filter(("name[ignore_if_missing: true, latest_version_only: true]" == var_name and "age" > 1) or ("class" == "1"))
+        filter: filter(
+          ({"name", ignore_if_missing: true, latest_version_only: true} == var_name and "age" > 1) or
+            ("class" == "1")
+        )
 
       batch_get [
         get(
@@ -128,19 +131,18 @@ defmodule ExAliyunOts do
   ## Options
 
     * `ignore_if_missing`, used when attribute column not existed.
-      * if a attribute column is not existed, when set `[ignore_if_missing: true]` in filter expression, there will ignore this row data in the returned result;
+      * if a attribute column is not existed, when set `ignore_if_missing: true` in filter expression, there will ignore this row data in the returned result;
       * if a attribute column is existed, the returned result won't be affected no matter true or false was set.
     * `latest_version_only`, used when attribute column has multiple versions.
-      * if set `[latest_version_only: true]`, there will only check the value of the latest version is matched or not, by default it's set as `[latest_version_only: true]`;
-      * if set `[latest_version_only: false]`, there will check the value of all versions are matched or not.
+      * if set `latest_version_only: true`, there will only check the value of the latest version is matched or not, by default it's set as `latest_version_only: true`;
+      * if set `latest_version_only: false`, there will check the value of all versions are matched or not.
 
   """
   @doc row: :row
   defmacro filter(filter_expr) do
     quote do
-      ast_expr = unquote(Macro.escape(filter_expr))
-      context_binding = binding()
-      ExAliyunOts.expressions_to_filter(ast_expr, context_binding)
+      require Filter
+      Filter.filter(unquote(filter_expr))
     end
   end
 
@@ -207,6 +209,7 @@ defmodule ExAliyunOts do
       column_condition = ExAliyunOts.expressions_to_filter(ast_expr, context_binding)
       %{unquote(condition) | column_condition: column_condition}
     end
+
   end
 
   defp map_condition(:ignore) do
