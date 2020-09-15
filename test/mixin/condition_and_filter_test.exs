@@ -50,9 +50,7 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
     filter_type: :FT_COMPOSITE_COLUMN_VALUE
   }
 
-  def value() do
-    1
-  end
+  def value(), do: "attr21"
 
   test "bind variables" do
     value1 = "attr21"
@@ -76,10 +74,7 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
     condition_result2 = condition(:expect_exist, key == value1)
 
     assert condition_result == condition_result2
-
-    assert_raise ExAliyunOts.RuntimeError, ~r/Invalid expression `value\(\)`/, fn ->
-      condition(:expect_exist, "attr2" == value())
-    end
+    assert condition_result == condition(:expect_exist, "attr2" == value())
 
     value1 = "updated_attr21"
     class_field = "class"
