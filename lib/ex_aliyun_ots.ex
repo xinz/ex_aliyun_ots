@@ -71,7 +71,6 @@ defmodule ExAliyunOts do
   alias ExAliyunOts.Const.{
     OperationType,
     ReturnType,
-    RowExistence,
     FilterType,
     ComparatorType,
     LogicOperator,
@@ -80,7 +79,6 @@ defmodule ExAliyunOts do
 
   require OperationType
   require ReturnType
-  require RowExistence
   require FilterType
   require ComparatorType
   require LogicOperator
@@ -183,8 +181,58 @@ defmodule ExAliyunOts do
   """
   @doc row: :row
   @spec condition(existence :: :expect_exist | :expect_not_exist | :ignore) :: map()
-  def condition(existence) do
+  defmacro condition(existence) do
     map_condition(existence)
+  end
+
+  @doc """
+  Similar to `condition/1` and support use filter expression (please see `filter/1`) as well, please refer them for details.
+
+  ## Example
+
+      import MyApp.TableStore
+
+      delete_row "table",
+        [{"key", "key1"}, {"key2", "key2"}],
+        condition: condition(:expect_exist, "attr_column" == "value2")
+
+  """
+  @doc row: :row
+  defmacro condition(existence, filter_expr) do
+    condition = map_condition(existence)
+
+    quote do
+      ast_expr = unquote(Macro.escape(filter_expr))
+      context_binding = binding()
+      column_condition = ExAliyunOts.expressions_to_filter(ast_expr, context_binding)
+      %{unquote(condition) | column_condition: column_condition}
+    end
+  end
+
+  defp map_condition(:ignore) do
+    quote do
+      require ExAliyunOts.Const.RowExistence, as: RowExistence
+      %Var.Condition{row_existence: RowExistence.ignore()}
+    end
+  end
+
+  defp map_condition(:expect_exist) do
+    quote do
+      require ExAliyunOts.Const.RowExistence, as: RowExistence
+      %Var.Condition{row_existence: RowExistence.expect_exist()}
+    end
+  end
+
+  defp map_condition(:expect_not_exist) do
+    quote do
+      require ExAliyunOts.Const.RowExistence, as: RowExistence
+      %Var.Condition{row_existence: RowExistence.expect_not_exist()}
+    end
+  end
+
+  defp map_condition(existence) do
+    raise ExAliyunOts.RuntimeError,
+          "Invalid existence: #{inspect(existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
   end
 
   @doc """
@@ -211,29 +259,6 @@ defmodule ExAliyunOts do
       filter_type: FilterType.column_pagination(),
       filter: %Var.ColumnPaginationFilter{offset: offset, limit: limit}
     }
-  end
-
-  @doc """
-  Similar to `condition/1` and support use filter expression (please see `filter/1`) as well, please refer them for details.
-
-  ## Example
-
-      import MyApp.TableStore
-
-      delete_row "table",
-        [{"key", "key1"}, {"key2", "key2"}],
-        condition: condition(:expect_exist, "attr_column" == "value2")
-
-  """
-  @doc row: :row
-  defmacro condition(existence, filter_expr) do
-    quote do
-      condition = ExAliyunOts.map_condition(unquote(existence))
-      ast_expr = unquote(Macro.escape(filter_expr))
-      context_binding = binding()
-      column_condition = ExAliyunOts.expressions_to_filter(ast_expr, context_binding)
-      %{condition | column_condition: column_condition}
-    end
   end
 
   @doc """
@@ -1139,30 +1164,6 @@ defmodule ExAliyunOts do
   @doc local_transaction: :local_transaction
   def abort_transaction(instance, transaction_id) do
     Client.abort_transaction(instance, transaction_id)
-  end
-
-  @doc false
-  def map_condition(:ignore) do
-    %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
-  end
-
-  def map_condition(:expect_exist) do
-    %Var.Condition{
-      row_existence: RowExistence.expect_exist()
-    }
-  end
-
-  def map_condition(:expect_not_exist) do
-    %Var.Condition{
-      row_existence: RowExistence.expect_not_exist()
-    }
-  end
-
-  def map_condition(existence) do
-    raise ExAliyunOts.RuntimeError,
-          "Invalid existence: #{inspect(existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
   end
 
   @doc false
