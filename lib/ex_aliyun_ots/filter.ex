@@ -55,19 +55,19 @@ defmodule ExAliyunOts.Filter do
     build_filter(filter_expr)
   end
 
-  defp build_filter({combinator, _, _} = ast) when combinator in [:and, :not, :or] do
+  def build_filter({combinator, _, _} = ast) when combinator in [:and, :not, :or] do
     composite_filter(ast)
   end
 
-  defp build_filter({combinator, _, _} = ast) when combinator in [:==, :>, :>=, :!=, :<, :<=] do
+  def build_filter({combinator, _, _} = ast) when combinator in [:==, :>, :>=, :!=, :<, :<=] do
     single_filter(ast)
   end
 
-  defp build_filter({binding_name, _, nil} = ast) when is_atom(binding_name) do
+  def build_filter({binding_name, _, nil} = ast) when is_atom(binding_name) do
     ast
   end
 
-  defp build_filter(ast) do
+  def build_filter(ast) do
     raise ExAliyunOts.RuntimeError, "Invalid filter expression: #{Macro.to_string(ast)}"
   end
 

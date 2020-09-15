@@ -84,8 +84,6 @@ defmodule ExAliyunOts do
   require LogicOperator
   require Direction
 
-  @regex_filter_options ~r/^(.+?)(\[.+?\])$/
-
   defmacro __using__(opts \\ []) do
     opts = Macro.prewalk(opts, &Macro.expand(&1, __CALLER__))
 
@@ -140,10 +138,7 @@ defmodule ExAliyunOts do
   """
   @doc row: :row
   defmacro filter(filter_expr) do
-    quote do
-      require Filter
-      Filter.filter(unquote(filter_expr))
-    end
+    Filter.build_filter(filter_expr)
   end
 
   @doc """
@@ -202,12 +197,10 @@ defmodule ExAliyunOts do
   @doc row: :row
   defmacro condition(existence, filter_expr) do
     condition = map_condition(existence)
+    column_condition = Filter.build_filter(filter_expr)
 
     quote do
-      ast_expr = unquote(Macro.escape(filter_expr))
-      context_binding = binding()
-      column_condition = ExAliyunOts.expressions_to_filter(ast_expr, context_binding)
-      %{unquote(condition) | column_condition: column_condition}
+      %{unquote(condition) | column_condition: unquote(column_condition)}
     end
   end
 
@@ -1166,121 +1159,6 @@ defmodule ExAliyunOts do
   @doc local_transaction: :local_transaction
   def abort_transaction(instance, transaction_id) do
     Client.abort_transaction(instance, transaction_id)
-  end
-
-  @doc false
-  def expressions_to_filter({:and, _, expressions}, binding) do
-    %Var.Filter{
-      filter_type: FilterType.composite_column(),
-      filter: %Var.CompositeColumnValueFilter{
-        combinator: LogicOperator.and(),
-        sub_filters:
-          Enum.map(expressions, fn expr ->
-            expressions_to_filter(expr, binding)
-          end)
-      }
-    }
-  end
-
-  def expressions_to_filter({:not, _, expressions}, binding) do
-    %Var.Filter{
-      filter_type: FilterType.composite_column(),
-      filter: %Var.CompositeColumnValueFilter{
-        combinator: LogicOperator.not(),
-        sub_filters:
-          Enum.map(expressions, fn expr ->
-            expressions_to_filter(expr, binding)
-          end)
-      }
-    }
-  end
-
-  def expressions_to_filter({:or, _, expressions}, binding) do
-    %Var.Filter{
-      filter_type: FilterType.composite_column(),
-      filter: %Var.CompositeColumnValueFilter{
-        combinator: LogicOperator.or(),
-        sub_filters:
-          Enum.map(expressions, fn expr ->
-            expressions_to_filter(expr, binding)
-          end)
-      }
-    }
-  end
-
-  def expressions_to_filter({:==, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.eq(), column_name, column_value, binding)
-  end
-
-  def expressions_to_filter({:>, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.gt(), column_name, column_value, binding)
-  end
-
-  def expressions_to_filter({:>=, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.ge(), column_name, column_value, binding)
-  end
-
-  def expressions_to_filter({:!=, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(
-      ComparatorType.not_eq(),
-      column_name,
-      column_value,
-      binding
-    )
-  end
-
-  def expressions_to_filter({:<, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.lt(), column_name, column_value, binding)
-  end
-
-  def expressions_to_filter({:<=, _, [column_name, column_value]}, binding) do
-    prepare_single_column_value_filter(ComparatorType.le(), column_name, column_value, binding)
-  end
-
-  defp prepare_single_column_value_filter(comparator, column_name, column_value, binding) do
-    {column_name, options} = check_signal_col_val_filter_options(column_name, binding)
-
-    filter = %Var.SingleColumnValueFilter{
-      comparator: comparator,
-      column_name: column_name,
-      column_value: map_filter_column_value(column_value, binding)
-    }
-
-    filter_with_options = map_options(filter, options)
-
-    %Var.Filter{
-      filter_type: FilterType.single_column(),
-      filter: filter_with_options
-    }
-  end
-
-  defp check_signal_col_val_filter_options(column_content, binding) do
-    with column_content <- map_filter_column_value(column_content, binding),
-         nil <- Regex.run(@regex_filter_options, column_content) do
-      {column_content, nil}
-    else
-      [_, column_name, options_str] ->
-        {options, _} = Code.eval_string(options_str)
-        {column_name, options}
-
-      _ ->
-        raise ExAliyunOts.RuntimeError, "filter expression: #{inspect(column_content)}"
-    end
-  end
-
-  defp map_filter_column_value({column_value_bound_var, _, _} = ast, binding) do
-    prepared = Keyword.get(binding, column_value_bound_var)
-
-    if prepared == nil do
-      raise ExAliyunOts.RuntimeError,
-            "Invalid expression `#{Macro.to_string(ast)}` in context, please use a variable refer the value in filter expression."
-    else
-      prepared
-    end
-  end
-
-  defp map_filter_column_value(column_value, _binding) do
-    column_value
   end
 
   defp map_options(var, nil), do: var
