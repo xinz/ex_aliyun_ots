@@ -88,7 +88,6 @@ defmodule ExAliyunOts.Filter do
   end
 
   defp single_filter({comparator, _, [column_name, column_value]}) do
-
     quote do
       require ExAliyunOts.Const.FilterType
 
@@ -106,6 +105,7 @@ defmodule ExAliyunOts.Filter do
               latest_version_only: Keyword.get(column_options, :latest_version_only, true)
             }
           }
+
         column_name ->
           %ExAliyunOts.Var.Filter{
             filter_type: ExAliyunOts.Const.FilterType.single_column(),
@@ -119,7 +119,5 @@ defmodule ExAliyunOts.Filter do
           }
       end
     end
-
   end
-
 end

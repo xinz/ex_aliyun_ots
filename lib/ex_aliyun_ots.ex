@@ -209,7 +209,6 @@ defmodule ExAliyunOts do
       column_condition = ExAliyunOts.expressions_to_filter(ast_expr, context_binding)
       %{unquote(condition) | column_condition: column_condition}
     end
-
   end
 
   defp map_condition(:ignore) do
