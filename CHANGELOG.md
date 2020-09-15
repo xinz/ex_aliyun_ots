@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.7.1 (2020-09-15)
+* Enhance condition expression and simplify some code about it
+
 ## v0.7.0 (2020-09-15)
 * Update ExAliyunOts.filter/1 for a better usage (please notice that this change is incompatible update),
   before this version uses `filter` like this:
