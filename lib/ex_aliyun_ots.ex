@@ -314,9 +314,7 @@ defmodule ExAliyunOts do
   @doc table: :table
   @spec delete_table(instance :: atom(), table :: String.t()) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def delete_table(instance, table) do
-    Client.delete_table(instance, table)
-  end
+  defdelegate delete_table(instance, table), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/27313.html) | [English](https://www.alibabacloud.com/help/doc-detail/27313.html)
@@ -330,9 +328,7 @@ defmodule ExAliyunOts do
   @doc table: :table
   @spec list_table(instance :: atom()) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def list_table(instance) do
-    Client.list_table(instance)
-  end
+  defdelegate list_table(instance), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/27315.html) | [English](https://www.alibabacloud.com/help/doc-detail/27315.html)
@@ -374,9 +370,7 @@ defmodule ExAliyunOts do
   @doc table: :table
   @spec describe_table(instance :: atom(), table :: String.t()) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def describe_table(instance, table) do
-    Client.describe_table(instance, table)
-  end
+  defdelegate describe_table(instance, table), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/27310.html) | [English](https://www.alibabacloud.com/help/doc-detail/27310.html)
@@ -400,9 +394,7 @@ defmodule ExAliyunOts do
   @doc row: :row
   @spec batch_get(instance :: atom(), requests :: list()) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def batch_get(instance, requests) do
-    Client.batch_get_row(instance, requests)
-  end
+  defdelegate batch_get(instance, requests), to: Client, as: :batch_get_row
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/27311.html) | [English](https://www.alibabacloud.com/help/doc-detail/27311.html)
@@ -996,9 +988,7 @@ defmodule ExAliyunOts do
   @doc search: :search
   @spec list_search_index(instance :: atom(), table :: String.t()) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def list_search_index(instance, table) do
-    Client.list_search_index(instance, table)
-  end
+  defdelegate list_search_index(instance, table), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/117452.html) | [English](https://www.alibabacloud.com/help/doc-detail/117452.html)
@@ -1143,9 +1133,7 @@ defmodule ExAliyunOts do
   @doc local_transaction: :local_transaction
   @spec commit_transaction(instance :: atom(), transaction_id :: String.t()) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def commit_transaction(instance, transaction_id) do
-    Client.commit_transaction(instance, transaction_id)
-  end
+  defdelegate commit_transaction(instance, transaction_id), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/93819.html) | [English](https://www.alibabacloud.com/help/doc-detail/93819.html)
@@ -1157,9 +1145,7 @@ defmodule ExAliyunOts do
       abort_transaction("transaction_id")
   """
   @doc local_transaction: :local_transaction
-  def abort_transaction(instance, transaction_id) do
-    Client.abort_transaction(instance, transaction_id)
-  end
+  defdelegate abort_transaction(instance, transaction_id), to: Client
 
   defp map_options(var, nil), do: var
 
