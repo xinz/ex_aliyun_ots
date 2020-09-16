@@ -55,6 +55,7 @@ defmodule ExAliyunOts.Filter do
     build_filter(filter_expr)
   end
 
+  @doc false
   def build_filter({combinator, _, _} = ast) when combinator in [:and, :not, :or] do
     composite_filter(ast)
   end
@@ -88,7 +89,7 @@ defmodule ExAliyunOts.Filter do
   end
 
   defp single_filter({comparator, _, [column_name, column_value]}) do
-    quote do
+    quote location: :keep do
       require ExAliyunOts.Const.FilterType
 
       comparator = unquote(@comparator_mapping[comparator])
