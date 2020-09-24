@@ -134,12 +134,21 @@ defmodule ExAliyunOts.Var.CreateTable do
   @moduledoc false
   defstruct table_name: "",
             primary_keys: [],
+            defined_columns: [],
             reserved_throughput_write: 0,
             reserved_throughput_read: 0,
             time_to_live: -1,
             max_versions: 1,
             deviation_cell_version_in_sec: 86_400,
-            stream_spec: %ExAliyunOts.Var.StreamSpec{}
+            stream_spec: %ExAliyunOts.Var.StreamSpec{},
+            index_metas: []
+end
+
+defmodule ExAliyunOts.Var.CreateIndex do
+  @moduledoc false
+  defstruct table_name: "",
+            index_meta: %ExAliyunOts.TableStore.IndexMeta{},
+            include_base_data: true
 end
 
 defmodule ExAliyunOts.Var.UpdateTable do

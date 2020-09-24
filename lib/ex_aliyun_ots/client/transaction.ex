@@ -14,7 +14,7 @@ defmodule ExAliyunOts.Client.Transaction do
 
   import ExAliyunOts.Logger, only: [debug: 1]
 
-  def request_to_start_local_transaction(var_start_transaction) do
+  defp request_to_start_local_transaction(var_start_transaction) do
     table_name = var_start_transaction.table_name
     partition_key = PlainBuffer.serialize_primary_keys([var_start_transaction.partition_key])
 
@@ -23,7 +23,9 @@ defmodule ExAliyunOts.Client.Transaction do
     |> StartLocalTransactionRequest.encode()
   end
 
-  def remote_start_local_transaction(instance, request_body) do
+  def remote_start_local_transaction(instance, var_start_local_transaction) do
+    request_body = request_to_start_local_transaction(var_start_local_transaction)
+
     result =
       instance
       |> Http.client(
@@ -33,54 +35,37 @@ defmodule ExAliyunOts.Client.Transaction do
       )
       |> Http.post()
 
-    debug(fn ->
-      [
-        "start_local_transaction result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["start_local_transaction result: ", inspect(result)] end)
 
     result
   end
 
-  def request_to_commit_transaction(transaction_id) do
-    CommitTransactionRequest.new(transaction_id: transaction_id)
-    |> CommitTransactionRequest.encode()
-  end
+  def remote_commit_transaction(instance, transaction_id) do
+    request_body =
+      CommitTransactionRequest.new(transaction_id: transaction_id)
+      |> CommitTransactionRequest.encode()
 
-  def remote_commit_transaction(instance, request_body) do
     result =
       instance
       |> Http.client("/CommitTransaction", request_body, &CommitTransactionResponse.decode/1)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "commit_transaction result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["commit_transaction result: ", inspect(result)] end)
 
     result
   end
 
-  def request_to_abort_transaction(transaction_id) do
-    AbortTransactionRequest.new(transaction_id: transaction_id)
-    |> AbortTransactionRequest.encode()
-  end
+  def remote_abort_transaction(instance, transaction_id) do
+    request_body =
+      AbortTransactionRequest.new(transaction_id: transaction_id)
+      |> AbortTransactionRequest.encode()
 
-  def remote_abort_transaction(instance, request_body) do
     result =
       instance
       |> Http.client("/AbortTransaction", request_body, &AbortTransactionResponse.decode/1)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "abort_transaction result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["abort_transaction result: ", inspect(result)] end)
 
     result
   end

@@ -1,21 +1,19 @@
 defmodule ExAliyunOts.Filter do
   @moduledoc false
-  require ExAliyunOts.Const.ComparatorType, as: ComparatorType
-  require ExAliyunOts.Const.LogicOperator, as: LogicOperator
 
   @operator_mapping %{
-    and: LogicOperator.and(),
-    not: LogicOperator.not(),
-    or: LogicOperator.or()
+    and: :LO_AND,
+    not: :LO_NOT,
+    or: :LO_OR
   }
 
   @comparator_mapping %{
-    ==: ComparatorType.eq(),
-    >: ComparatorType.gt(),
-    >=: ComparatorType.ge(),
-    !=: ComparatorType.not_eq(),
-    <: ComparatorType.lt(),
-    <=: ComparatorType.le()
+    ==: :CT_EQUAL,
+    !=: :CT_NOT_EQUAL,
+    >: :CT_GREATER_THAN,
+    >=: :CT_GREATER_EQUAL,
+    <: :CT_LESS_THAN,
+    <=: :CT_LESS_EQUAL
   }
 
   @doc """
@@ -76,10 +74,8 @@ defmodule ExAliyunOts.Filter do
     sub_filters = Enum.map(expressions, &build_filter/1)
 
     quote do
-      require ExAliyunOts.Const.FilterType
-
       %ExAliyunOts.Var.Filter{
-        filter_type: ExAliyunOts.Const.FilterType.composite_column(),
+        filter_type: :FT_COMPOSITE_COLUMN_VALUE,
         filter: %ExAliyunOts.Var.CompositeColumnValueFilter{
           combinator: unquote(@operator_mapping[combinator]),
           sub_filters: unquote(sub_filters)
@@ -90,14 +86,12 @@ defmodule ExAliyunOts.Filter do
 
   defp single_filter({comparator, _, [column_name, column_value]}) do
     quote location: :keep do
-      require ExAliyunOts.Const.FilterType
-
       comparator = unquote(@comparator_mapping[comparator])
 
       case unquote(column_name) do
         {column_name, column_options} ->
           %ExAliyunOts.Var.Filter{
-            filter_type: ExAliyunOts.Const.FilterType.single_column(),
+            filter_type: :FT_SINGLE_COLUMN_VALUE,
             filter: %ExAliyunOts.Var.SingleColumnValueFilter{
               comparator: comparator,
               column_name: column_name,
@@ -109,7 +103,7 @@ defmodule ExAliyunOts.Filter do
 
         column_name ->
           %ExAliyunOts.Var.Filter{
-            filter_type: ExAliyunOts.Const.FilterType.single_column(),
+            filter_type: :FT_SINGLE_COLUMN_VALUE,
             filter: %ExAliyunOts.Var.SingleColumnValueFilter{
               comparator: comparator,
               column_name: column_name,

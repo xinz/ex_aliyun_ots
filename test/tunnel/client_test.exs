@@ -1,12 +1,8 @@
 defmodule ExAliyunOtsTest.Tunnel do
   use ExUnit.Case
-
   require Logger
-
+  require ExAliyunOts.Const.TunnelType, as: TunnelType
   alias ExAliyunOts.Client
-
-  alias ExAliyunOts.Const.TunnelType
-  require TunnelType
 
   @instance_key EDCEXTestInstance
   @table_name "test_tunnel_client"
@@ -14,8 +10,7 @@ defmodule ExAliyunOtsTest.Tunnel do
   @test_records_size 10
 
   defmodule TunnelData do
-    use ExAliyunOts,
-      instance: EDCEXTestInstance
+    use ExAliyunOts, instance: EDCEXTestInstance
 
     def create_table(table_name) do
       create_table(table_name, [{"id", PKType.integer()}])

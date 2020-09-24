@@ -1,9 +1,6 @@
 defmodule ExAliyunOts.MixinTest.Table do
   use ExUnit.Case
-
-  use ExAliyunOts,
-    instance: EDCEXTestInstance
-
+  use ExAliyunOts, instance: EDCEXTestInstance
   require Logger
 
   test "table" do
@@ -25,6 +22,7 @@ defmodule ExAliyunOts.MixinTest.Table do
     {:ok, list_tables_result} = list_table()
 
     assert length(list_tables_result.table_names) > 0
+    assert table_name in list_tables_result.table_names == true
 
     _update_table_result =
       update_table(table_name,
