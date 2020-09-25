@@ -1,8 +1,8 @@
 defmodule ExAliyunOts.DSL do
   @moduledoc false
   require ExAliyunOts.Constants, as: Constants
-  alias ExAliyunOts.{Var, Filter}
   alias ExAliyunOts.TableStore.{Condition, IndexMeta}
+  alias ExAliyunOts.TableStoreFilter.{Filter, ColumnPaginationFilter}
 
   @type row_existence :: :expect_exist | :expect_not_exist | :ignore
 
@@ -40,7 +40,36 @@ defmodule ExAliyunOts.DSL do
   """
   @doc row: :row
   defmacro filter(filter_expr) do
-    Filter.build_filter(filter_expr)
+    ExAliyunOts.Filter.build_filter(filter_expr)
+  end
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/44573.html) | [English](https://www.alibabacloud.com/help/doc-detail/44573.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      get_row table_name,
+        [{"key", "1"}],
+        start_column: "room",
+        filter: pagination(offset: 0, limit: 3)
+
+  Use `pagination/1` for `:filter` options when get row.
+  """
+  @doc row: :row
+  @spec pagination(options :: Keyword.t()) :: map()
+  defmacro pagination(options) do
+    offset = Keyword.get(options, :offset)
+    limit = Keyword.get(options, :limit)
+    filter_type = Constants.filter_type(:column_pagination)
+
+    quote do
+      %Filter{
+        type: unquote(filter_type),
+        filter: %ColumnPaginationFilter{offset: unquote(offset), limit: unquote(limit)}
+      }
+    end
   end
 
   @doc """
@@ -101,7 +130,7 @@ defmodule ExAliyunOts.DSL do
   @doc row: :row
   defmacro condition(row_existence, filter_expr) do
     row_existence = map_row_existence(row_existence)
-    column_condition = Filter.build_filter(filter_expr)
+    column_condition = ExAliyunOts.Filter.build_filter(filter_expr)
 
     quote do
       %Condition{
@@ -119,45 +148,21 @@ defmodule ExAliyunOts.DSL do
             "Invalid existence: #{inspect(row_existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
   end
 
-  @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/44573.html) | [English](https://www.alibabacloud.com/help/doc-detail/44573.html)
-
-  ## Example
-
-      import MyApp.TableStore
-
-      get_row table_name,
-        [{"key", "1"}],
-        start_column: "room",
-        filter: pagination(offset: 0, limit: 3)
-
-  Use `pagination/1` for `:filter` options when get row.
-  """
-  @doc row: :row
-  @spec pagination(options :: Keyword.t()) :: map()
-  def pagination(options) do
-    offset = Keyword.get(options, :offset)
-    limit = Keyword.get(options, :limit)
-
-    %Var.Filter{
-      filter_type: :FT_COLUMN_PAGINATION,
-      filter: %Var.ColumnPaginationFilter{offset: offset, limit: limit}
-    }
-  end
-
   @doc false
   @spec index_meta(
           index_name :: String.t(),
           primary_keys :: [String.t()],
           defined_columns :: [String.t()]
         ) :: IndexMeta.t()
-  def index_meta(index_name, primary_keys, defined_columns) do
-    %IndexMeta{
-      name: index_name,
-      primary_key: primary_keys,
-      defined_column: defined_columns,
-      index_update_mode: :IUM_ASYNC_INDEX,
-      index_type: :IT_GLOBAL_INDEX
-    }
+  defmacro index_meta(index_name, primary_keys, defined_columns) do
+    quote do
+      %IndexMeta{
+        name: unquote(index_name),
+        primary_key: unquote(primary_keys),
+        defined_column: unquote(defined_columns),
+        index_update_mode: :IUM_ASYNC_INDEX,
+        index_type: :IT_GLOBAL_INDEX
+      }
+    end
   end
 end

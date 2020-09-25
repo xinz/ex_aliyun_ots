@@ -46,30 +46,6 @@ defmodule ExAliyunOts.Var.TimeRange do
   defstruct [:start_time, :end_time, :specific_time]
 end
 
-defmodule ExAliyunOts.Var.Filter do
-  @moduledoc false
-  defstruct [:filter, :filter_type]
-end
-
-defmodule ExAliyunOts.Var.CompositeColumnValueFilter do
-  @moduledoc false
-  defstruct combinator: nil, sub_filters: []
-end
-
-defmodule ExAliyunOts.Var.ColumnPaginationFilter do
-  @moduledoc false
-  defstruct offset: 0, limit: 0
-end
-
-defmodule ExAliyunOts.Var.SingleColumnValueFilter do
-  @moduledoc false
-  defstruct comparator: nil,
-            column_name: nil,
-            column_value: nil,
-            ignore_if_missing: false,
-            latest_version_only: true
-end
-
 defmodule ExAliyunOts.Var.UpdateRow do
   @moduledoc false
   alias ExAliyunOts.Const.ReturnType

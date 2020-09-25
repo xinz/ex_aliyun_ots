@@ -3,6 +3,7 @@ defmodule ExAliyunOts.Constants do
   use Const
   alias ExAliyunOts.Utils
   alias ExAliyunOts.TableStore.RowExistenceExpectation
+  alias ExAliyunOts.TableStoreFilter.ComparatorType
 
   defmacro __using__(_opts \\ []) do
     quote do
@@ -11,9 +12,6 @@ defmodule ExAliyunOts.Constants do
         PKType,
         ReturnType,
         Direction,
-        FilterType,
-        LogicOperator,
-        ComparatorType,
         Search.FieldType,
         Search.QueryType,
         Search.QueryOperator,
@@ -31,9 +29,6 @@ defmodule ExAliyunOts.Constants do
       require PKType
       require ReturnType
       require Direction
-      require FilterType
-      require LogicOperator
-      require ComparatorType
 
       # SearchIndex
       require FieldType
@@ -60,6 +55,25 @@ defmodule ExAliyunOts.Constants do
       RowExistenceExpectation.mapping()
       |> Enum.map(fn {type, _value} ->
         {Utils.downcase_atom(type), type}
+      end)
+  )
+
+  enum filter_type do
+    single_column(:FT_SINGLE_COLUMN_VALUE)
+    composite_column(:FT_COMPOSITE_COLUMN_VALUE)
+    column_pagination(:FT_COLUMN_PAGINATION)
+  end
+
+  enum(logic_operator, do: [not: :LO_NOT, and: :LO_AND, or: :LO_OR])
+
+  enum(comparator_type,
+    do:
+      ComparatorType.mapping()
+      |> Enum.map(fn {type, _value} ->
+        downcase_type =
+          type |> to_string() |> String.slice(3..-1) |> String.downcase() |> String.to_atom()
+
+        {downcase_type, type}
       end)
   )
 end
@@ -132,36 +146,6 @@ defmodule ExAliyunOts.Const.Direction do
 
   const(:forward, :FORWARD)
   const(:backward, :BACKWARD)
-end
-
-defmodule ExAliyunOts.Const.FilterType do
-  @moduledoc false
-  import ExAliyunOts.Constants
-
-  const(:single_column, :FT_SINGLE_COLUMN_VALUE)
-  const(:composite_column, :FT_COMPOSITE_COLUMN_VALUE)
-  const(:column_pagination, :FT_COLUMN_PAGINATION)
-end
-
-defmodule ExAliyunOts.Const.LogicOperator do
-  @moduledoc false
-  import ExAliyunOts.Constants
-
-  const(:not, :LO_NOT)
-  const(:and, :LO_AND)
-  const(:or, :LO_OR)
-end
-
-defmodule ExAliyunOts.Const.ComparatorType do
-  @moduledoc false
-  import ExAliyunOts.Constants
-
-  const(:eq, :CT_EQUAL)
-  const(:not_eq, :CT_NOT_EQUAL)
-  const(:gt, :CT_GREATER_THAN)
-  const(:ge, :CT_GREATER_EQUAL)
-  const(:lt, :CT_LESS_THAN)
-  const(:le, :CT_LESS_EQUAL)
 end
 
 defmodule ExAliyunOts.Const.Search.FieldType do

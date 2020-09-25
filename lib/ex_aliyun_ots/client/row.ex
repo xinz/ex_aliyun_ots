@@ -25,14 +25,7 @@ defmodule ExAliyunOts.Client.Row do
     DeleteRowResponse
   }
 
-  alias ExAliyunOts.TableStoreFilter.{
-    Filter,
-    ColumnPaginationFilter,
-    CompositeColumnValueFilter,
-    SingleColumnValueFilter
-  }
-
-  alias ExAliyunOts.{PlainBuffer, Var, Http}
+  alias ExAliyunOts.{PlainBuffer, Var, Http, Filter}
   alias ExAliyunOts.Const.{OperationType, ReturnType}
 
   require OperationType
@@ -41,7 +34,7 @@ defmodule ExAliyunOts.Client.Row do
   @batch_write_limit_per_request 200
 
   defp request_to_put_row(var_put_row) do
-    proto_condition = Map.update!(var_put_row.condition, :column_condition, &filter_to_bytes/1)
+    proto_condition = Map.update!(var_put_row.condition, :column_condition, &Filter.serialize_filter/1)
 
     serialized_row =
       PlainBuffer.serialize_for_put_row(var_put_row.primary_keys, var_put_row.attribute_columns)
@@ -72,7 +65,7 @@ defmodule ExAliyunOts.Client.Row do
 
   defp request_to_get_row(var_get_row) do
     primary_keys = PlainBuffer.serialize_primary_keys(var_get_row.primary_keys)
-    filter = filter_to_bytes(var_get_row.filter)
+    filter = Filter.serialize_filter(var_get_row.filter)
 
     get_row_request =
       GetRowRequest.new(
@@ -117,7 +110,7 @@ defmodule ExAliyunOts.Client.Row do
     serialized_row =
       PlainBuffer.serialize_for_update_row(var_update_row.primary_keys, var_update_row.updates)
 
-    proto_condition = Map.update!(var_update_row.condition, :column_condition, &filter_to_bytes/1)
+    proto_condition = Map.update!(var_update_row.condition, :column_condition, &Filter.serialize_filter/1)
 
     [
       table_name: var_update_row.table_name,
@@ -146,7 +139,7 @@ defmodule ExAliyunOts.Client.Row do
   defp request_to_delete_row(var_delete_row) do
     serialized_primary_keys = PlainBuffer.serialize_for_delete_row(var_delete_row.primary_keys)
 
-    proto_condition = Map.update!(var_delete_row.condition, :column_condition, &filter_to_bytes/1)
+    proto_condition = Map.update!(var_delete_row.condition, :column_condition, &Filter.serialize_filter/1)
 
     [
       table_name: var_delete_row.table_name,
@@ -185,7 +178,7 @@ defmodule ExAliyunOts.Client.Row do
     prepared_exclusive_end_primary_keys =
       PlainBuffer.serialize_primary_keys(var_get_range.exclusive_end_primary_keys)
 
-    filter = filter_to_bytes(var_get_range.filter)
+    filter = Filter.serialize_filter(var_get_range.filter)
 
     get_range_request =
       GetRangeRequest.new(
@@ -244,7 +237,7 @@ defmodule ExAliyunOts.Client.Row do
 
   defp do_request_to_batch_get_row(var_batch_get_row) do
     bytes_primary_keys = pks_to_batch_get_row(var_batch_get_row.primary_keys)
-    filter = filter_to_bytes(var_batch_get_row.filter)
+    filter = Filter.serialize_filter(var_batch_get_row.filter)
 
     batch_get_row_request =
       TableInBatchGetRowRequest.new(
@@ -379,7 +372,7 @@ defmodule ExAliyunOts.Client.Row do
 
   defp do_request_to_batch_write_row(var_row_in_request) do
     proto_condition =
-      Map.update!(var_row_in_request.condition, :column_condition, &filter_to_bytes/1)
+      Map.update!(var_row_in_request.condition, :column_condition, &Filter.serialize_filter/1)
 
     type = var_row_in_request.type
 
@@ -422,12 +415,7 @@ defmodule ExAliyunOts.Client.Row do
       end)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "batch_write_row result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["batch_write_row result: ", inspect(result)] end)
 
     result
   end
@@ -446,96 +434,6 @@ defmodule ExAliyunOts.Client.Row do
       timeout: :infinity
     )
     |> Enum.map(fn {:ok, response} -> response end)
-  end
-
-  defp filter_to_bytes(nil) do
-    nil
-  end
-
-  defp filter_to_bytes(
-         %Var.Filter{filter: %Var.CompositeColumnValueFilter{}, filter_type: filter_type} =
-           var_filter
-       ) do
-    encoded_filter = var_filter |> filter_to_protobuf() |> CompositeColumnValueFilter.encode()
-    Filter.encode(Filter.new(type: filter_type, filter: encoded_filter))
-  end
-
-  defp filter_to_bytes(
-         %Var.Filter{filter: %Var.ColumnPaginationFilter{}, filter_type: filter_type} = var_filter
-       ) do
-    encoded_filter = var_filter |> filter_to_protobuf() |> ColumnPaginationFilter.encode()
-    Filter.encode(Filter.new(type: filter_type, filter: encoded_filter))
-  end
-
-  defp filter_to_bytes(
-         %Var.Filter{filter: %Var.SingleColumnValueFilter{}, filter_type: filter_type} =
-           var_filter
-       ) do
-    encoded_filter = var_filter |> filter_to_protobuf() |> SingleColumnValueFilter.encode()
-    Filter.encode(Filter.new(type: filter_type, filter: encoded_filter))
-  end
-
-  defp filter_to_bytes(%Var.Filter{filter: invalid_filter}) do
-    raise ExAliyunOts.RuntimeError, "Not supported filter: #{inspect(invalid_filter)}"
-  end
-
-  defp filter_to_protobuf(
-         %Var.Filter{filter: filter, filter_type: filter_type},
-         is_sub_filter \\ false
-       ) do
-    case filter do
-      %Var.CompositeColumnValueFilter{} ->
-        prepared_sub_filters =
-          Enum.map(filter.sub_filters, fn sub_filter ->
-            filter_to_protobuf(sub_filter, true)
-          end)
-
-        if prepared_sub_filters == [],
-          do:
-            raise(
-              ExAliyunOts.RuntimeError,
-              "Invalid filter for CompositeColumnValueFilter: #{inspect(filter)}"
-            )
-
-        proto_filter =
-          CompositeColumnValueFilter.new(
-            combinator: filter.combinator,
-            sub_filters: prepared_sub_filters
-          )
-
-        if is_sub_filter do
-          Filter.new(type: filter_type, filter: CompositeColumnValueFilter.encode(proto_filter))
-        else
-          proto_filter
-        end
-
-      %Var.ColumnPaginationFilter{} ->
-        proto_filter = ColumnPaginationFilter.new(offset: filter.offset, limit: filter.limit)
-
-        if is_sub_filter do
-          Filter.new(type: filter_type, filter: ColumnPaginationFilter.encode(proto_filter))
-        else
-          proto_filter
-        end
-
-      %Var.SingleColumnValueFilter{} ->
-        column_value = PlainBuffer.serialize_column_value(filter.column_value)
-
-        proto_filter =
-          SingleColumnValueFilter.new(
-            comparator: filter.comparator,
-            column_name: filter.column_name,
-            column_value: column_value,
-            filter_if_missing: not filter.ignore_if_missing,
-            latest_version_only: filter.latest_version_only
-          )
-
-        if is_sub_filter do
-          Filter.new(type: filter_type, filter: SingleColumnValueFilter.encode(proto_filter))
-        else
-          proto_filter
-        end
-    end
   end
 
   defp prepare_time_range(%Var.TimeRange{

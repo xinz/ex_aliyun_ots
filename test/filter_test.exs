@@ -4,22 +4,17 @@ defmodule ExAliyunOtsTest.Filter do
   require ExAliyunOts.Constants, as: Constants
   alias ExAliyunOts.Var
   alias ExAliyunOts.TableStore.Condition
+  alias ExAliyunOts.TableStoreFilter.{Filter, SingleColumnValueFilter, CompositeColumnValueFilter}
 
   alias ExAliyunOts.Const.{
     PKType,
     OperationType,
-    ReturnType,
-    FilterType,
-    ComparatorType,
-    LogicOperator
+    ReturnType
   }
 
   require PKType
   require OperationType
   require ReturnType
-  require FilterType
-  require ComparatorType
-  require LogicOperator
 
   @instance_key EDCEXTestInstance
 
@@ -40,13 +35,14 @@ defmodule ExAliyunOtsTest.Filter do
     # `ignore_if_missing`: true, if the filter is not matched/existed, we will ignore this filter condition, and make the corresponding update continuing happened.
     id = "1"
 
-    filter = %Var.Filter{
-      filter_type: FilterType.single_column(),
-      filter: %Var.SingleColumnValueFilter{
-        comparator: ComparatorType.eq(),
+    filter = %Filter{
+      type: Constants.filter_type(:single_column),
+      filter: %SingleColumnValueFilter{
+        comparator: Constants.comparator_type(:equal),
         column_name: "counter",
         column_value: 1,
-        ignore_if_missing: false
+        filter_if_missing: true,
+        latest_version_only: true
       }
     }
 
@@ -71,7 +67,7 @@ defmodule ExAliyunOtsTest.Filter do
     assert error.code == "OTSConditionCheckFail"
 
     id = "2"
-    filter = %{filter | filter: %{filter.filter | ignore_if_missing: true}}
+    filter = %{filter | filter: %{filter.filter | filter_if_missing: false}}
     condition = %{condition | column_condition: filter}
 
     var_update_row = %{
@@ -98,25 +94,29 @@ defmodule ExAliyunOtsTest.Filter do
 
     {:ok, _result} = ExAliyunOts.Client.put_row(@instance_key, var_put_row)
 
-    filter = %Var.Filter{
-      filter_type: FilterType.composite_column(),
-      filter: %Var.CompositeColumnValueFilter{
-        combinator: LogicOperator.and(),
+    filter = %Filter{
+      type: Constants.filter_type(:composite_column),
+      filter: %CompositeColumnValueFilter{
+        combinator: Constants.logic_operator(:and),
         sub_filters: [
-          %Var.Filter{
-            filter_type: FilterType.single_column(),
-            filter: %Var.SingleColumnValueFilter{
-              comparator: ComparatorType.eq(),
+          %Filter{
+            type: Constants.filter_type(:single_column),
+            filter: %SingleColumnValueFilter{
+              comparator: Constants.comparator_type(:equal),
               column_name: "name",
-              column_value: "tmp_name"
+              column_value: "tmp_name",
+              filter_if_missing: true,
+              latest_version_only: true
             }
           },
-          %Var.Filter{
-            filter_type: FilterType.single_column(),
-            filter: %Var.SingleColumnValueFilter{
-              comparator: ComparatorType.gt(),
+          %Filter{
+            type: Constants.filter_type(:single_column),
+            filter: %SingleColumnValueFilter{
+              comparator: Constants.comparator_type(:greater_than),
               column_name: "counter",
-              column_value: 1
+              column_value: 1,
+              filter_if_missing: true,
+              latest_version_only: true
             }
           }
         ]
