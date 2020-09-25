@@ -8,8 +8,8 @@ defmodule ExAliyunOts.Client do
     Table.remote_create_table(Config.get(instance_key), var_create_table)
   end
 
-  def create_index(instance_key, var_create_index) do
-    Table.remote_create_index(Config.get(instance_key), var_create_index)
+  def create_index(instance_key, create_index_request) do
+    Table.remote_create_index(Config.get(instance_key), create_index_request)
   end
 
   def delete_index(instance_key, table_name, index_name) do
@@ -98,7 +98,10 @@ defmodule ExAliyunOts.Client do
   end
 
   def start_local_transaction(instance_key, var_start_local_transaction) do
-    Transaction.remote_start_local_transaction(Config.get(instance_key), var_start_local_transaction)
+    Transaction.remote_start_local_transaction(
+      Config.get(instance_key),
+      var_start_local_transaction
+    )
   end
 
   def commit_transaction(instance_key, transaction_id) do

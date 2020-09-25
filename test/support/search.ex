@@ -1,12 +1,11 @@
 defmodule ExAliyunOtsTest.Support.Search do
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
   alias ExAliyunOts.{Var, Client}
   alias ExAliyunOts.Var.Search
-  alias ExAliyunOts.Const.{PKType, RowExistence}
+  alias ExAliyunOts.Const.PKType
   alias ExAliyunOts.Const.Search.FieldType
   require PKType
-  require RowExistence
   require FieldType
 
   import ExAliyunOts.Search, only: [field_schema_keyword: 1, field_schema_nested: 2]
@@ -186,9 +185,7 @@ defmodule ExAliyunOtsTest.Support.Search do
         table_name: table,
         primary_keys: [{"partition_key", item.id}],
         attribute_columns: attribute_columns,
-        condition: %Var.Condition{
-          row_existence: RowExistence.expect_not_exist()
-        }
+        condition: condition(:expect_not_exist)
       }
 
       {:ok, _result} = Client.put_row(instance_key, var_put_row)
@@ -204,9 +201,7 @@ defmodule ExAliyunOtsTest.Support.Search do
         table_name: table,
         primary_keys: [{"partition_key", item.id}],
         attribute_columns: [{"content", item.content}],
-        condition: %Var.Condition{
-          row_existence: RowExistence.expect_not_exist()
-        }
+        condition: condition(:expect_not_exist)
       }
 
       {:ok, _result} = Client.put_row(instance_key, var_put_row)
@@ -233,9 +228,7 @@ defmodule ExAliyunOtsTest.Support.Search do
         table_name: table,
         primary_keys: [{"partition_key", item.id}],
         attribute_columns: attribute_columns,
-        condition: %Var.Condition{
-          row_existence: RowExistence.expect_not_exist()
-        }
+        condition: condition(:expect_not_exist)
       }
 
       {:ok, _result} = Client.put_row(instance_key, row)

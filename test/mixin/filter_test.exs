@@ -1,7 +1,6 @@
 defmodule ExAliyunOts.MixinTest.Filter do
   use ExUnit.Case
-
-  import ExAliyunOts
+  import ExAliyunOts.DSL, only: [filter: 1]
 
   @result %ExAliyunOts.Var.Filter{
     filter: %ExAliyunOts.Var.CompositeColumnValueFilter{

@@ -1,5 +1,8 @@
 defmodule ExAliyunOts.Constants do
   @moduledoc false
+  use Const
+  alias ExAliyunOts.Utils
+  alias ExAliyunOts.TableStore.RowExistenceExpectation
 
   defmacro __using__(_opts \\ []) do
     quote do
@@ -8,7 +11,6 @@ defmodule ExAliyunOts.Constants do
         PKType,
         ReturnType,
         Direction,
-        RowExistence,
         FilterType,
         LogicOperator,
         ComparatorType,
@@ -29,7 +31,6 @@ defmodule ExAliyunOts.Constants do
       require PKType
       require ReturnType
       require Direction
-      require RowExistence
       require FilterType
       require LogicOperator
       require ComparatorType
@@ -53,6 +54,14 @@ defmodule ExAliyunOts.Constants do
       defmacro unquote(name)(), do: unquote(value)
     end
   end
+
+  enum(row_existence,
+    do:
+      RowExistenceExpectation.mapping()
+      |> Enum.map(fn {type, _value} ->
+        {Utils.downcase_atom(type), type}
+      end)
+  )
 end
 
 defmodule ExAliyunOts.Const.ErrorType do
@@ -123,16 +132,6 @@ defmodule ExAliyunOts.Const.Direction do
 
   const(:forward, :FORWARD)
   const(:backward, :BACKWARD)
-end
-
-defmodule ExAliyunOts.Const.RowExistence do
-  @moduledoc false
-  import ExAliyunOts.Constants
-
-  const(:ignore, :IGNORE)
-  const(:expect_exist, :EXPECT_EXIST)
-  const(:expect_not_exist, :EXPECT_NOT_EXIST)
-  const(:supported, [:IGNORE, :EXPECT_EXIST, :EXPECT_NOT_EXIST])
 end
 
 defmodule ExAliyunOts.Const.FilterType do

@@ -1,13 +1,11 @@
 defmodule ExAliyunOtsTest.PutRow do
   use ExUnit.Case
-
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
   alias ExAliyunOts.Var
-  alias ExAliyunOts.Const.{PKType, ReturnType, RowExistence}
+  alias ExAliyunOts.Const.{PKType, ReturnType}
   require PKType
   require ReturnType
-  require RowExistence
 
   @instance_key EDCEXTestInstance
 
@@ -23,9 +21,7 @@ defmodule ExAliyunOtsTest.PutRow do
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.expect_not_exist()
-    }
+    condition = condition(:expect_not_exist)
 
     partition_key = 3
 

@@ -75,18 +75,8 @@ defmodule ExAliyunOts.Client.Table do
     result
   end
 
-  def remote_create_index(instance, %{
-        table_name: table_name,
-        index_meta: index_meta,
-        include_base_data: include_base_data
-      }) do
-    request_body =
-      %CreateIndexRequest{
-        main_table_name: table_name,
-        index_meta: index_meta,
-        include_base_data: include_base_data
-      }
-      |> CreateIndexRequest.encode()
+  def remote_create_index(instance, create_index_request) do
+    request_body = CreateIndexRequest.encode(create_index_request)
 
     result =
       instance

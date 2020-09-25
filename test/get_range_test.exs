@@ -1,15 +1,13 @@
 defmodule ExAliyunOtsTest.GetRange do
   use ExUnit.Case
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
-  @instance_key EDCEXTestInstance
-
   alias ExAliyunOts.{Var, Client}
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence}
+  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType}
   require PKType
   require OperationType
   require ReturnType
-  require RowExistence
+  @instance_key EDCEXTestInstance
 
   test "get range" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -28,9 +26,7 @@ defmodule ExAliyunOtsTest.GetRange do
 
     Process.sleep(10_000)
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     Logger.info("inserting test data...")
 

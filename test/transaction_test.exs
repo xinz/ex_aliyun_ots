@@ -1,27 +1,20 @@
 defmodule ExAliyunOtsTest.Transaction do
   use ExUnit.Case
-
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
   alias ExAliyunOts.{Client, Var}
   alias ExAliyunOts.Var.Transaction.StartLocalTransactionRequest
-
-  alias ExAliyunOts.Const.{RowExistence, OperationType, PKType}
-  require RowExistence
+  alias ExAliyunOts.Const.{OperationType, PKType}
   require OperationType
   require PKType
 
   @instance_key EDCEXTestInstance
-
   @table "test_txn"
-
   @table_range "test_txn_range"
 
   setup_all do
     on_exit(fn ->
-      condition = %Var.Condition{
-        row_existence: RowExistence.ignore()
-      }
+      condition = condition(:ignore)
 
       var_delete_row1 = %Var.DeleteRow{
         table_name: @table,
@@ -86,9 +79,7 @@ defmodule ExAliyunOtsTest.Transaction do
 
     transaction_id = response.transaction_id
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     var_put_row = %Var.PutRow{
       table_name: @table,
@@ -149,9 +140,7 @@ defmodule ExAliyunOtsTest.Transaction do
 
     transaction_id = response.transaction_id
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     var_put_row = %Var.PutRow{
       table_name: @table,
@@ -195,9 +184,7 @@ defmodule ExAliyunOtsTest.Transaction do
     {:ok, response} = Client.start_local_transaction(@instance_key, request)
     transaction_id = response.transaction_id
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     var_update_row = %Var.UpdateRow{
       table_name: @table,
@@ -256,9 +243,7 @@ defmodule ExAliyunOtsTest.Transaction do
       table_name: @table,
       primary_keys: [partition_key],
       attribute_columns: [{"attr1", "attr1"}],
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      }
+      condition: condition(:ignore)
     })
 
     request = %StartLocalTransactionRequest{
@@ -269,9 +254,7 @@ defmodule ExAliyunOtsTest.Transaction do
     {:ok, response} = Client.start_local_transaction(@instance_key, request)
     transaction_id = response.transaction_id
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     var_delete_row = %Var.DeleteRow{
       table_name: @table,
@@ -329,9 +312,7 @@ defmodule ExAliyunOtsTest.Transaction do
 
     transaction_id = response.transaction_id
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     # If you have multi primary keys,
     # you can use partition_key (ONLY one) to batch write multi rows with transaction
@@ -377,9 +358,7 @@ defmodule ExAliyunOtsTest.Transaction do
       table_name: @table,
       primary_keys: [partition_key],
       attribute_columns: [{"attr1", "attr1"}],
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      }
+      condition: condition(:ignore)
     })
 
     request = %StartLocalTransactionRequest{
@@ -407,9 +386,7 @@ defmodule ExAliyunOtsTest.Transaction do
         updates: %{
           OperationType.put() => [{"attr_1_v2", "attr_1_v2"}]
         },
-        condition: %Var.Condition{
-          row_existence: RowExistence.ignore()
-        }
+        condition: condition(:ignore)
       })
 
     assert error.code == "OTSRowOperationConflict"
@@ -424,9 +401,7 @@ defmodule ExAliyunOtsTest.Transaction do
       table_name: @table,
       primary_keys: [partition_key],
       attribute_columns: [{"attr1", "attr1"}],
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      }
+      condition: condition(:ignore)
     })
 
     request = %StartLocalTransactionRequest{
@@ -461,9 +436,7 @@ defmodule ExAliyunOtsTest.Transaction do
   end
 
   test "get range with transaction_id and batch write update" do
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     for index <- 1..3 do
       Client.put_row(@instance_key, %Var.PutRow{

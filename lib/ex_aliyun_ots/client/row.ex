@@ -5,7 +5,6 @@ defmodule ExAliyunOts.Client.Row do
 
   alias ExAliyunOts.TableStore.{
     PutRowRequest,
-    Condition,
     PutRowResponse,
     ReturnContent,
     TimeRange,
@@ -34,26 +33,15 @@ defmodule ExAliyunOts.Client.Row do
   }
 
   alias ExAliyunOts.{PlainBuffer, Var, Http}
-  alias ExAliyunOts.Const.{OperationType, ReturnType, RowExistence}
+  alias ExAliyunOts.Const.{OperationType, ReturnType}
 
   require OperationType
   require ReturnType
-  require RowExistence
 
   @batch_write_limit_per_request 200
 
   defp request_to_put_row(var_put_row) do
-    %Var.Condition{row_existence: row_existence, column_condition: column_condition} =
-      var_put_row.condition
-
-    if row_existence not in RowExistence.supported() do
-      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect(row_existence)}"
-    end
-
-    column_condition = filter_to_bytes(column_condition)
-
-    proto_condition =
-      Condition.new(row_existence: row_existence, column_condition: column_condition)
+    proto_condition = Map.update!(var_put_row.condition, :column_condition, &filter_to_bytes/1)
 
     serialized_row =
       PlainBuffer.serialize_for_put_row(var_put_row.primary_keys, var_put_row.attribute_columns)
@@ -129,17 +117,7 @@ defmodule ExAliyunOts.Client.Row do
     serialized_row =
       PlainBuffer.serialize_for_update_row(var_update_row.primary_keys, var_update_row.updates)
 
-    %Var.Condition{row_existence: row_existence, column_condition: column_condition} =
-      var_update_row.condition
-
-    if row_existence not in RowExistence.supported() do
-      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect(row_existence)}"
-    end
-
-    column_condition = filter_to_bytes(column_condition)
-
-    proto_condition =
-      Condition.new(row_existence: row_existence, column_condition: column_condition)
+    proto_condition = Map.update!(var_update_row.condition, :column_condition, &filter_to_bytes/1)
 
     [
       table_name: var_update_row.table_name,
@@ -168,17 +146,7 @@ defmodule ExAliyunOts.Client.Row do
   defp request_to_delete_row(var_delete_row) do
     serialized_primary_keys = PlainBuffer.serialize_for_delete_row(var_delete_row.primary_keys)
 
-    %Var.Condition{row_existence: row_existence, column_condition: column_condition} =
-      var_delete_row.condition
-
-    if row_existence not in RowExistence.supported() do
-      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect(row_existence)}"
-    end
-
-    column_condition = filter_to_bytes(column_condition)
-
-    proto_condition =
-      Condition.new(row_existence: row_existence, column_condition: column_condition)
+    proto_condition = Map.update!(var_delete_row.condition, :column_condition, &filter_to_bytes/1)
 
     [
       table_name: var_delete_row.table_name,
@@ -410,17 +378,8 @@ defmodule ExAliyunOts.Client.Row do
   end
 
   defp do_request_to_batch_write_row(var_row_in_request) do
-    %Var.Condition{row_existence: row_existence, column_condition: column_condition} =
-      var_row_in_request.condition
-
-    if row_existence not in RowExistence.supported() do
-      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect(row_existence)}"
-    end
-
-    column_condition = filter_to_bytes(column_condition)
-
     proto_condition =
-      Condition.new(row_existence: row_existence, column_condition: column_condition)
+      Map.update!(var_row_in_request.condition, :column_condition, &filter_to_bytes/1)
 
     type = var_row_in_request.type
 

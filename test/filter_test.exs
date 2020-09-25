@@ -1,15 +1,14 @@
 defmodule ExAliyunOtsTest.Filter do
   use ExUnit.Case
-
   require Logger
-
+  require ExAliyunOts.Constants, as: Constants
   alias ExAliyunOts.Var
+  alias ExAliyunOts.TableStore.Condition
 
   alias ExAliyunOts.Const.{
     PKType,
     OperationType,
     ReturnType,
-    RowExistence,
     FilterType,
     ComparatorType,
     LogicOperator
@@ -18,7 +17,6 @@ defmodule ExAliyunOtsTest.Filter do
   require PKType
   require OperationType
   require ReturnType
-  require RowExistence
   require FilterType
   require ComparatorType
   require LogicOperator
@@ -52,8 +50,8 @@ defmodule ExAliyunOtsTest.Filter do
       }
     }
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore(),
+    condition = %Condition{
+      row_existence: Constants.row_existence(:ignore),
       column_condition: filter
     }
 
@@ -93,8 +91,8 @@ defmodule ExAliyunOtsTest.Filter do
       table_name: table_name,
       primary_keys: [{"id", id}],
       attribute_columns: [{"counter", 2}, {"name", "tmp_name"}],
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
+      condition: %Condition{
+        row_existence: Constants.row_existence(:ignore)
       }
     }
 
@@ -125,8 +123,8 @@ defmodule ExAliyunOtsTest.Filter do
       }
     }
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore(),
+    condition = %Condition{
+      row_existence: Constants.row_existence(:ignore),
       column_condition: filter
     }
 

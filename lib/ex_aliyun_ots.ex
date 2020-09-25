@@ -65,9 +65,10 @@ defmodule ExAliyunOts do
   All defined functions and macros in `ExAliyunOts` are available and referrible for your own ExAliyunOts module as well, except that the given arity of functions may
   different, because the `instance` parameter of each invoke request is NOT needed from your own ExAliyunOts module although the `ExAliyunOts` module defines it.
   """
+  import ExAliyunOts.DSL, only: [index_meta: 3]
   require ExAliyunOts.Const.OperationType, as: OperationType
-  alias ExAliyunOts.{Var, Client, Filter, Utils}
-  alias ExAliyunOts.TableStore.{ReturnType, Direction, IndexMeta}
+  alias ExAliyunOts.{Var, Client, Utils}
+  alias ExAliyunOts.TableStore.{ReturnType, Direction, CreateIndexRequest, IndexMeta}
 
   @type instance :: atom
 
@@ -79,184 +80,17 @@ defmodule ExAliyunOts do
 
       use ExAliyunOts.Constants
 
-      import ExAliyunOts,
+      import ExAliyunOts.DSL,
         only: [
           filter: 1,
           condition: 1,
           condition: 2,
-          pagination: 1
+          pagination: 1,
+          index_meta: 3
         ]
 
       @before_compile ExAliyunOts.Compiler
     end
-  end
-
-  @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/35193.html) | [English](https://www.alibabacloud.com/help/doc-detail/35193.html)
-
-  ## Example
-
-      import MyApp.TableStore
-
-      get_row table_name1, [{"key", "key1"}],
-        columns_to_get: ["name", "level"],
-        filter: filter(
-          ({"name", ignore_if_missing: true, latest_version_only: true} == var_name and "age" > 1) or
-            ("class" == "1")
-        )
-
-      batch_get [
-        get(
-          table_name2,
-          [{"key", "key1"}],
-          filter: filter "age" >= 10
-        )
-      ]
-
-  ## Options
-
-    * `ignore_if_missing`, used when attribute column not existed.
-      * if a attribute column is not existed, when set `ignore_if_missing: true` in filter expression, there will ignore this row data in the returned result;
-      * if a attribute column is existed, the returned result won't be affected no matter true or false was set.
-    * `latest_version_only`, used when attribute column has multiple versions.
-      * if set `latest_version_only: true`, there will only check the value of the latest version is matched or not, by default it's set as `latest_version_only: true`;
-      * if set `latest_version_only: false`, there will check the value of all versions are matched or not.
-
-  """
-  @doc row: :row
-  defmacro filter(filter_expr) do
-    Filter.build_filter(filter_expr)
-  end
-
-  @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/35194.html) | [English](https://www.alibabacloud.com/help/doc-detail/35194.html)
-
-  ## Example
-
-      import MyApp.TableStore
-
-      update_row "table", [{"pk", "pk1"}],
-        delete_all: ["attr1", "attr2"],
-        return_type: :pk,
-        condition: condition(:expect_exist)
-
-  The available `existence` options: `:expect_exist` | `:expect_not_exist` | `:ignore`, here are some use cases for your reference:
-
-  Use `condition(:expect_exist)`, expect the primary keys to row is existed.
-    * for `put_row/5`, if the primary keys have auto increment column type, meanwhile the target primary keys row is existed,
-    only use `condition(:expect_exist)` can successfully overwrite the row.
-    * for `update_row/4`, if the primary keys have auto increment column type, meanwhile the target primary keys row is existed,
-    only use `condition(:expect_exist)` can successfully update the row.
-    * for `delete_row/4`, no matter what primary keys type are, use `condition(:expect_exist)` can successfully delete the row.
-
-  Use `condition(:expect_not_exist)`, expect the primary_keys to row is not existed.
-    * for `put_row/5`, if the primary keys have auto increment type,
-      - while the target primary keys row is existed, only use `condition(:expect_exist)` can successfully put the row;
-      - while the target primary keys row is not existed, only use `condition(:ignore)` can successfully put the row.
-
-  Use `condition(:ignore)`, ignore the row existence check
-    * for `put_row/5`, if the primary keys have auto increment column type, meanwhile the target primary keys row is not existed,
-    only use `condition(:ignore)` can successfully put the row.
-    * for `update_row/4`, if the primary keys have auto increment column type, meanwhile the target primary keys row is not existed,
-    only use `condition(:ignore)` can successfully update the row.
-    * for `delete_row/4`, no matter what primary keys type are, use `condition(:ignore)` can successfully delete the row if existed.
-
-  The `batch_write/3` operation is a collection of put_row / update_row / delete_row operations.
-  """
-  @doc row: :row
-  @spec condition(existence :: :expect_exist | :expect_not_exist | :ignore) :: map()
-  defmacro condition(existence) do
-    map_condition(existence)
-  end
-
-  @doc """
-  Similar to `condition/1` and support use filter expression (please see `filter/1`) as well, please refer them for details.
-
-  ## Example
-
-      import MyApp.TableStore
-
-      delete_row "table",
-        [{"key", "key1"}, {"key2", "key2"}],
-        condition: condition(:expect_exist, "attr_column" == "value2")
-
-  """
-  @doc row: :row
-  defmacro condition(existence, filter_expr) do
-    condition = map_condition(existence)
-    column_condition = Filter.build_filter(filter_expr)
-
-    quote do
-      %{unquote(condition) | column_condition: unquote(column_condition)}
-    end
-  end
-
-  defp map_condition(:ignore) do
-    quote do
-      require ExAliyunOts.Const.RowExistence, as: RowExistence
-      %Var.Condition{row_existence: RowExistence.ignore()}
-    end
-  end
-
-  defp map_condition(:expect_exist) do
-    quote do
-      require ExAliyunOts.Const.RowExistence, as: RowExistence
-      %Var.Condition{row_existence: RowExistence.expect_exist()}
-    end
-  end
-
-  defp map_condition(:expect_not_exist) do
-    quote do
-      require ExAliyunOts.Const.RowExistence, as: RowExistence
-      %Var.Condition{row_existence: RowExistence.expect_not_exist()}
-    end
-  end
-
-  defp map_condition(existence) do
-    raise ExAliyunOts.RuntimeError,
-          "Invalid existence: #{inspect(existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
-  end
-
-  @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/44573.html) | [English](https://www.alibabacloud.com/help/doc-detail/44573.html)
-
-  ## Example
-
-      import MyApp.TableStore
-
-      get_row table_name,
-        [{"key", "1"}],
-        start_column: "room",
-        filter: pagination(offset: 0, limit: 3)
-
-  Use `pagination/1` for `:filter` options when get row.
-  """
-  @doc row: :row
-  @spec pagination(options :: Keyword.t()) :: map()
-  def pagination(options) do
-    offset = Keyword.get(options, :offset)
-    limit = Keyword.get(options, :limit)
-
-    %Var.Filter{
-      filter_type: :FT_COLUMN_PAGINATION,
-      filter: %Var.ColumnPaginationFilter{offset: offset, limit: limit}
-    }
-  end
-
-  @doc false
-  @spec index_meta(
-          index_name :: String.t(),
-          primary_keys :: [String.t()],
-          defined_columns :: [String.t()]
-        ) :: IndexMeta.t()
-  def index_meta(index_name, primary_keys, defined_columns) do
-    %IndexMeta{
-      name: index_name,
-      primary_key: primary_keys,
-      defined_column: defined_columns,
-      index_update_mode: :IUM_ASYNC_INDEX,
-      index_type: :IT_GLOBAL_INDEX
-    }
   end
 
   @doc """
@@ -357,13 +191,13 @@ defmodule ExAliyunOts do
         index_meta,
         include_base_data \\ true
       ) do
-    var_create_index = %Var.CreateIndex{
-      table_name: table_name,
+    create_index_request = %CreateIndexRequest{
+      main_table_name: table_name,
       index_meta: index_meta,
       include_base_data: include_base_data
     }
 
-    Client.create_index(instance, var_create_index)
+    Client.create_index(instance, create_index_request)
   end
 
   @doc """

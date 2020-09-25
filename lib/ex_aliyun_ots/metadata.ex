@@ -1,3 +1,5 @@
+alias ExAliyunOts.TableStore.Condition
+
 defmodule ExAliyunOts.RuntimeError do
   @moduledoc false
   defexception [:message, :error_code]
@@ -68,11 +70,6 @@ defmodule ExAliyunOts.Var.SingleColumnValueFilter do
             latest_version_only: true
 end
 
-defmodule ExAliyunOts.Var.Condition do
-  @moduledoc false
-  defstruct row_existence: nil, column_condition: nil
-end
-
 defmodule ExAliyunOts.Var.UpdateRow do
   @moduledoc false
   alias ExAliyunOts.Const.ReturnType
@@ -81,7 +78,7 @@ defmodule ExAliyunOts.Var.UpdateRow do
   defstruct table_name: "",
             primary_keys: [],
             updates: %{},
-            condition: %ExAliyunOts.Var.Condition{},
+            condition: %Condition{},
             return_type: ReturnType.none(),
             return_columns: [],
             transaction_id: nil
@@ -95,7 +92,7 @@ defmodule ExAliyunOts.Var.PutRow do
   defstruct table_name: "",
             primary_keys: [],
             attribute_columns: [],
-            condition: %ExAliyunOts.Var.Condition{},
+            condition: %Condition{},
             return_type: ReturnType.none(),
             transaction_id: nil
 end
@@ -120,7 +117,7 @@ defmodule ExAliyunOts.Var.DeleteRow do
 
   defstruct table_name: "",
             primary_keys: [],
-            condition: %ExAliyunOts.Var.Condition{},
+            condition: %Condition{},
             return_type: ReturnType.none(),
             transaction_id: nil
 end
@@ -142,13 +139,6 @@ defmodule ExAliyunOts.Var.CreateTable do
             deviation_cell_version_in_sec: 86_400,
             stream_spec: %ExAliyunOts.Var.StreamSpec{},
             index_metas: []
-end
-
-defmodule ExAliyunOts.Var.CreateIndex do
-  @moduledoc false
-  defstruct table_name: "",
-            index_meta: %ExAliyunOts.TableStore.IndexMeta{},
-            include_base_data: true
 end
 
 defmodule ExAliyunOts.Var.UpdateTable do
@@ -189,7 +179,7 @@ defmodule ExAliyunOts.Var.RowInBatchWriteRequest do
   defstruct type: nil,
             primary_keys: [],
             updates: nil,
-            condition: %ExAliyunOts.Var.Condition{},
+            condition: %Condition{},
             return_type: ReturnType.none(),
             return_columns: []
 end

@@ -1,13 +1,11 @@
 defmodule ExAliyunOtsTest.AtomicIncrement do
   use ExUnit.Case
-
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
   alias ExAliyunOts.Var
-  alias ExAliyunOts.Const.{PKType, ReturnType, RowExistence, OperationType}
+  alias ExAliyunOts.Const.{PKType, ReturnType, OperationType}
   require PKType
   require ReturnType
-  require RowExistence
   require OperationType
 
   @instance_key EDCEXTestInstance
@@ -24,9 +22,7 @@ defmodule ExAliyunOtsTest.AtomicIncrement do
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     for i <- 1..3 do
       var_update_row = %Var.UpdateRow{

@@ -26,8 +26,6 @@ defmodule ExAliyunOts.Compiler do
         ExAliyunOts.create_table(@instance, table, pk_keys, opts)
       end
 
-      defdelegate index_meta(index_name, primary_keys, defined_columns), to: ExAliyunOts
-
       def create_index(
             table,
             index_name,

@@ -1,13 +1,11 @@
 defmodule ExAliyunOtsTest.DeleteRow do
   use ExUnit.Case
-
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
   alias ExAliyunOts.Var
-  alias ExAliyunOts.Const.{PKType, ReturnType, RowExistence}
+  alias ExAliyunOts.Const.{PKType, ReturnType}
   require PKType
   require ReturnType
-  require RowExistence
 
   @instance_key EDCEXTestInstance
 
@@ -23,9 +21,7 @@ defmodule ExAliyunOtsTest.DeleteRow do
     result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.expect_not_exist()
-    }
+    condition = condition(:expect_not_exist)
 
     for primary_key <- 1..3 do
       var_put_row = %Var.PutRow{
@@ -45,13 +41,8 @@ defmodule ExAliyunOtsTest.DeleteRow do
       {:ok, _result} = ExAliyunOts.Client.put_row(@instance_key, var_put_row)
     end
 
-    condition_exist = %Var.Condition{
-      row_existence: RowExistence.expect_exist()
-    }
-
-    condition_ignore = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition_exist = condition(:expect_exist)
+    condition_ignore = condition(:ignore)
 
     # successfully delete a existed case
     var_delete_row = %ExAliyunOts.Var.DeleteRow{

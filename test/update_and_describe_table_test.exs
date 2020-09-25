@@ -1,14 +1,11 @@
 defmodule ExAliyunOtsTest.UpdateAndDescribeTable do
   use ExUnit.Case
-
   require Logger
-
   alias ExAliyunOts.Var
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence}
+  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType}
   require PKType
   require OperationType
   require ReturnType
-  require RowExistence
 
   @instance_key EDCEXTestInstance
 

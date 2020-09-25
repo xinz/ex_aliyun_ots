@@ -1,14 +1,12 @@
 defmodule ExAliyunOtsTest.BatchGetRow do
   use ExUnit.Case
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
-  @instance_key EDCEXTestInstance
-
   alias ExAliyunOts.{Var, Client}
-  alias ExAliyunOts.Const.{PKType, ReturnType, RowExistence}
+  alias ExAliyunOts.Const.{PKType, ReturnType}
   require PKType
   require ReturnType
-  require RowExistence
+  @instance_key EDCEXTestInstance
 
   test "batch get row" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -39,9 +37,7 @@ defmodule ExAliyunOtsTest.BatchGetRow do
 
     table_not_existed = "test_table_batch_get_row_ne_#{cur_timestamp}"
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.expect_not_exist()
-    }
+    condition = condition(:expect_not_exist)
 
     for partition_key <- 1..3 do
       var_put_row = %Var.PutRow{

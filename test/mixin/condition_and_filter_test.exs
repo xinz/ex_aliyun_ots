@@ -1,18 +1,19 @@
 defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
   use ExUnit.Case
+  import ExAliyunOts.DSL, only: [condition: 2, filter: 1]
+  alias ExAliyunOts.Var.{Filter, CompositeColumnValueFilter, SingleColumnValueFilter}
+  alias ExAliyunOts.TableStore.Condition
 
-  import ExAliyunOts, only: [condition: 2, filter: 1]
-
-  @result %ExAliyunOts.Var.Filter{
-    filter: %ExAliyunOts.Var.CompositeColumnValueFilter{
+  @result %Filter{
+    filter: %CompositeColumnValueFilter{
       combinator: :LO_OR,
       sub_filters: [
-        %ExAliyunOts.Var.Filter{
-          filter: %ExAliyunOts.Var.CompositeColumnValueFilter{
+        %Filter{
+          filter: %CompositeColumnValueFilter{
             combinator: :LO_AND,
             sub_filters: [
-              %ExAliyunOts.Var.Filter{
-                filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+              %Filter{
+                filter: %SingleColumnValueFilter{
                   column_name: "name",
                   column_value: "updated_attr21",
                   comparator: :CT_EQUAL,
@@ -21,8 +22,8 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
                 },
                 filter_type: :FT_SINGLE_COLUMN_VALUE
               },
-              %ExAliyunOts.Var.Filter{
-                filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+              %Filter{
+                filter: %SingleColumnValueFilter{
                   column_name: "age",
                   column_value: 1,
                   comparator: :CT_GREATER_THAN,
@@ -35,8 +36,8 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
           },
           filter_type: :FT_COMPOSITE_COLUMN_VALUE
         },
-        %ExAliyunOts.Var.Filter{
-          filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+        %Filter{
+          filter: %SingleColumnValueFilter{
             column_name: "class",
             column_value: "1",
             comparator: :CT_EQUAL,
@@ -56,9 +57,9 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
     value1 = "attr21"
     condition_result = condition(:expect_exist, "attr2" == value1)
 
-    assert condition_result == %ExAliyunOts.Var.Condition{
-             column_condition: %ExAliyunOts.Var.Filter{
-               filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+    assert condition_result == %Condition{
+             column_condition: %Filter{
+               filter: %SingleColumnValueFilter{
                  column_name: "attr2",
                  column_value: "attr21",
                  comparator: :CT_EQUAL,
