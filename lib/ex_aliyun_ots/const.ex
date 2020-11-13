@@ -251,6 +251,7 @@ defmodule ExAliyunOts.Const.Search.ColumnReturnType do
   const(:all, :RETURN_ALL)
   const(:specified, :RETURN_SPECIFIED)
   const(:none, :RETURN_NONE)
+  const(:all_from_index, :RETURN_ALL_FROM_INDEX)
 end
 
 defmodule ExAliyunOts.Const.Search.IndexOptions do
