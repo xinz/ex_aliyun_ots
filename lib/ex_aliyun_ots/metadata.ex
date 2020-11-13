@@ -318,6 +318,29 @@ defmodule ExAliyunOts.Var.Search do
               routing_values: nil
   end
 
+  defmodule ScanQuery do
+    @moduledoc false
+    defstruct limit: nil,
+              query: nil,
+              alive_time: 60,
+              token: nil,
+              current_parallel_id: nil,
+              max_parallel: nil
+  end
+
+  defmodule ParallelScanRequest do
+    @moduledoc false
+    alias ExAliyunOts.Const.Search.ColumnReturnType
+    require ColumnReturnType
+    defstruct table_name: "",
+              index_name: "",
+              columns_to_get: %ColumnsToGet{
+                return_type: ColumnReturnType.all_from_index()
+              },
+              session_id: "",
+              scan_query: %ScanQuery{}
+  end
+
   defmodule MatchQuery do
     @moduledoc false
     defstruct field_name: "", text: "", minimum_should_match: 1, operator: nil
@@ -445,6 +468,7 @@ defmodule ExAliyunOts.Var.Search do
     require SortOrder
     defstruct order: SortOrder.desc(), sub_agg_name: nil
   end
+
 end
 
 # Transaction
@@ -457,3 +481,6 @@ defmodule ExAliyunOts.Var.Transaction do
     defstruct table_name: "", partition_key: {}
   end
 end
+
+# ParallelScan
+#

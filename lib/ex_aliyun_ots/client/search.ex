@@ -77,7 +77,16 @@ defmodule ExAliyunOts.Client.Search do
     SubAggSort,
     Range,
     GeoPoint,
-    NestedFilter
+    NestedFilter,
+    ParallelScanRequest,
+    ParallelScanResponse,
+    ScanQuery
+  }
+
+  alias ExAliyunOts.TableStore.{
+    ComputeSplitsRequest,
+    SearchIndexSplitsOptions,
+    ComputeSplitsResponse
   }
 
   alias ExAliyunOts.{Http, Utils}
@@ -183,12 +192,9 @@ defmodule ExAliyunOts.Client.Search do
   end
 
   def remote_search(instance, request_body) do
-    result =
-      instance
-      |> Http.client("/Search", request_body, &decode_search_response/1)
-      |> Http.post()
-
-    result
+    instance
+    |> Http.client("/Search", request_body, &decode_search_response/1)
+    |> Http.post()
   end
 
   def request_to_delete_search_index(%Search.DeleteSearchIndexRequest{
@@ -228,6 +234,67 @@ defmodule ExAliyunOts.Client.Search do
   def remote_describe_search_index(instance, request_body) do
     instance
     |> Http.client("/DescribeSearchIndex", request_body, &DescribeSearchIndexResponse.decode/1)
+    |> Http.post()
+  end
+
+  def request_to_compute_splits(table_name, index_name) do
+    ComputeSplitsRequest.new(
+      table_name: table_name,
+      search_index_splits_options: SearchIndexSplitsOptions.new(
+        index_name: index_name
+      )
+    )
+    |> ComputeSplitsRequest.encode()
+  end
+
+  def remote_compute_splits(instance, request_body) do
+    instance
+    |> Http.client("/ComputeSplits", request_body, &ComputeSplitsResponse.decode/1)
+    |> Http.post()
+  end
+
+  def request_to_parallel_scan(%Search.ParallelScanRequest{
+        table_name: table_name,
+        index_name: index_name,
+        columns_to_get: %Search.ColumnsToGet{
+          return_type: return_type,
+          column_names: column_names
+        },
+        scan_query: scan_query,
+        session_id: session_id
+      }) do
+
+    proto_scan_query =
+      ScanQuery.new(
+        query: prepare_query(scan_query.query),
+        limit: scan_query.limit,
+        alive_time: scan_query.alive_time,
+        token: scan_query.token,
+        current_parallel_id: scan_query.current_parallel_id,
+        max_parallel: scan_query.max_parallel
+      )
+
+    proto_columns_to_get =
+      ColumnsToGet.new(
+        return_type: return_type,
+        column_names: column_names
+      )
+
+    request =
+      ParallelScanRequest.new(
+        table_name: table_name,
+        index_name: index_name,
+        columns_to_get: proto_columns_to_get,
+        scan_query: ScanQuery.encode(proto_scan_query),
+        session_id: session_id
+      )
+
+    ParallelScanRequest.encode(request)
+  end
+
+  def remote_parallel_scan(instance, request_body) do
+    instance
+    |> Http.client("/ParallelScan", request_body, &ParallelScanResponse.decode/1)
     |> Http.post()
   end
 
@@ -322,14 +389,8 @@ defmodule ExAliyunOts.Client.Search do
     end
   end
 
-  defp prepare_sort([]) do
-    nil
-  end
-
-  defp prepare_sort(nil) do
-    nil
-  end
-
+  defp prepare_sort([]), do: nil
+  defp prepare_sort(nil), do: nil
   defp prepare_sort(sorters) when is_list(sorters) do
     prepared_sorters =
       sorters

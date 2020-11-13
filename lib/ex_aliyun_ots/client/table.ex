@@ -15,7 +15,9 @@ defmodule ExAliyunOts.Client.Table do
     UpdateTableResponse,
     DescribeTableRequest,
     DescribeTableResponse,
-    StreamSpecification
+    StreamSpecification,
+    ComputeSplitPointsBySizeRequest,
+    ComputeSplitPointsBySizeResponse
   }
 
   alias ExAliyunOts.{Var, Http}
@@ -152,6 +154,28 @@ defmodule ExAliyunOts.Client.Table do
 
     debug([
       "describe_table result: ",
+      inspect(result)
+    ])
+
+    result
+  end
+
+  def request_to_compute_split_points_by_size(table_name, split_size) do
+    ComputeSplitPointsBySizeRequest.new(
+      table_name: table_name,
+      split_size: split_size
+    )
+    |> ComputeSplitPointsBySizeRequest.encode()
+  end
+
+  def remote_compute_split_points_by_size(instance, request_body) do
+    result =
+      instance
+      |> Http.client("/ComputeSplitPointsBySize", request_body, &ComputeSplitPointsBySizeResponse.decode/1)
+      |> Http.post()
+
+    debug([
+      "compute_split_points_by_size result: ",
       inspect(result)
     ])
 
