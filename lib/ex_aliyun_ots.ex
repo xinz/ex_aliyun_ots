@@ -1032,7 +1032,7 @@ defmodule ExAliyunOts do
 
   @doc """
   A simple wrapper of `stream_parallel_scan/4` to take care `OTSSessionExpired` error with retry, make parallel scan
-  as a stream that applies the given function to each response of scan query.
+  as a stream that applies the given function to the complete result of scan query.
 
   In general, recommend to use this function for the common use case of parallel scan.
 
@@ -1089,7 +1089,7 @@ defmodule ExAliyunOts do
 
   @doc """
   A simple wrapper of `stream_parallel_scan/4` to take care `OTSSessionExpired` error with retry, make parallel scan
-  as a stream that applies the given function from `module` with the list of arguments `args` to each response of scan query.
+  as a stream that applies the given function from `module` with the list of arguments `args` to the complete result of scan query.
 
   In general, recommend to use this function for the common use case of parallel scan.
 
@@ -1139,7 +1139,7 @@ defmodule ExAliyunOts do
   end
 
   @doc """
-  Integer `parallel_scan/4` with `compute_splits/3` as a complete use, base on the response of `compute_splits/3` to create the corrsponding 
+  Integrate `parallel_scan/4` with `compute_splits/3` as a complete use, base on the response of `compute_splits/3` to create the corrsponding
   number of concurrency task(s), use `Task.async_stream/3` to make parallel scan as a stream which properly process `token`
   in every request of the internal, when use this function need to consider the possibility of the `OTSSessionExpired` error in the external.
 
