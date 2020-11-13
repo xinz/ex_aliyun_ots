@@ -20,7 +20,8 @@ defmodule ExAliyunOts.MixinTest.ParallelScan do
   # Notice:
   #
   # Since `test_parallelscan` table and `test_parallelscan_index` index have been manually
-  # splited shard (by support team), and then the shard number is 3, so we don't delete this table and index.
+  # splited shard (by support team), and then its shard number is 3, its scan_query support limit `5000`,
+  # so we don't delete this table and index.
   #
  
   #defp create() do
@@ -331,6 +332,20 @@ defmodule ExAliyunOts.MixinTest.ParallelScan do
       )
 
     assert length(rows) == 2500 
+
+    rows =
+      iterate_parallel_scan(
+        @table,
+        @index,
+        &process_stream_parallel_scan/1,
+        scan_query: [
+          query: match_query("is_actived", "true"),
+          limit: 5000
+        ],
+        columns_to_get: ["is_actived", "name", "score"]
+      )
+
+    assert length(rows) == 2500
   end
 
   defmodule TmpHandler do

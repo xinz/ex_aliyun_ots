@@ -1010,7 +1010,7 @@ defmodule ExAliyunOts do
 
     * `:scan_query`, required, the main option to use query.
       - `:query`, required, bind to the query functions, the same as query option of `search/4`.
-      - `:limit`, optional, the limited size of query, defaults to 2000, the maximum value of limit is 5000.
+      - `:limit`, optional, the limited size of query, defaults to 2000, the maximum value of limit is 2000.
       - `:token`, optional, when do not load all the matched rows in a single request, there will return a `next_token` value in that result,
       and then we can pass it to `:token` in the next same scan query to continue load the rest rows.
       - `:max_parallel`, required, the maximum number of concurrent, as the `splits_size` value from the response of `compute_splits/3`.
@@ -1040,7 +1040,7 @@ defmodule ExAliyunOts do
 
     * `:scan_query`, required, the main option to use query.
       - `:query`, required, bind to the query functions, the same as query option of `search/5`.
-      - `:limit`, optional, the limited size of query, defaults to 2000, the maximum value of limit is 5000.
+      - `:limit`, optional, the limited size of query, defaults to 2000, the maximum value of limit is 2000.
     * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields of the search index, here are available options:
       - `:all_from_index`, return all attribute column fields of search index;
       - `:none`, do not return any attribute column fields;
@@ -1118,7 +1118,7 @@ defmodule ExAliyunOts do
         [],
         scan_query: [
           query: match_query("is_actived", "true"),
-          limit: 5000
+          limit: 1000
         ],
         columns_to_get: ["field1", "field2"]
       )
