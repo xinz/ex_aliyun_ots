@@ -52,6 +52,7 @@ defmodule ExAliyunOts.Search do
   """
 
   alias ExAliyunOts.Var.Search
+  alias ExAliyunOts.Client
 
   alias ExAliyunOts.Const.{
     Search.FieldType,
@@ -1399,6 +1400,123 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc false
+  def stream_parallel_scan(instance, table, index_name, options) do
+    instance
+    |> compute_splits_before_stream_parallel_scan(table, index_name)
+    |> multi_tasks_to_stream_parallel_scan(options)
+  end
+
+  defp compute_splits_before_stream_parallel_scan(instance, table, index_name) do
+    {
+      ExAliyunOts.compute_splits(instance, table, index_name),
+      instance,
+      table,
+      index_name
+    }
+  end
+
+  defp multi_tasks_to_stream_parallel_scan({{:ok, %{session_id: session_id, splits_size: splits_size}}, instance, table, index_name}, options) do
+    options =
+      options
+      |> put_in([:session_id], session_id)
+      |> put_in([:scan_query, :max_parallel], splits_size)
+
+    timeout = options[:timeout] || :infinity
+
+    0
+    |> Range.new(splits_size - 1)
+    |> Task.async_stream(fn(current_parallel_id) ->
+      options = put_in(options[:scan_query][:current_parallel_id], current_parallel_id)
+      stream_parallel_scan_per_task(instance, table, index_name, options)
+    end, timeout: timeout, ordered: false)
+    |> Stream.map(fn({:ok, stream}) ->
+      stream
+    end)
+    |> Stream.concat()
+  end
+  defp multi_tasks_to_stream_parallel_scan({{:error, _} = error, _instance, _table, _index_name}, _options) do
+    # Return the error still in the stream format.
+    Stream.map([error], & &1)
+  end
+
+  defp stream_parallel_scan_per_task(instance, table, index_name, options) do
+    starter = "initialize"
+
+    starter
+    |> Stream.unfold(fn
+      ^starter ->
+        request = map_scan_options(table, index_name, options)
+        Client.parallel_scan(instance, request) |> map_unfold_parallel_scan_response()
+      nil ->
+        nil
+      next_token ->
+        options = put_in(options[:scan_query][:token], next_token)
+        request = map_scan_options(table, index_name, options)
+        Client.parallel_scan(instance, request) |> map_unfold_parallel_scan_response()
+    end)
+    |> Stream.reject(& &1 == nil)
+  end
+
+  defp map_unfold_parallel_scan_response({:ok, %{next_token: nil, rows: []}}) do
+    {nil, nil}
+  end
+  defp map_unfold_parallel_scan_response({:ok, response} = data) do
+    {data, response.next_token}
+  end
+  defp map_unfold_parallel_scan_response({:error, _error} = data) do
+    {data, nil}
+  end
+
+  @doc false
+  def map_scan_options(table_name, index_name, nil) do
+    %Search.ParallelScanRequest{
+      table_name: table_name,
+      index_name: index_name
+    }
+  end
+
+  def map_scan_options(table_name, index_name, options) do
+    var =
+      %Search.ParallelScanRequest{
+        table_name: table_name, index_name: index_name
+      }
+    Enum.reduce(options, var,
+      fn {key, value}, acc ->
+        if value != nil and Map.has_key?(var, key) do
+          do_map_scan_options(key, value, acc)
+        else
+          acc
+        end
+      end
+    )
+  end
+
+  def map_scan_options(var, nil), do: var
+  def map_scan_options(var, options) do
+    Enum.reduce(options, var,
+      fn {key, value}, acc ->
+        if value != nil and Map.has_key?(var, key) do
+          do_map_scan_options(key, value, acc)
+        else
+          acc
+        end
+      end
+    )
+  end
+
+  defp do_map_scan_options(:scan_query = key, value, var) do
+    Map.put(var, key, map_scan_query(value))
+  end
+
+  defp do_map_scan_options(:columns_to_get = key, value, var) do
+    Map.put(var, key, map_columns_to_get(value))
+  end
+
+  defp do_map_scan_options(key, value, var) do
+    Map.put(var, key, value)
+  end
+
+  @doc false
   def map_search_options(var, nil) do
     var
   end
@@ -1483,16 +1601,29 @@ defmodule ExAliyunOts.Search do
       do:
         raise(
           ExAliyunOts.RuntimeError,
-          "input query: #{inspect(search_query)} required to be keyword"
+          "input search_query: #{inspect(search_query)} required to be keyword"
         )
 
     {query, rest_search_query_options} = Keyword.pop(search_query, :query, Keyword.new())
 
-    search_query = map_search_options(%Search.SearchQuery{}, rest_search_query_options)
+    %Search.SearchQuery{}
+    |> map_search_options(rest_search_query_options)
+    |> Map.put(:query, map_query_details(query))
+  end
 
-    var_query = map_query_details(query)
+  defp map_scan_query(scan_query) when is_list(scan_query) do
+    if not Keyword.keyword?(scan_query),
+      do:
+        raise(
+          ExAliyunOts.RuntimeError,
+          "input scan_query: #{inspect(scan_query)} required to be keyword"
+        )
 
-    Map.put(search_query, :query, var_query)
+    {query, rest_search_query_options} = Keyword.pop(scan_query, :query, Keyword.new())
+
+    %Search.ScanQuery{}
+    |> map_scan_options(rest_search_query_options)
+    |> Map.put(:query, map_query_details(query))
   end
 
   defp map_query_details([query]) when is_map(query) do
@@ -1697,6 +1828,14 @@ defmodule ExAliyunOts.Search do
        when return_type == ColumnReturnType.none() do
     %Search.ColumnsToGet{
       return_type: ColumnReturnType.none()
+    }
+  end
+
+  defp map_columns_to_get(return_type)
+       when return_type == :all_from_index
+       when return_type == ColumnReturnType.all_from_index() do
+    %Search.ColumnsToGet{
+      return_type: ColumnReturnType.all_from_index()
     }
   end
 

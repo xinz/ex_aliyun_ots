@@ -111,6 +111,7 @@ Here is a [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore)
   * DeleteTable
   * UpdateTable
   * DescribeTable
+  * ComputeSplitPointsBySize
 
 * Row
   * PutRow
@@ -126,6 +127,7 @@ Here is a [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore)
   * DescribeSearchIndex
   * DeleteSearchIndex
   * Search
+  * ParallelScan
 
 * LocalTransaction
   * StartLocalTransaction
@@ -134,8 +136,10 @@ Here is a [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore)
 
 * SDK built-in
   * IterateAllRange
-  * StreamRange
+  * IterateParallelScan
   * Sequence
+  * StreamParallelScan
+  * StreamRange
 
 * Tunnel service
 * Timeline mode
