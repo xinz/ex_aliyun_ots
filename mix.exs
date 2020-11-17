@@ -1,6 +1,8 @@
 defmodule ExAliyunOts.Mixfile do
   use Mix.Project
 
+  @source_url "https://github.com/xinz/ex_aliyun_ots"
+
   def project do
     [
       app: :ex_aliyun_ots,
@@ -12,13 +14,11 @@ defmodule ExAliyunOts.Mixfile do
       package: package(),
       deps: deps(),
       docs: docs(),
-      source_url: "https://github.com/xinz/ex_aliyun_ots",
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [coveralls: :test]
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger],
@@ -26,19 +26,19 @@ defmodule ExAliyunOts.Mixfile do
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:timex, "~> 3.3"},
-      {:tesla, "~> 1.4"},
-      {:finch, "~> 0.5"},
       {:exprotobuf, "~> 1.2"},
+      {:finch, "~> 0.5"},
       {:gen_state_machine, "~> 2.0"},
-      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:credo, "~> 1.2", only: :dev, runtime: false},
+      {:tesla, "~> 1.4"},
+      {:timex, "~> 3.3"},
+
       {:benchee, "~> 1.0", only: :dev, runtime: false},
-      {:mock, "~> 0.3.2", only: :test},
-      {:excoveralls, "~> 0.11", only: :test}
+      {:credo, "~> 1.2", only: :dev, runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.11", only: :test},
+      {:mock, "~> 0.3.2", only: :test}
     ]
   end
 
@@ -51,16 +51,21 @@ defmodule ExAliyunOts.Mixfile do
       files: ["lib", "mix.exs", "README.md", "LICENSE.md"],
       maintainers: ["Xin Zou"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/xinz/ex_aliyun_ots"}
+      links: %{
+        "Changelog" => "#{@source_url}/blob/master/CHANGELOG.md",
+        "GitHub" => @source_url
+      }
     ]
   end
 
   defp docs do
     [
       main: "readme",
+      source_url: @source_url,
       formatter_opts: [gfm: true],
       extras: [
-        "README.md"
+        "README.md",
+        "CHANGELOG.md"
       ],
       groups_for_functions: [
         Query: &(&1[:query] == :query),

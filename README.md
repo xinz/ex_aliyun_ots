@@ -1,9 +1,13 @@
 # ExAliyunOts
 
-[![hex.pm version](https://img.shields.io/hexpm/v/ex_aliyun_ots.svg)](https://hex.pm/packages/ex_aliyun_ots)
 [![Coverage Status](https://coveralls.io/repos/github/xinz/ex_aliyun_ots/badge.svg?branch=master)](https://coveralls.io/github/xinz/ex_aliyun_ots?branch=master)
+[![Module Version](https://img.shields.io/hexpm/v/ex_aliyun_ots.svg)](https://hex.pm/packages/ex_aliyun_ots)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/ex_aliyun_ots/)
+[![Total Download](https://img.shields.io/hexpm/dt/ex_aliyun_ots.svg)](https://hex.pm/packages/ex_aliyun_ots)
+[![License](https://img.shields.io/hexpm/l/ex_aliyun_ots.svg)](https://github.com/xinz/ex_aliyun_ots/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/xinz/ex_aliyun_ots.svg)](https://github.com/xinz/ex_aliyun_ots/commits/master)
 
-Aliyun TableStore SDK for Elixir/Erlang
+Aliyun [TableStore](https://www.alibabacloud.com/product/table-store) SDK for Elixir/Erlang
 
 > TableStore is a NoSQL database service built on Alibaba Cloud’s Apsara distributed operating system that can store and access large volumes of structured data in real time.
 
@@ -19,8 +23,10 @@ end
 
 ## Configuration
 
+Add these settings below into the `config/ots.secret.exs` file.
+
 ```elixir
-config :ex_aliyun_ots, :my_instance
+config :ex_aliyun_ots, :my_instance,
   name: "MyInstanceName",
   endpoint: "MyInstanceEndpoint",
   access_key_id: "MyAliyunRAMKeyID",
@@ -86,7 +92,7 @@ There are two ways to use ExAliyunOts:
 * using macros and functions from your own ExAliyunOts module, like `MyApp.TableStore`.
 * using macros and functions from the `ExAliyunOts` module.
 
-All defined functions and macros in `ExAliyunOts` are available and referrible for your own ExAliyunOts module as well, except that the given arity of functions may different, because the `instance` parameter of each invoke request is NOT needed from your own ExAliyunOts module although the `ExAliyunOts` module defines it.
+All defined functions and macros in `ExAliyunOts` are available and referable for your own ExAliyunOts module as well, except that the given arity of functions may different, because the `instance` parameter of each invoke request is NOT needed from your own ExAliyunOts module although the `ExAliyunOts` module defines it.
 
 
 ## Ecto Adapter
@@ -102,7 +108,7 @@ Here is a [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore)
 * Filter
 * Atomic counters
 * Search index
-* Local transation
+* Local transaction
 * Tunnel service
 * Timeline mode
 
@@ -161,4 +167,4 @@ Alibaba Tablestore product official references:
 
 ## License
 
-MIT
+This project is licensed under the MIT license. Copyright (c) 2018- Xin Zou.

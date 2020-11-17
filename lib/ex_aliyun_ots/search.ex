@@ -45,10 +45,10 @@ defmodule ExAliyunOts.Search do
 
     * The statistics(via `:aggs`) and GroupBy type aggregations(via `:group_bys`) can be used at the same time.
     * The GroupBy type aggregations support the nested sub statistics(via `:sub_aggs`) and sub GroupBy type aggregations(via `:sub_group_bys`).
-    * To ensure the performance and reduce the complexity of aggregations, there is a limition with a certain number
+    * To ensure the performance and reduce the complexity of aggregations, there is a limitation with a certain number
     of levels for nesting.
     * If you are only care about using `:aggs` or `:group_bys`, meanwhile do not need the returned rows, you can set `:limit` as 0 to ignore the matched rows
-    return, there will have a better query performace.
+    return, there will have a better query performance.
   """
 
   alias ExAliyunOts.Var.Search
@@ -286,7 +286,7 @@ defmodule ExAliyunOts.Search do
         ]
 
   The following options can be a single `Query` or a list of `Query` to combine the "And | Or | At least"
-  serach condication.
+  search condition.
 
   ## Options
 
@@ -831,7 +831,7 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  The query results are grouped according to the range from a certain center geo point, if the distance difference
+  The query results are grouped according to the range from a certain center Geo point, if the distance difference
   is within a certain range, it will be put into a group, and finally the number of corresponding items in each
   range will be returned.
 
