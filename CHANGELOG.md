@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.0 (2020-11-17)
+
+* [Http] Use Tasla with Finch adapter
+
 ## v0.8.0 (2020-11-13)
 * [Table] Add `ExAliyunOts.compute_split_points_by_size/2`
 * [Table] Fix `shard_splits` of DescribeTable response in proper decoded format

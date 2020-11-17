@@ -31,8 +31,8 @@ defmodule ExAliyunOts.Mixfile do
     [
       {:tablestore_protos, github: "xinz/tablestore_protos"},
       {:timex, "~> 3.3"},
-      {:tesla, "~> 1.3"},
-      {:hackney, "~> 1.15.2"},
+      {:tesla, "~> 1.4"},
+      {:finch, "~> 0.5"},
       {:gen_state_machine, "~> 2.0"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.2", only: :dev, runtime: false},
