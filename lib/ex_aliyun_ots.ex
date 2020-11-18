@@ -65,7 +65,7 @@ defmodule ExAliyunOts do
   All defined functions and macros in `ExAliyunOts` are available and referrible for your own ExAliyunOts module as well, except that the given arity of functions may
   different, because the `instance` parameter of each invoke request is NOT needed from your own ExAliyunOts module although the `ExAliyunOts` module defines it.
   """
-  import ExAliyunOts.DSL, only: [index_meta: 3]
+  require ExAliyunOts.DSL, as: DSL
   require ExAliyunOts.Const.OperationType, as: OperationType
   alias ExAliyunOts.{Var, Client, Utils}
   alias ExAliyunOts.TableStore.{ReturnType, Direction, CreateIndexRequest, IndexMeta}
@@ -164,7 +164,7 @@ defmodule ExAliyunOts do
     create_index(
       instance,
       table_name,
-      index_meta(index_name, primary_keys, defined_columns),
+      DSL.index_meta(index_name, primary_keys, defined_columns),
       include_base_data
     )
   end
@@ -395,13 +395,7 @@ defmodule ExAliyunOts do
         ) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   def get_row(instance, table, pk_keys, options \\ []) do
-    prepared_var =
-      %Var.GetRow{
-        table_name: table,
-        primary_keys: pk_keys
-      }
-      |> map_options(options)
-
+    prepared_var = get(table, pk_keys, options)
     Client.get_row(instance, prepared_var)
   end
 
@@ -566,10 +560,7 @@ defmodule ExAliyunOts do
   @doc row: :row
   @spec get(table :: String.t(), pk_keys :: list(), options :: Keyword.t()) :: map()
   def get(table, pk_keys, options \\ []) do
-    %Var.GetRow{
-      table_name: table,
-      primary_keys: pk_keys
-    }
+    %Var.GetRow{table_name: table, primary_keys: pk_keys}
     |> map_options(options)
   end
 

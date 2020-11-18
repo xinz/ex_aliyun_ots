@@ -48,8 +48,7 @@ end
 
 defmodule ExAliyunOts.Var.UpdateRow do
   @moduledoc false
-  alias ExAliyunOts.Const.ReturnType
-  require ReturnType
+  require ExAliyunOts.Const.ReturnType, as: ReturnType
 
   defstruct table_name: "",
             primary_keys: [],
@@ -62,8 +61,7 @@ end
 
 defmodule ExAliyunOts.Var.PutRow do
   @moduledoc false
-  alias ExAliyunOts.Const.ReturnType
-  require ReturnType
+  require ExAliyunOts.Const.ReturnType, as: ReturnType
 
   defstruct table_name: "",
             primary_keys: [],
@@ -88,8 +86,7 @@ end
 
 defmodule ExAliyunOts.Var.DeleteRow do
   @moduledoc false
-  alias ExAliyunOts.Const.ReturnType
-  require ReturnType
+  require ExAliyunOts.Const.ReturnType, as: ReturnType
 
   defstruct table_name: "",
             primary_keys: [],
@@ -130,8 +127,7 @@ end
 
 defmodule ExAliyunOts.Var.GetRange do
   @moduledoc false
-  alias ExAliyunOts.Const.Direction
-  require Direction
+  require ExAliyunOts.Const.Direction, as: Direction
 
   defstruct table_name: "",
             direction: Direction.forward(),
@@ -149,8 +145,7 @@ end
 
 defmodule ExAliyunOts.Var.RowInBatchWriteRequest do
   @moduledoc false
-  alias ExAliyunOts.Const.ReturnType
-  require ReturnType
+  require ExAliyunOts.Const.ReturnType, as: ReturnType
 
   defstruct type: nil,
             primary_keys: [],
@@ -210,8 +205,7 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule FieldSchema do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.FieldType
-    require FieldType
+    require ExAliyunOts.Const.Search.FieldType, as: FieldType
 
     defstruct field_name: "",
               field_type: FieldType.keyword(),
@@ -226,16 +220,14 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule FieldSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct field_name: "", order: SortOrder.asc(), mode: nil, nested_filter: nil
   end
 
   defmodule GeoDistanceSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.{SortOrder, GeoDistanceType}
-    require SortOrder
-    require GeoDistanceType
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
+    require ExAliyunOts.Const.Search.GeoDistanceType, as: GeoDistanceType
 
     defstruct field_name: "",
               points: [],
@@ -252,22 +244,19 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule ScoreSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.asc()
   end
 
   defmodule PrimaryKeySort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.asc()
   end
 
   defmodule ColumnsToGet do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.ColumnReturnType
-    require ColumnReturnType
+    require ExAliyunOts.Const.Search.ColumnReturnType, as: ColumnReturnType
     defstruct return_type: ColumnReturnType.all(), column_names: []
   end
 
@@ -340,8 +329,7 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule NestedQuery do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.ScoreMode
-    require ScoreMode
+    require ExAliyunOts.Const.Search.ScoreMode, as: ScoreMode
 
     # `score_mode`:
     # 多值字段获取文档得分的模式，一个字段多个值的情况下，采用哪个值来进行排序
@@ -402,22 +390,19 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule GroupKeySort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.asc()
   end
 
   defmodule RowCountSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.asc()
   end
 
   defmodule SubAggSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.desc(), sub_agg_name: nil
   end
 end
