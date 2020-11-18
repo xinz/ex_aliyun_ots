@@ -193,7 +193,7 @@ defmodule ExAliyunOts.Http do
   @moduledoc false
   import ExAliyunOts.Logger, only: [error: 1]
 
-  alias ExAliyunOts.Error
+  alias ExAliyunOts.{Application, Error}
   alias ExAliyunOts.Const.ErrorType
 
   require ErrorType
@@ -379,7 +379,7 @@ defmodule ExAliyunOts.Http do
 
     {
       Tesla.Adapter.Finch,
-      [name: __MODULE__.Finch, receive_timeout: timeout]
+      [name: Application.http_name(), receive_timeout: timeout]
     }
   end
 end
