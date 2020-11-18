@@ -1,55 +1,55 @@
 defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
   use ExUnit.Case
+  use ExAliyunOts.Constants
   import ExAliyunOts.DSL, only: [condition: 2, filter: 1]
-  require ExAliyunOts.Constants, as: Constants
   alias ExAliyunOts.TableStoreFilter.{Filter, CompositeColumnValueFilter, SingleColumnValueFilter}
   alias ExAliyunOts.TableStore.Condition
 
   @result %Filter{
     filter: %CompositeColumnValueFilter{
-      combinator: Constants.logic_operator(:or),
+      combinator: LogicOperator.or(),
       sub_filters: [
         %Filter{
           filter: %CompositeColumnValueFilter{
-            combinator: Constants.logic_operator(:and),
+            combinator: LogicOperator.and(),
             sub_filters: [
               %Filter{
                 filter: %SingleColumnValueFilter{
                   column_name: "name",
                   column_value: "updated_attr21",
-                  comparator: Constants.comparator_type(:equal),
+                  comparator: ComparatorType.equal(),
                   filter_if_missing: false,
                   latest_version_only: true
                 },
-                type: Constants.filter_type(:single_column)
+                type: FilterType.single_column()
               },
               %Filter{
                 filter: %SingleColumnValueFilter{
                   column_name: "age",
                   column_value: 1,
-                  comparator: Constants.comparator_type(:greater_than),
+                  comparator: ComparatorType.greater_than(),
                   filter_if_missing: true,
                   latest_version_only: true
                 },
-                type: Constants.filter_type(:single_column)
+                type: FilterType.single_column()
               }
             ]
           },
-          type: Constants.filter_type(:composite_column)
+          type: FilterType.composite_column()
         },
         %Filter{
           filter: %SingleColumnValueFilter{
             column_name: "class",
             column_value: "1",
-            comparator: Constants.comparator_type(:equal),
+            comparator: ComparatorType.equal(),
             filter_if_missing: true,
             latest_version_only: true
           },
-          type: Constants.filter_type(:single_column)
+          type: FilterType.single_column()
         }
       ]
     },
-    type: Constants.filter_type(:composite_column)
+    type: FilterType.composite_column()
   }
 
   def value(), do: "attr21"
@@ -63,13 +63,13 @@ defmodule ExAliyunOts.MixinTest.ConditionAndFilter do
                filter: %SingleColumnValueFilter{
                  column_name: "attr2",
                  column_value: "attr21",
-                 comparator: Constants.comparator_type(:equal),
+                 comparator: ComparatorType.equal(),
                  filter_if_missing: true,
                  latest_version_only: true
                },
-               type: Constants.filter_type(:single_column)
+               type: FilterType.single_column()
              },
-             row_existence: Constants.row_existence(:expect_exist)
+             row_existence: RowExistence.expect_exist()
            }
 
     key = "attr2"

@@ -1,20 +1,10 @@
 defmodule ExAliyunOtsTest.Filter do
   use ExUnit.Case
+  use ExAliyunOts.Constants
   require Logger
-  require ExAliyunOts.Constants, as: Constants
   alias ExAliyunOts.Var
   alias ExAliyunOts.TableStore.Condition
   alias ExAliyunOts.TableStoreFilter.{Filter, SingleColumnValueFilter, CompositeColumnValueFilter}
-
-  alias ExAliyunOts.Const.{
-    PKType,
-    OperationType,
-    ReturnType
-  }
-
-  require PKType
-  require OperationType
-  require ReturnType
 
   @instance_key EDCEXTestInstance
 
@@ -36,9 +26,9 @@ defmodule ExAliyunOtsTest.Filter do
     id = "1"
 
     filter = %Filter{
-      type: Constants.filter_type(:single_column),
+      type: FilterType.single_column(),
       filter: %SingleColumnValueFilter{
-        comparator: Constants.comparator_type(:equal),
+        comparator: ComparatorType.equal(),
         column_name: "counter",
         column_value: 1,
         filter_if_missing: true,
@@ -47,7 +37,7 @@ defmodule ExAliyunOtsTest.Filter do
     }
 
     condition = %Condition{
-      row_existence: Constants.row_existence(:ignore),
+      row_existence: RowExistence.ignore(),
       column_condition: filter
     }
 
@@ -88,21 +78,21 @@ defmodule ExAliyunOtsTest.Filter do
       primary_keys: [{"id", id}],
       attribute_columns: [{"counter", 2}, {"name", "tmp_name"}],
       condition: %Condition{
-        row_existence: Constants.row_existence(:ignore)
+        row_existence: RowExistence.ignore()
       }
     }
 
     {:ok, _result} = ExAliyunOts.Client.put_row(@instance_key, var_put_row)
 
     filter = %Filter{
-      type: Constants.filter_type(:composite_column),
+      type: FilterType.composite_column(),
       filter: %CompositeColumnValueFilter{
-        combinator: Constants.logic_operator(:and),
+        combinator: LogicOperator.and(),
         sub_filters: [
           %Filter{
-            type: Constants.filter_type(:single_column),
+            type: FilterType.single_column(),
             filter: %SingleColumnValueFilter{
-              comparator: Constants.comparator_type(:equal),
+              comparator: ComparatorType.equal(),
               column_name: "name",
               column_value: "tmp_name",
               filter_if_missing: true,
@@ -110,9 +100,9 @@ defmodule ExAliyunOtsTest.Filter do
             }
           },
           %Filter{
-            type: Constants.filter_type(:single_column),
+            type: FilterType.single_column(),
             filter: %SingleColumnValueFilter{
-              comparator: Constants.comparator_type(:greater_than),
+              comparator: ComparatorType.greater_than(),
               column_name: "counter",
               column_value: 1,
               filter_if_missing: true,
@@ -124,7 +114,7 @@ defmodule ExAliyunOtsTest.Filter do
     }
 
     condition = %Condition{
-      row_existence: Constants.row_existence(:ignore),
+      row_existence: RowExistence.ignore(),
       column_condition: filter
     }
 

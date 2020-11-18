@@ -1,10 +1,10 @@
 defmodule ExAliyunOts.DSL do
-  @moduledoc false
-  require ExAliyunOts.Constants, as: Constants
+  require ExAliyunOts.Const.FilterType, as: FilterType
+  require ExAliyunOts.Const.RowExistence, as: RowExistence
   alias ExAliyunOts.TableStore.{Condition, IndexMeta}
   alias ExAliyunOts.TableStoreFilter.{Filter, ColumnPaginationFilter}
 
-  @type row_existence :: :expect_exist | :expect_not_exist | :ignore
+  @type row_existence :: ExAliyunOts.Const.RowExistence.supported()
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/35193.html) | [English](https://www.alibabacloud.com/help/doc-detail/35193.html)
@@ -62,11 +62,10 @@ defmodule ExAliyunOts.DSL do
   defmacro pagination(options) do
     offset = Keyword.get(options, :offset)
     limit = Keyword.get(options, :limit)
-    filter_type = Constants.filter_type(:column_pagination)
 
     quote do
       %Filter{
-        type: unquote(filter_type),
+        type: unquote(FilterType.column_pagination()),
         filter: %ColumnPaginationFilter{offset: unquote(offset), limit: unquote(limit)}
       }
     end
@@ -141,7 +140,7 @@ defmodule ExAliyunOts.DSL do
   end
 
   defp map_row_existence(row_existence) do
-    Constants.row_existence(row_existence)
+    Map.fetch!(RowExistence.mapping(), row_existence)
   rescue
     _ ->
       raise ExAliyunOts.RuntimeError,

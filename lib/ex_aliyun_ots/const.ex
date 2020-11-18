@@ -1,9 +1,5 @@
 defmodule ExAliyunOts.Constants do
   @moduledoc false
-  use Const
-  alias ExAliyunOts.Utils
-  alias ExAliyunOts.TableStore.RowExistenceExpectation
-  alias ExAliyunOts.TableStoreFilter.ComparatorType
 
   defmacro __using__(_opts \\ []) do
     quote do
@@ -12,6 +8,10 @@ defmodule ExAliyunOts.Constants do
         PKType,
         ReturnType,
         Direction,
+        RowExistence,
+        FilterType,
+        LogicOperator,
+        ComparatorType,
         Search.FieldType,
         Search.QueryType,
         Search.QueryOperator,
@@ -29,6 +29,10 @@ defmodule ExAliyunOts.Constants do
       require PKType
       require ReturnType
       require Direction
+      require RowExistence
+      require FilterType
+      require LogicOperator
+      require ComparatorType
 
       # SearchIndex
       require FieldType
@@ -49,33 +53,6 @@ defmodule ExAliyunOts.Constants do
       defmacro unquote(name)(), do: unquote(value)
     end
   end
-
-  enum(row_existence,
-    do:
-      RowExistenceExpectation.mapping()
-      |> Enum.map(fn {type, _value} ->
-        {Utils.downcase_atom(type), type}
-      end)
-  )
-
-  enum filter_type do
-    single_column(:FT_SINGLE_COLUMN_VALUE)
-    composite_column(:FT_COMPOSITE_COLUMN_VALUE)
-    column_pagination(:FT_COLUMN_PAGINATION)
-  end
-
-  enum(logic_operator, do: [not: :LO_NOT, and: :LO_AND, or: :LO_OR])
-
-  enum(comparator_type,
-    do:
-      ComparatorType.mapping()
-      |> Enum.map(fn {type, _value} ->
-        downcase_type =
-          type |> to_string() |> String.slice(3..-1) |> String.downcase() |> String.to_atom()
-
-        {downcase_type, type}
-      end)
-  )
 end
 
 defmodule ExAliyunOts.Const.ErrorType do
@@ -146,6 +123,54 @@ defmodule ExAliyunOts.Const.Direction do
 
   const(:forward, :FORWARD)
   const(:backward, :BACKWARD)
+end
+
+defmodule ExAliyunOts.Const.RowExistence do
+  @moduledoc false
+  import ExAliyunOts.Constants
+
+  const(:ignore, :IGNORE)
+  const(:expect_exist, :EXPECT_EXIST)
+  const(:expect_not_exist, :EXPECT_NOT_EXIST)
+  const(:supported, [:IGNORE, :EXPECT_EXIST, :EXPECT_NOT_EXIST])
+
+  def mapping,
+    do: %{
+      ignore: :IGNORE,
+      expect_exist: :EXPECT_EXIST,
+      expect_not_exist: :EXPECT_NOT_EXIST
+    }
+end
+
+defmodule ExAliyunOts.Const.FilterType do
+  @moduledoc false
+  import ExAliyunOts.Constants
+
+  const(:single_column, :FT_SINGLE_COLUMN_VALUE)
+  const(:composite_column, :FT_COMPOSITE_COLUMN_VALUE)
+  const(:column_pagination, :FT_COLUMN_PAGINATION)
+end
+
+defmodule ExAliyunOts.Const.LogicOperator do
+  @moduledoc false
+  import ExAliyunOts.Constants
+
+  const(:not, :LO_NOT)
+  const(:and, :LO_AND)
+  const(:or, :LO_OR)
+  def mapping, do: %{not: :LO_NOT, and: :LO_AND, or: :LO_OR}
+end
+
+defmodule ExAliyunOts.Const.ComparatorType do
+  @moduledoc false
+  import ExAliyunOts.Constants
+
+  const(:equal, :CT_EQUAL)
+  const(:not_equal, :CT_NOT_EQUAL)
+  const(:greater_than, :CT_GREATER_THAN)
+  const(:greater_equal, :CT_GREATER_EQUAL)
+  const(:less_than, :CT_LESS_THAN)
+  const(:less_equal, :CT_LESS_EQUAL)
 end
 
 defmodule ExAliyunOts.Const.Search.FieldType do

@@ -34,7 +34,6 @@ defmodule ExAliyunOts.Mixfile do
       {:tesla, "~> 1.3"},
       {:hackney, "~> 1.15.2"},
       {:gen_state_machine, "~> 2.0"},
-      {:ex_const, "~> 0.2"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.2", only: :dev, runtime: false},
       {:benchee, "~> 1.0", only: :dev, runtime: false},

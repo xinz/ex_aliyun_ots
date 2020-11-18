@@ -77,18 +77,8 @@ defmodule ExAliyunOts do
 
     quote do
       @instance Keyword.get(unquote(opts), :instance)
-
       use ExAliyunOts.Constants
-
-      import ExAliyunOts.DSL,
-        only: [
-          filter: 1,
-          condition: 1,
-          condition: 2,
-          pagination: 1,
-          index_meta: 3
-        ]
-
+      import ExAliyunOts.DSL
       @before_compile ExAliyunOts.Compiler
     end
   end

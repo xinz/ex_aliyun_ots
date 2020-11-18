@@ -1,7 +1,7 @@
 defmodule ExAliyunOts.MixinTest.Filter do
   use ExUnit.Case
+  use ExAliyunOts.Constants
   import ExAliyunOts.DSL, only: [filter: 1]
-  require ExAliyunOts.Constants, as: Constants
 
   alias ExAliyunOts.TableStoreFilter.{
     Filter,
@@ -11,49 +11,49 @@ defmodule ExAliyunOts.MixinTest.Filter do
 
   @result %Filter{
     filter: %CompositeColumnValueFilter{
-      combinator: Constants.logic_operator(:or),
+      combinator: LogicOperator.or(),
       sub_filters: [
         %Filter{
           filter: %CompositeColumnValueFilter{
-            combinator: Constants.logic_operator(:and),
+            combinator: LogicOperator.and(),
             sub_filters: [
               %Filter{
                 filter: %SingleColumnValueFilter{
                   column_name: "name",
                   column_value: "updated_attr21",
-                  comparator: Constants.comparator_type(:equal),
+                  comparator: ComparatorType.equal(),
                   filter_if_missing: false,
                   latest_version_only: true
                 },
-                type: Constants.filter_type(:single_column)
+                type: FilterType.single_column()
               },
               %Filter{
                 filter: %SingleColumnValueFilter{
                   column_name: "age",
                   column_value: 1,
-                  comparator: Constants.comparator_type(:greater_than),
+                  comparator: ComparatorType.greater_than(),
                   filter_if_missing: true,
                   latest_version_only: true
                 },
-                type: Constants.filter_type(:single_column)
+                type: FilterType.single_column()
               }
             ]
           },
-          type: Constants.filter_type(:composite_column)
+          type: FilterType.composite_column()
         },
         %Filter{
           filter: %SingleColumnValueFilter{
             column_name: "class",
             column_value: "1",
-            comparator: Constants.comparator_type(:equal),
+            comparator: ComparatorType.equal(),
             filter_if_missing: true,
             latest_version_only: true
           },
-          type: Constants.filter_type(:single_column)
+          type: FilterType.single_column()
         }
       ]
     },
-    type: Constants.filter_type(:composite_column)
+    type: FilterType.composite_column()
   }
 
   test "filter" do
