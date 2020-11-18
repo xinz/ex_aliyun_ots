@@ -22,6 +22,10 @@ defmodule ExAliyunOts.Application do
     Supervisor.start_link(children, strategy: :one_for_one)
   end
 
+  def http_name() do
+    __MODULE__.Finch
+  end
+
   defp child_spec(_app, _enable_tunnel, []) do
     raise ExAliyunOts.RuntimeError, "Not found any instances configuration"
   end
@@ -49,7 +53,7 @@ defmodule ExAliyunOts.Application do
   defp child_spec_http_client(pools) do
     {
       Finch,
-      name: ExAliyunOts.Http.Finch, pools: pools
+      name: http_name(), pools: pools
     }
   end
 
