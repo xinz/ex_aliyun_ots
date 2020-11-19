@@ -193,12 +193,10 @@ defmodule ExAliyunOts.Http do
   @moduledoc false
   import ExAliyunOts.Logger, only: [error: 1]
 
-  alias ExAliyunOts.Error
+  alias ExAliyunOts.{Application, Error}
   alias ExAliyunOts.Const.ErrorType
 
   require ErrorType
-
-  @timeout 15_000
 
   def client(instance, uri, request_body, decoder, opts \\ []) do
     Tesla.client(
@@ -261,8 +259,14 @@ defmodule ExAliyunOts.Http do
   end
 
   defp match_should_retry?({:error, %Error{message: :closed}}) do
-    # May occur `:closed` failed case as an acceptable situation when use hackney adapter,
+    # May occur `:closed` failed case as an acceptable situation when use tesla/hackney adapter,
     # just retry to ignore and resolve it.
+    true
+  end
+
+  defp match_should_retry?({:error, %Error{message: "socket closed"}}) do
+    # May occur `:closed` failed case as an acceptable situation when use tesla/finch adapter may return
+    # a format reason, just retry to ignore and resolve it.
     true
   end
 
@@ -371,9 +375,11 @@ defmodule ExAliyunOts.Http do
   end
 
   defp adapter(opts) do
-    timeout = Keyword.get(opts, :timeout, @timeout)
+    timeout = Keyword.get(opts, :timeout, 15_000)
 
-    {Tesla.Adapter.Hackney,
-     [recv_timeout: timeout, ssl_options: [versions: [:"tlsv1.3", :"tlsv1.2"]]]}
+    {
+      Tesla.Adapter.Finch,
+      [name: Application.http_name(), receive_timeout: timeout]
+    }
   end
 end

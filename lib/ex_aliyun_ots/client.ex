@@ -28,8 +28,23 @@ defmodule ExAliyunOts.Client do
     Table.remote_update_table(Config.get(instance_key), var_update_table)
   end
 
-  def describe_table(instance_key, table_name) do
-    Table.remote_describe_table(Config.get(instance_key), table_name)
+  def describe_table(instance_key, var_describe_table) do
+    case Table.remote_describe_table(Config.get(instance_key), table_name) do
+      {:ok, response} ->
+        {:ok, %{response | shard_splits: decode_rows(response.shard_splits)}}
+      error ->
+        error
+    end
+  end
+
+  def compute_split_points_by_size(instance_key, table_name, split_size) do
+    encoded_request = Table.request_to_compute_split_points_by_size(table_name, split_size)
+    case Table.remote_compute_split_points_by_size(Config.get(instance_key), encoded_request) do
+      {:ok, response} ->
+        {:ok, %{response | split_points: decode_rows(response.split_points)}}
+      error ->
+        error
+    end
   end
 
   def put_row(instance_key, var_put_row) do
@@ -77,11 +92,25 @@ defmodule ExAliyunOts.Client do
 
   def search(instance_key, var_search_request) do
     case Search.remote_search(Config.get(instance_key), var_search_request) do
-      {:ok, search_result_response} ->
-        {:ok, %{search_result_response | rows: decode_rows(search_result_response.rows)}}
+      {:ok, response} ->
+        {:ok, %{response | rows: decode_rows(response.rows)}}
+      error ->
+        error
+    end
+  end
 
-      error_result ->
-        error_result
+  def compute_splits(instance_key, table_name, index_name) do
+    encoded_request = Search.request_to_compute_splits(table_name, index_name)
+    Search.remote_compute_splits(Config.get(instance_key), encoded_request)
+  end
+
+  def parallel_scan(instance_key, var_scan_request) do
+    encoded_request = Search.request_to_parallel_scan(var_scan_request)
+    case Search.remote_parallel_scan(Config.get(instance_key), encoded_request) do
+      {:ok, response} ->
+        {:ok, %{response | rows: decode_rows(response.rows)}}
+      error ->
+        error
     end
   end
 

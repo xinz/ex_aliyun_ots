@@ -73,6 +73,8 @@ defmodule ExAliyunOts do
   @before_compile ExAliyunOts.MergeCompiler
   @type instance :: atom
 
+  require Logger
+
   defmacro __using__(opts \\ []) do
     opts = Macro.prewalk(opts, &Macro.expand(&1, __CALLER__))
 
@@ -272,6 +274,14 @@ defmodule ExAliyunOts do
   @spec describe_table(instance, table :: String.t()) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
   defdelegate describe_table(instance, table), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/53813.html) | [English](https://www.alibabacloud.com/help/doc-detail/53813.html)
+  """
+  @doc table: :table
+  @spec compute_split_points_by_size(instance :: atom(), table :: String.t(), splits_size :: integer()) ::
+          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  defdelegate compute_split_points_by_size(instance, table, splits_size), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/27310.html) | [English](https://www.alibabacloud.com/help/doc-detail/27310.html)
@@ -639,6 +649,8 @@ defmodule ExAliyunOts do
         time_range: 1525942123224,
         direction: :forward
 
+  Also, there is an alternative `stream_range/5` to iteratively get range of rows in stream.
+
   ## Options
 
     * `:direction`, required, the order of fetch data, available options are `:forward` | `:backward`, by it is `:forward`.
@@ -815,8 +827,8 @@ defmodule ExAliyunOts do
 
   ## Options
 
-    * `:search_query`, required, the main option to use Query and Sort.
-      - `:query`, required, bind to the Query functions:
+    * `:search_query`, required, the main option to use query and sort.
+      - `:query`, required, bind to the query functions:
         - `ExAliyunOts.Search.bool_query/1`
         - `ExAliyunOts.Search.exists_query/1`
         - `ExAliyunOts.Search.geo_bounding_box_query/3`
@@ -842,7 +854,8 @@ defmodule ExAliyunOts do
       - `:limit`, optional, the limited size of query.
       - `:offset`, optional, the offset size of query. When the total rows are less or equal than 2000, can both used`:limit` and `:offset` to pagination.
       - `:get_total_count`, optional, return the total count of the all matched rows, by default it is `true`.
-      - `:token`, optional, when do not load all the matched rows in a single request, there will return a `next_token` value in that result, and then we can pass it to `:token` in the next same search query to continue load.
+      - `:token`, optional, when do not load all the matched rows in a single request, there will return a `next_token` value in that result,
+      and then we can pass it to `:token` in the next same search query to continue load the rest rows.
       - `:collapse`, optional, duplicate removal by the specified field, please see official document in [Chinese](https://help.aliyun.com/document_detail/154172.html), please NOTICE that currently there does not support use `:collapse` with `:token` together.
     * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields, here are available options:
       - `:all`, return all attribute column fields;
@@ -867,6 +880,170 @@ defmodule ExAliyunOts do
 
     Client.search(instance, prepared_var)
   end
+
+  @doc """
+  Query current supported maximum number of concurrent tasks to `parallel_scan/4` request.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/153862.html) | [English](https://www.alibabacloud.com/help/doc-detail/153862.htm)
+  """
+  @doc search: :search
+  @spec compute_splits(atom(), String.t(), String.t()) :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  defdelegate compute_splits(instance, table, index_name), to: Client
+
+  @doc """
+  Leverage concurrent tasks to query matched raw data (still be with search function) more quickly, in this use case, this function is improved for speed up
+  scan query, but no guarantee to the order of query results, and does not support the aggregation of scan query.
+
+  In general, recommend to use `iterate_parallel_scan/5` or `iterate_parallel_scan/7` for the common use case of parallel scan.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/153862.html) | [English](https://www.alibabacloud.com/help/doc-detail/153862.htm)
+
+  ## Options
+
+    * `:scan_query`, required, the main option to use query.
+      - `:query`, required, bind to the query functions, the same as query option of `search/4`.
+      - `:limit`, optional, the limited size of query, defaults to 2000, the maximum value of limit is 2000.
+      - `:token`, optional, when do not load all the matched rows in a single request, there will return a `next_token` value in that result,
+      and then we can pass it to `:token` in the next same scan query to continue load the rest rows.
+      - `:max_parallel`, required, the maximum number of concurrent, as the `splits_size` value from the response of `compute_splits/3`.
+      - `:current_parallel_id`, required, refer the official document, the available value is in [0, max_parallel).
+    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields of the search index, here are available options:
+      - `:all_from_index`, return all attribute column fields of search index;
+      - `:none`, do not return any attribute column fields;
+      - `["field1", "field2"]`, specifies the expected return attribute column fields.
+    * `session_id`, as usual, this option is required from the response of `compute_splits/3`, if not set this option, the query result may contain
+    duplicate data, refer the official document, once occurs an `OTSSessionExpired` error, must initiate another parallel scan task to re-query data.
+  """
+  @doc search: :search
+  @spec parallel_scan(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
+          :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  def parallel_scan(instance, table, index_name, options) do
+    request = ExAliyunOts.Search.map_scan_options(table, index_name, options)
+    Client.parallel_scan(instance, request)
+  end
+
+  @doc """
+  A simple wrapper of `stream_parallel_scan/4` to take care `OTSSessionExpired` error with retry, make parallel scan
+  as a stream that applies the given function to the complete result of scan query.
+
+  In general, recommend to use this function for the common use case of parallel scan.
+
+  ## Options
+
+    * `:scan_query`, required, the main option to use query.
+      - `:query`, required, bind to the query functions, the same as query option of `search/5`.
+      - `:limit`, optional, the limited size of query, defaults to 2000, the maximum value of limit is 2000.
+    * `:columns_to_get`, optional, fetch the special fields, by default it returns all fields of the search index, here are available options:
+      - `:all_from_index`, return all attribute column fields of search index;
+      - `:none`, do not return any attribute column fields;
+      - `["field1", "field2"]`, specifies the expected return attribute column fields.
+    * `:timeout`, optional, the `:timeout` option of `Task.async_stream/3`, defaults to `:infinity`.
+
+  ## Example
+
+      def iterate_stream(stream) do
+        Enum.map(stream, fn
+          {:ok, response} ->
+            response
+          {:error, error} ->
+            error
+        end)
+      end
+
+      iterate_parallel_scan(
+        "table",
+        "index",
+        &iterate_stream/1,
+        scan_query: [
+          query: match_query("is_actived", "true"),
+          limit: 1000
+        ],
+        columns_to_get: ["is_actived", "name", "score"]
+      )
+
+  """
+  @doc search: :search
+  @spec iterate_parallel_scan(instance :: atom(), table :: String.t(), index_name :: String.t(),
+          fun :: (term -> term), options :: Keyword.t()) :: term()
+  def iterate_parallel_scan(instance, table, index_name, fun, options) when is_function(fun) do
+    result =
+      instance
+      |> stream_parallel_scan(table, index_name, options)
+      |> fun.()
+    case result do
+      {:error, %ExAliyunOts.Error{code: "OTSSessionExpired"}} ->
+        Logger.info("scan_query session expired, will renew a parallelscan task.")
+        iterate_parallel_scan(instance, table, index_name, fun, options)
+      other ->
+        other
+    end
+  end
+
+  @doc """
+  A simple wrapper of `stream_parallel_scan/4` to take care `OTSSessionExpired` error with retry, make parallel scan
+  as a stream that applies the given function from `module` with the list of arguments `args` to the complete result of scan query.
+
+  In general, recommend to use this function for the common use case of parallel scan.
+
+  ## Options
+
+    Please see options of `iterate_parallel_scan/5`.
+
+  ## Example
+
+      defmodule StreamHandler do
+        def iterate_stream(stream) do
+          Enum.map(stream, fn
+            {:ok, response} ->
+              response
+            {:error, error} ->
+              error
+          end)
+        end
+      end
+
+      iterate_parallel_scan(
+        "table",
+        "index",
+        StreamHandler,
+        :iterate_stream,
+        [],
+        scan_query: [
+          query: match_query("is_actived", "true"),
+          limit: 1000
+        ],
+        columns_to_get: ["field1", "field2"]
+      )
+
+  """
+  @doc search: :search
+  @spec iterate_parallel_scan(instance :: atom(), table :: String.t(), index_name :: String.t(),
+    mod :: module(), fun :: atom(), args :: [term], options :: Keyword.t()) :: term()
+  def iterate_parallel_scan(instance, table, index_name, mod, fun, args, options) do
+    value = stream_parallel_scan(instance, table, index_name, options)
+    case apply(mod, fun, [value | args]) do
+      {:error, %ExAliyunOts.Error{code: "OTSSessionExpired"}} ->
+        Logger.info("scan_query session expired, will renew a parallelscan task.")
+        iterate_parallel_scan(instance, table, index_name, mod, fun, args, options)
+      other ->
+        other
+    end
+  end
+
+  @doc """
+  Integrate `parallel_scan/4` with `compute_splits/3` as a complete use, base on the response of `compute_splits/3` to create the corrsponding
+  number of concurrency task(s), use `Task.async_stream/3` to make parallel scan as a stream which properly process `token`
+  in every request of the internal, when use this function need to consider the possibility of the `OTSSessionExpired` error in the external.
+
+  ## Options
+
+    Please see options of `iterate_parallel_scan/5`.
+  """
+  @doc search: :search
+  @spec stream_parallel_scan(instance :: atom(), table :: String.t(), index_name :: String.t(),
+          options :: Keyword.t()) :: Enumerable.t()
+  defdelegate stream_parallel_scan(instance, table, index_name, options), to: ExAliyunOts.Search
+
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/117477.html) | [English](https://www.alibabacloud.com/help/doc-detail/117477.html)
@@ -1039,6 +1216,7 @@ defmodule ExAliyunOts do
   @doc local_transaction: :local_transaction
   defdelegate abort_transaction(instance, transaction_id), to: Client
 
+
   defp map_options(var, nil), do: var
 
   defp map_options(var, options) do
@@ -1119,4 +1297,5 @@ defmodule ExAliyunOts do
       end
     end)
   end
+
 end

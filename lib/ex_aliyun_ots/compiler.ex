@@ -66,6 +66,10 @@ defmodule ExAliyunOts.Compiler do
       def describe_table(table) do
         ExAliyunOts.describe_table(@instance, table)
       end
+
+      def compute_split_points_by_size(table, split_size) do
+        ExAliyunOts.compute_split_points_by_size(@instance, table, split_size)
+      end
     end
   end
 
@@ -193,6 +197,26 @@ defmodule ExAliyunOts.Compiler do
 
       def describe_search_index(table, index_name) do
         ExAliyunOts.describe_search_index(@instance, table, index_name)
+      end
+
+      def compute_splits(table, index_name) do
+        ExAliyunOts.compute_splits(@instance, table, index_name)
+      end
+
+      def parallel_scan(table, index_name, opts \\ []) do
+        ExAliyunOts.parallel_scan(@instance, table, index_name, opts)
+      end
+
+      def iterate_parallel_scan(table, index_name, fun, opts \\ []) when is_function(fun) do
+        ExAliyunOts.iterate_parallel_scan(@instance, table, index_name, fun, opts)
+      end
+
+      def iterate_parallel_scan(table, index_name, module, function_name, args, opts \\ []) do
+        ExAliyunOts.iterate_parallel_scan(@instance, table, index_name, module, function_name, args, opts)
+      end
+
+      def stream_parallel_scan(table, index_name, opts \\ []) do
+        ExAliyunOts.stream_parallel_scan(@instance, table, index_name, opts)
       end
     end
   end
