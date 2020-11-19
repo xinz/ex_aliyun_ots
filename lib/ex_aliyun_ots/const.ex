@@ -133,6 +133,13 @@ defmodule ExAliyunOts.Const.RowExistence do
   const(:expect_exist, :EXPECT_EXIST)
   const(:expect_not_exist, :EXPECT_NOT_EXIST)
   const(:supported, [:IGNORE, :EXPECT_EXIST, :EXPECT_NOT_EXIST])
+
+  def mapping,
+    do: %{
+      ignore: :IGNORE,
+      expect_exist: :EXPECT_EXIST,
+      expect_not_exist: :EXPECT_NOT_EXIST
+    }
 end
 
 defmodule ExAliyunOts.Const.FilterType do
@@ -151,18 +158,19 @@ defmodule ExAliyunOts.Const.LogicOperator do
   const(:not, :LO_NOT)
   const(:and, :LO_AND)
   const(:or, :LO_OR)
+  def mapping, do: %{not: :LO_NOT, and: :LO_AND, or: :LO_OR}
 end
 
 defmodule ExAliyunOts.Const.ComparatorType do
   @moduledoc false
   import ExAliyunOts.Constants
 
-  const(:eq, :CT_EQUAL)
-  const(:not_eq, :CT_NOT_EQUAL)
-  const(:gt, :CT_GREATER_THAN)
-  const(:ge, :CT_GREATER_EQUAL)
-  const(:lt, :CT_LESS_THAN)
-  const(:le, :CT_LESS_EQUAL)
+  const(:equal, :CT_EQUAL)
+  const(:not_equal, :CT_NOT_EQUAL)
+  const(:greater_than, :CT_GREATER_THAN)
+  const(:greater_equal, :CT_GREATER_EQUAL)
+  const(:less_than, :CT_LESS_THAN)
+  const(:less_equal, :CT_LESS_EQUAL)
 end
 
 defmodule ExAliyunOts.Const.Search.FieldType do

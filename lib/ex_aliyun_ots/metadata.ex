@@ -1,3 +1,5 @@
+alias ExAliyunOts.TableStore.Condition
+
 defmodule ExAliyunOts.RuntimeError do
   @moduledoc false
   defexception [:message, :error_code]
@@ -46,44 +48,14 @@ defmodule ExAliyunOts.Var.TimeRange do
   defstruct [:start_time, :end_time, :specific_time]
 end
 
-defmodule ExAliyunOts.Var.Filter do
-  @moduledoc false
-  defstruct [:filter, :filter_type]
-end
-
-defmodule ExAliyunOts.Var.CompositeColumnValueFilter do
-  @moduledoc false
-  defstruct combinator: nil, sub_filters: []
-end
-
-defmodule ExAliyunOts.Var.ColumnPaginationFilter do
-  @moduledoc false
-  defstruct offset: 0, limit: 0
-end
-
-defmodule ExAliyunOts.Var.SingleColumnValueFilter do
-  @moduledoc false
-  defstruct comparator: nil,
-            column_name: nil,
-            column_value: nil,
-            ignore_if_missing: false,
-            latest_version_only: true
-end
-
-defmodule ExAliyunOts.Var.Condition do
-  @moduledoc false
-  defstruct row_existence: nil, column_condition: nil
-end
-
 defmodule ExAliyunOts.Var.UpdateRow do
   @moduledoc false
-  alias ExAliyunOts.Const.ReturnType
-  require ReturnType
+  require ExAliyunOts.Const.ReturnType, as: ReturnType
 
   defstruct table_name: "",
             primary_keys: [],
             updates: %{},
-            condition: %ExAliyunOts.Var.Condition{},
+            condition: %Condition{},
             return_type: ReturnType.none(),
             return_columns: [],
             transaction_id: nil
@@ -91,13 +63,12 @@ end
 
 defmodule ExAliyunOts.Var.PutRow do
   @moduledoc false
-  alias ExAliyunOts.Const.ReturnType
-  require ReturnType
+  require ExAliyunOts.Const.ReturnType, as: ReturnType
 
   defstruct table_name: "",
             primary_keys: [],
             attribute_columns: [],
-            condition: %ExAliyunOts.Var.Condition{},
+            condition: %Condition{},
             return_type: ReturnType.none(),
             transaction_id: nil
 end
@@ -117,12 +88,11 @@ end
 
 defmodule ExAliyunOts.Var.DeleteRow do
   @moduledoc false
-  alias ExAliyunOts.Const.ReturnType
-  require ReturnType
+  require ExAliyunOts.Const.ReturnType, as: ReturnType
 
   defstruct table_name: "",
             primary_keys: [],
-            condition: %ExAliyunOts.Var.Condition{},
+            condition: %Condition{},
             return_type: ReturnType.none(),
             transaction_id: nil
 end
@@ -136,12 +106,14 @@ defmodule ExAliyunOts.Var.CreateTable do
   @moduledoc false
   defstruct table_name: "",
             primary_keys: [],
+            defined_columns: [],
             reserved_throughput_write: 0,
             reserved_throughput_read: 0,
             time_to_live: -1,
             max_versions: 1,
             deviation_cell_version_in_sec: 86_400,
-            stream_spec: %ExAliyunOts.Var.StreamSpec{}
+            stream_spec: %ExAliyunOts.Var.StreamSpec{},
+            index_metas: []
 end
 
 defmodule ExAliyunOts.Var.UpdateTable do
@@ -157,8 +129,7 @@ end
 
 defmodule ExAliyunOts.Var.GetRange do
   @moduledoc false
-  alias ExAliyunOts.Const.Direction
-  require Direction
+  require ExAliyunOts.Const.Direction, as: Direction
 
   defstruct table_name: "",
             direction: Direction.forward(),
@@ -176,13 +147,12 @@ end
 
 defmodule ExAliyunOts.Var.RowInBatchWriteRequest do
   @moduledoc false
-  alias ExAliyunOts.Const.ReturnType
-  require ReturnType
+  require ExAliyunOts.Const.ReturnType, as: ReturnType
 
   defstruct type: nil,
             primary_keys: [],
             updates: nil,
-            condition: %ExAliyunOts.Var.Condition{},
+            condition: %Condition{},
             return_type: ReturnType.none(),
             return_columns: []
 end
@@ -237,8 +207,7 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule FieldSchema do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.FieldType
-    require FieldType
+    require ExAliyunOts.Const.Search.FieldType, as: FieldType
 
     defstruct field_name: "",
               field_type: FieldType.keyword(),
@@ -253,16 +222,14 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule FieldSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct field_name: "", order: SortOrder.asc(), mode: nil, nested_filter: nil
   end
 
   defmodule GeoDistanceSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.{SortOrder, GeoDistanceType}
-    require SortOrder
-    require GeoDistanceType
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
+    require ExAliyunOts.Const.Search.GeoDistanceType, as: GeoDistanceType
 
     defstruct field_name: "",
               points: [],
@@ -279,22 +246,19 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule ScoreSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.asc()
   end
 
   defmodule PrimaryKeySort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.asc()
   end
 
   defmodule ColumnsToGet do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.ColumnReturnType
-    require ColumnReturnType
+    require ExAliyunOts.Const.Search.ColumnReturnType, as: ColumnReturnType
     defstruct return_type: ColumnReturnType.all(), column_names: []
   end
 
@@ -390,8 +354,7 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule NestedQuery do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.ScoreMode
-    require ScoreMode
+    require ExAliyunOts.Const.Search.ScoreMode, as: ScoreMode
 
     # `score_mode`:
     # 多值字段获取文档得分的模式，一个字段多个值的情况下，采用哪个值来进行排序
@@ -452,22 +415,19 @@ defmodule ExAliyunOts.Var.Search do
 
   defmodule GroupKeySort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.asc()
   end
 
   defmodule RowCountSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.asc()
   end
 
   defmodule SubAggSort do
     @moduledoc false
-    alias ExAliyunOts.Const.Search.SortOrder
-    require SortOrder
+    require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.desc(), sub_agg_name: nil
   end
 

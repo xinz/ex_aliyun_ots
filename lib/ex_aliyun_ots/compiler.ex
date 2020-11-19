@@ -26,6 +26,31 @@ defmodule ExAliyunOts.Compiler do
         ExAliyunOts.create_table(@instance, table, pk_keys, opts)
       end
 
+      def create_index(
+            table,
+            index_name,
+            pk_keys,
+            defined_columns,
+            include_base_data \\ true
+          ) do
+        ExAliyunOts.create_index(
+          @instance,
+          table,
+          index_name,
+          pk_keys,
+          defined_columns,
+          include_base_data
+        )
+      end
+
+      def create_index(table, index_meta, include_base_data \\ true) do
+        ExAliyunOts.create_index(@instance, table, index_meta, include_base_data)
+      end
+
+      def delete_index(table, index_name) do
+        ExAliyunOts.delete_index(@instance, table, index_name)
+      end
+
       def delete_table(table) do
         ExAliyunOts.delete_table(@instance, table)
       end

@@ -1,53 +1,59 @@
 defmodule ExAliyunOts.MixinTest.Filter do
   use ExUnit.Case
+  use ExAliyunOts.Constants
+  import ExAliyunOts.DSL, only: [filter: 1]
 
-  import ExAliyunOts
+  alias ExAliyunOts.TableStoreFilter.{
+    Filter,
+    SingleColumnValueFilter,
+    CompositeColumnValueFilter
+  }
 
-  @result %ExAliyunOts.Var.Filter{
-    filter: %ExAliyunOts.Var.CompositeColumnValueFilter{
-      combinator: :LO_OR,
+  @result %Filter{
+    filter: %CompositeColumnValueFilter{
+      combinator: LogicOperator.or(),
       sub_filters: [
-        %ExAliyunOts.Var.Filter{
-          filter: %ExAliyunOts.Var.CompositeColumnValueFilter{
-            combinator: :LO_AND,
+        %Filter{
+          filter: %CompositeColumnValueFilter{
+            combinator: LogicOperator.and(),
             sub_filters: [
-              %ExAliyunOts.Var.Filter{
-                filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+              %Filter{
+                filter: %SingleColumnValueFilter{
                   column_name: "name",
                   column_value: "updated_attr21",
-                  comparator: :CT_EQUAL,
-                  ignore_if_missing: true,
+                  comparator: ComparatorType.equal(),
+                  filter_if_missing: false,
                   latest_version_only: true
                 },
-                filter_type: :FT_SINGLE_COLUMN_VALUE
+                type: FilterType.single_column()
               },
-              %ExAliyunOts.Var.Filter{
-                filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+              %Filter{
+                filter: %SingleColumnValueFilter{
                   column_name: "age",
                   column_value: 1,
-                  comparator: :CT_GREATER_THAN,
-                  ignore_if_missing: false,
+                  comparator: ComparatorType.greater_than(),
+                  filter_if_missing: true,
                   latest_version_only: true
                 },
-                filter_type: :FT_SINGLE_COLUMN_VALUE
+                type: FilterType.single_column()
               }
             ]
           },
-          filter_type: :FT_COMPOSITE_COLUMN_VALUE
+          type: FilterType.composite_column()
         },
-        %ExAliyunOts.Var.Filter{
-          filter: %ExAliyunOts.Var.SingleColumnValueFilter{
+        %Filter{
+          filter: %SingleColumnValueFilter{
             column_name: "class",
             column_value: "1",
-            comparator: :CT_EQUAL,
-            ignore_if_missing: false,
+            comparator: ComparatorType.equal(),
+            filter_if_missing: true,
             latest_version_only: true
           },
-          filter_type: :FT_SINGLE_COLUMN_VALUE
+          type: FilterType.single_column()
         }
       ]
     },
-    filter_type: :FT_COMPOSITE_COLUMN_VALUE
+    type: FilterType.composite_column()
   }
 
   test "filter" do

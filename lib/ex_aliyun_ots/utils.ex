@@ -89,4 +89,6 @@ defmodule ExAliyunOts.Utils do
   defp assemble_attribute_column(_, acc) do
     acc
   end
+
+  def downcase_atom(atom), do: atom |> to_string() |> String.downcase() |> String.to_atom()
 end

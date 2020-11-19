@@ -2,16 +2,13 @@ defmodule ExAliyunOts.Timeline.Meta do
   @moduledoc """
   Tablestore Timeline meta implements.
   """
-
+  use ExAliyunOts.Constants
+  import ExAliyunOts.Utils.Guards
+  import ExAliyunOts.DSL, only: [condition: 1]
+  require Logger
   alias ExAliyunOts.{Client, Var, Utils}
   alias ExAliyunOts.Var.Search
   alias __MODULE__
-
-  use ExAliyunOts.Constants
-
-  import ExAliyunOts.Utils.Guards
-
-  require Logger
 
   @fields_max_size 4
 
@@ -248,9 +245,7 @@ defmodule ExAliyunOts.Timeline.Meta do
       table_name: table_name,
       primary_keys: identifier,
       attribute_columns: Utils.attrs_to_row(info),
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      },
+      condition: condition(:ignore),
       return_type: ReturnType.pk()
     }
 
@@ -290,9 +285,7 @@ defmodule ExAliyunOts.Timeline.Meta do
       updates: %{
         OperationType.put() => Utils.attrs_to_row(info)
       },
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      }
+      condition: condition(:ignore)
     }
 
     Client.update_row(instance, var_update_row)
@@ -326,9 +319,7 @@ defmodule ExAliyunOts.Timeline.Meta do
     var_delete_row = %Var.DeleteRow{
       table_name: table_name,
       primary_keys: identifier,
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      }
+      condition: condition(:ignore)
     }
 
     Client.delete_row(instance, var_delete_row)

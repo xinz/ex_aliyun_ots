@@ -1,27 +1,10 @@
 defmodule ExAliyunOtsTest.Filter do
   use ExUnit.Case
-
+  use ExAliyunOts.Constants
   require Logger
-
   alias ExAliyunOts.Var
-
-  alias ExAliyunOts.Const.{
-    PKType,
-    OperationType,
-    ReturnType,
-    RowExistence,
-    FilterType,
-    ComparatorType,
-    LogicOperator
-  }
-
-  require PKType
-  require OperationType
-  require ReturnType
-  require RowExistence
-  require FilterType
-  require ComparatorType
-  require LogicOperator
+  alias ExAliyunOts.TableStore.Condition
+  alias ExAliyunOts.TableStoreFilter.{Filter, SingleColumnValueFilter, CompositeColumnValueFilter}
 
   @instance_key EDCEXTestInstance
 
@@ -42,17 +25,18 @@ defmodule ExAliyunOtsTest.Filter do
     # `ignore_if_missing`: true, if the filter is not matched/existed, we will ignore this filter condition, and make the corresponding update continuing happened.
     id = "1"
 
-    filter = %Var.Filter{
-      filter_type: FilterType.single_column(),
-      filter: %Var.SingleColumnValueFilter{
-        comparator: ComparatorType.eq(),
+    filter = %Filter{
+      type: FilterType.single_column(),
+      filter: %SingleColumnValueFilter{
+        comparator: ComparatorType.equal(),
         column_name: "counter",
         column_value: 1,
-        ignore_if_missing: false
+        filter_if_missing: true,
+        latest_version_only: true
       }
     }
 
-    condition = %Var.Condition{
+    condition = %Condition{
       row_existence: RowExistence.ignore(),
       column_condition: filter
     }
@@ -73,7 +57,7 @@ defmodule ExAliyunOtsTest.Filter do
     assert error.code == "OTSConditionCheckFail"
 
     id = "2"
-    filter = %{filter | filter: %{filter.filter | ignore_if_missing: true}}
+    filter = %{filter | filter: %{filter.filter | filter_if_missing: false}}
     condition = %{condition | column_condition: filter}
 
     var_update_row = %{
@@ -93,39 +77,43 @@ defmodule ExAliyunOtsTest.Filter do
       table_name: table_name,
       primary_keys: [{"id", id}],
       attribute_columns: [{"counter", 2}, {"name", "tmp_name"}],
-      condition: %Var.Condition{
+      condition: %Condition{
         row_existence: RowExistence.ignore()
       }
     }
 
     {:ok, _result} = ExAliyunOts.Client.put_row(@instance_key, var_put_row)
 
-    filter = %Var.Filter{
-      filter_type: FilterType.composite_column(),
-      filter: %Var.CompositeColumnValueFilter{
+    filter = %Filter{
+      type: FilterType.composite_column(),
+      filter: %CompositeColumnValueFilter{
         combinator: LogicOperator.and(),
         sub_filters: [
-          %Var.Filter{
-            filter_type: FilterType.single_column(),
-            filter: %Var.SingleColumnValueFilter{
-              comparator: ComparatorType.eq(),
+          %Filter{
+            type: FilterType.single_column(),
+            filter: %SingleColumnValueFilter{
+              comparator: ComparatorType.equal(),
               column_name: "name",
-              column_value: "tmp_name"
+              column_value: "tmp_name",
+              filter_if_missing: true,
+              latest_version_only: true
             }
           },
-          %Var.Filter{
-            filter_type: FilterType.single_column(),
-            filter: %Var.SingleColumnValueFilter{
-              comparator: ComparatorType.gt(),
+          %Filter{
+            type: FilterType.single_column(),
+            filter: %SingleColumnValueFilter{
+              comparator: ComparatorType.greater_than(),
               column_name: "counter",
-              column_value: 1
+              column_value: 1,
+              filter_if_missing: true,
+              latest_version_only: true
             }
           }
         ]
       }
     }
 
-    condition = %Var.Condition{
+    condition = %Condition{
       row_existence: RowExistence.ignore(),
       column_condition: filter
     }

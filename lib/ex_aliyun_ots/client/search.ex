@@ -116,11 +116,11 @@ defmodule ExAliyunOts.Client.Search do
   @variant_type_boolean 0x2
   @variant_type_string 0x3
 
-  def request_to_create_search_index(%Search.CreateSearchIndexRequest{
-        table_name: table_name,
-        index_name: index_name,
-        index_schema: index_schema
-      }) do
+  defp request_to_create_search_index(%Search.CreateSearchIndexRequest{
+         table_name: table_name,
+         index_name: index_name,
+         index_schema: index_schema
+       }) do
     proto_field_schemas =
       Enum.map(index_schema.field_schemas, fn field_schema ->
         iterate_all_field_schemas(field_schema)
@@ -146,21 +146,23 @@ defmodule ExAliyunOts.Client.Search do
     CreateSearchIndexRequest.encode(request)
   end
 
-  def remote_create_search_index(instance, request_body) do
+  def remote_create_search_index(instance, var_create_search_index) do
+    request_body = request_to_create_search_index(var_create_search_index)
+
     instance
     |> Http.client("/CreateSearchIndex", request_body, &CreateSearchIndexResponse.decode/1)
     |> Http.post()
   end
 
-  def request_to_search(%Search.SearchRequest{
-        table_name: table_name,
-        index_name: index_name,
-        columns_to_get: %Search.ColumnsToGet{
-          return_type: return_type,
-          column_names: column_names
-        },
-        search_query: search_query
-      }) do
+  defp request_to_search(%Search.SearchRequest{
+         table_name: table_name,
+         index_name: index_name,
+         columns_to_get: %Search.ColumnsToGet{
+           return_type: return_type,
+           column_names: column_names
+         },
+         search_query: search_query
+       }) do
     proto_search_query =
       SearchQuery.new(
         offset: search_query.offset,
@@ -191,47 +193,58 @@ defmodule ExAliyunOts.Client.Search do
     SearchRequest.encode(request)
   end
 
-  def remote_search(instance, request_body) do
-    instance
-    |> Http.client("/Search", request_body, &decode_search_response/1)
-    |> Http.post()
+  def remote_search(instance, var_search_request) do
+    request_body = request_to_search(var_search_request)
+
+    result =
+      instance
+      |> Http.client("/Search", request_body, &decode_search_response/1)
+      |> Http.post()
+
+    result
   end
 
-  def request_to_delete_search_index(%Search.DeleteSearchIndexRequest{
-        table_name: table_name,
-        index_name: index_name
-      }) do
+  defp request_to_delete_search_index(%Search.DeleteSearchIndexRequest{
+         table_name: table_name,
+         index_name: index_name
+       }) do
     [table_name: table_name, index_name: index_name]
     |> DeleteSearchIndexRequest.new()
     |> DeleteSearchIndexRequest.encode()
   end
 
-  def remote_delete_search_index(instance, request_body) do
+  def remote_delete_search_index(instance, var_delete_search_index) do
+    request_body = request_to_delete_search_index(var_delete_search_index)
+
     instance
     |> Http.client("/DeleteSearchIndex", request_body, &DeleteSearchIndexResponse.decode/1)
     |> Http.post()
   end
 
-  def request_to_list_search_index(table_name) do
+  defp request_to_list_search_index(table_name) do
     ListSearchIndexRequest.new(table_name: table_name) |> ListSearchIndexRequest.encode()
   end
 
-  def remote_list_search_index(instance, request_body) do
+  def remote_list_search_index(instance, table_name) do
+    request_body = request_to_list_search_index(table_name)
+
     instance
     |> Http.client("/ListSearchIndex", request_body, &ListSearchIndexResponse.decode/1)
     |> Http.post()
   end
 
-  def request_to_describe_search_index(%Search.DescribeSearchIndexRequest{
-        table_name: table_name,
-        index_name: index_name
-      }) do
+  defp request_to_describe_search_index(%Search.DescribeSearchIndexRequest{
+         table_name: table_name,
+         index_name: index_name
+       }) do
     [table_name: table_name, index_name: index_name]
     |> DescribeSearchIndexRequest.new()
     |> DescribeSearchIndexRequest.encode()
   end
 
-  def remote_describe_search_index(instance, request_body) do
+  def remote_describe_search_index(instance, var_describe_search_index) do
+    request_body = request_to_describe_search_index(var_describe_search_index)
+
     instance
     |> Http.client("/DescribeSearchIndex", request_body, &DescribeSearchIndexResponse.decode/1)
     |> Http.post()

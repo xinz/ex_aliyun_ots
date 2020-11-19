@@ -5,7 +5,6 @@ defmodule ExAliyunOts.Client.Row do
 
   alias ExAliyunOts.TableStore.{
     PutRowRequest,
-    Condition,
     PutRowResponse,
     ReturnContent,
     TimeRange,
@@ -26,34 +25,16 @@ defmodule ExAliyunOts.Client.Row do
     DeleteRowResponse
   }
 
-  alias ExAliyunOts.TableStoreFilter.{
-    Filter,
-    ColumnPaginationFilter,
-    CompositeColumnValueFilter,
-    SingleColumnValueFilter
-  }
-
-  alias ExAliyunOts.{PlainBuffer, Var, Http}
-  alias ExAliyunOts.Const.{OperationType, ReturnType, RowExistence}
+  alias ExAliyunOts.{PlainBuffer, Var, Http, Filter}
+  alias ExAliyunOts.Const.{OperationType, ReturnType}
 
   require OperationType
   require ReturnType
-  require RowExistence
 
   @batch_write_limit_per_request 200
 
-  def request_to_put_row(var_put_row) do
-    %Var.Condition{row_existence: row_existence, column_condition: column_condition} =
-      var_put_row.condition
-
-    if row_existence not in RowExistence.supported() do
-      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect(row_existence)}"
-    end
-
-    column_condition = filter_to_bytes(column_condition)
-
-    proto_condition =
-      Condition.new(row_existence: row_existence, column_condition: column_condition)
+  defp request_to_put_row(var_put_row) do
+    proto_condition = Map.update!(var_put_row.condition, :column_condition, &Filter.serialize_filter/1)
 
     serialized_row =
       PlainBuffer.serialize_for_put_row(var_put_row.primary_keys, var_put_row.attribute_columns)
@@ -69,25 +50,22 @@ defmodule ExAliyunOts.Client.Row do
     |> PutRowRequest.encode()
   end
 
-  def remote_put_row(instance, request_body) do
+  def remote_put_row(instance, var_put_row) do
+    request_body = request_to_put_row(var_put_row)
+
     result =
       instance
       |> Http.client("/PutRow", request_body, &PutRowResponse.decode/1)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "put_row result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["put_row result: ", inspect(result)] end)
 
     result
   end
 
-  def request_to_get_row(var_get_row) do
+  defp request_to_get_row(var_get_row) do
     primary_keys = PlainBuffer.serialize_primary_keys(var_get_row.primary_keys)
-    filter = filter_to_bytes(var_get_row.filter)
+    filter = Filter.serialize_filter(var_get_row.filter)
 
     get_row_request =
       GetRowRequest.new(
@@ -115,37 +93,24 @@ defmodule ExAliyunOts.Client.Row do
     GetRowRequest.encode(get_row_request)
   end
 
-  def remote_get_row(instance, request_body) do
+  def remote_get_row(instance, var_get_row) do
+    request_body = request_to_get_row(var_get_row)
+
     result =
       instance
       |> Http.client("/GetRow", request_body, &GetRowResponse.decode/1)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "get_row result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["get_row result: ", inspect(result)] end)
 
     result
   end
 
-  def request_to_update_row(var_update_row) do
+  defp request_to_update_row(var_update_row) do
     serialized_row =
       PlainBuffer.serialize_for_update_row(var_update_row.primary_keys, var_update_row.updates)
 
-    %Var.Condition{row_existence: row_existence, column_condition: column_condition} =
-      var_update_row.condition
-
-    if row_existence not in RowExistence.supported() do
-      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect(row_existence)}"
-    end
-
-    column_condition = filter_to_bytes(column_condition)
-
-    proto_condition =
-      Condition.new(row_existence: row_existence, column_condition: column_condition)
+    proto_condition = Map.update!(var_update_row.condition, :column_condition, &Filter.serialize_filter/1)
 
     [
       table_name: var_update_row.table_name,
@@ -158,36 +123,23 @@ defmodule ExAliyunOts.Client.Row do
     |> UpdateRowRequest.encode()
   end
 
-  def remote_update_row(instance, request_body) do
+  def remote_update_row(instance, var_update_row) do
+    request_body = request_to_update_row(var_update_row)
+
     result =
       instance
       |> Http.client("/UpdateRow", request_body, &UpdateRowResponse.decode/1)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "update_row result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["update_row result: ", inspect(result)] end)
 
     result
   end
 
-  def request_to_delete_row(var_delete_row) do
+  defp request_to_delete_row(var_delete_row) do
     serialized_primary_keys = PlainBuffer.serialize_for_delete_row(var_delete_row.primary_keys)
 
-    %Var.Condition{row_existence: row_existence, column_condition: column_condition} =
-      var_delete_row.condition
-
-    if row_existence not in RowExistence.supported() do
-      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect(row_existence)}"
-    end
-
-    column_condition = filter_to_bytes(column_condition)
-
-    proto_condition =
-      Condition.new(row_existence: row_existence, column_condition: column_condition)
+    proto_condition = Map.update!(var_delete_row.condition, :column_condition, &Filter.serialize_filter/1)
 
     [
       table_name: var_delete_row.table_name,
@@ -200,23 +152,20 @@ defmodule ExAliyunOts.Client.Row do
     |> DeleteRowRequest.encode()
   end
 
-  def remote_delete_row(instance, request_body) do
+  def remote_delete_row(instance, var_delete_row) do
+    request_body = request_to_delete_row(var_delete_row)
+
     result =
       instance
       |> Http.client("/DeleteRow", request_body, &DeleteRowResponse.decode/1)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "delete_row result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["delete_row result: ", inspect(result)] end)
 
     result
   end
 
-  def request_to_get_range(var_get_range, next_start_primary_key \\ nil) do
+  defp request_to_get_range(var_get_range, next_start_primary_key) do
     parameter_time_range = var_get_range.time_range
 
     prepared_inclusive_start_primary_keys =
@@ -229,7 +178,7 @@ defmodule ExAliyunOts.Client.Row do
     prepared_exclusive_end_primary_keys =
       PlainBuffer.serialize_primary_keys(var_get_range.exclusive_end_primary_keys)
 
-    filter = filter_to_bytes(var_get_range.filter)
+    filter = Filter.serialize_filter(var_get_range.filter)
 
     get_range_request =
       GetRangeRequest.new(
@@ -258,23 +207,20 @@ defmodule ExAliyunOts.Client.Row do
     GetRangeRequest.encode(get_range_request)
   end
 
-  def remote_get_range(instance, request_body) do
+  def remote_get_range(instance, var_get_range, next_start_primary_key \\ nil) do
+    request_body = request_to_get_range(var_get_range, next_start_primary_key)
+
     result =
       instance
       |> Http.client("/GetRange", request_body, &GetRangeResponse.decode/1)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "get_range result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["get_range result: ", inspect(result)] end)
 
     result
   end
 
-  def request_to_batch_get_row(vars_batch_get_row) do
+  defp request_to_batch_get_row(vars_batch_get_row) do
     stream =
       Task.async_stream(
         vars_batch_get_row,
@@ -291,7 +237,7 @@ defmodule ExAliyunOts.Client.Row do
 
   defp do_request_to_batch_get_row(var_batch_get_row) do
     bytes_primary_keys = pks_to_batch_get_row(var_batch_get_row.primary_keys)
-    filter = filter_to_bytes(var_batch_get_row.filter)
+    filter = Filter.serialize_filter(var_batch_get_row.filter)
 
     batch_get_row_request =
       TableInBatchGetRowRequest.new(
@@ -340,7 +286,9 @@ defmodule ExAliyunOts.Client.Row do
           "Invalid primary_keys #{inspect(primary_keys)}, expect it as list"
   end
 
-  def remote_batch_get_row(instance, request_body) do
+  def remote_batch_get_row(instance, vars_batch_get_row) do
+    request_body = request_to_batch_get_row(vars_batch_get_row)
+
     result =
       instance
       |> Http.client("/BatchGetRow", request_body, fn response_body ->
@@ -350,12 +298,7 @@ defmodule ExAliyunOts.Client.Row do
       end)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "batch_get_row result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["batch_get_row result: ", inspect(result)] end)
 
     result
   end
@@ -376,7 +319,7 @@ defmodule ExAliyunOts.Client.Row do
     |> Enum.map(fn {:ok, response} -> response end)
   end
 
-  def request_to_batch_write_row(vars_batch_write_row, nil) when is_list(vars_batch_write_row) do
+  defp request_to_batch_write_row(vars_batch_write_row, nil) when is_list(vars_batch_write_row) do
     # BatchWriteRow for multi tables with local transaction are not supported.
     tables =
       Enum.map(vars_batch_write_row, fn var_batch_write_row ->
@@ -387,13 +330,13 @@ defmodule ExAliyunOts.Client.Row do
     BatchWriteRowRequest.encode(request)
   end
 
-  def request_to_batch_write_row([var_batch_write_row], transaction_id)
-      when is_map(var_batch_write_row) do
+  defp request_to_batch_write_row([var_batch_write_row], transaction_id)
+       when is_map(var_batch_write_row) do
     request_to_batch_write_row(var_batch_write_row, transaction_id)
   end
 
-  def request_to_batch_write_row(var_batch_write_row, transaction_id)
-      when is_map(var_batch_write_row) do
+  defp request_to_batch_write_row(var_batch_write_row, transaction_id)
+       when is_map(var_batch_write_row) do
     table = map_table_in_batch_write_row_request(var_batch_write_row)
     request = BatchWriteRowRequest.new(tables: [table], transaction_id: transaction_id)
     BatchWriteRowRequest.encode(request)
@@ -411,36 +354,25 @@ defmodule ExAliyunOts.Client.Row do
           } limit"
         )
 
-    stream =
-      Task.async_stream(
-        var_batch_write_row.rows,
+    encoded_rows =
+      rows
+      |> Task.async_stream(
         fn var_row_in_request ->
           do_request_to_batch_write_row(var_row_in_request)
         end,
         timeout: :infinity
       )
-
-    encoded_rows = Enum.map(stream, fn {:ok, request} -> request end)
-    table_name = var_batch_write_row.table_name
+      |> Enum.map(fn {:ok, request} -> request end)
 
     TableInBatchWriteRowRequest.new(
-      table_name: table_name,
+      table_name: var_batch_write_row.table_name,
       rows: encoded_rows
     )
   end
 
   defp do_request_to_batch_write_row(var_row_in_request) do
-    %Var.Condition{row_existence: row_existence, column_condition: column_condition} =
-      var_row_in_request.condition
-
-    if row_existence not in RowExistence.supported() do
-      raise ExAliyunOts.RuntimeError, "Invalid row_existence: #{inspect(row_existence)}"
-    end
-
-    column_condition = filter_to_bytes(column_condition)
-
     proto_condition =
-      Condition.new(row_existence: row_existence, column_condition: column_condition)
+      Map.update!(var_row_in_request.condition, :column_condition, &Filter.serialize_filter/1)
 
     type = var_row_in_request.type
 
@@ -471,7 +403,9 @@ defmodule ExAliyunOts.Client.Row do
     |> map_return_content(var_row_in_request.return_type, var_row_in_request.return_columns)
   end
 
-  def remote_batch_write_row(instance, request_body) do
+  def remote_batch_write_row(instance, var_batch_write_row, transaction_id) do
+    request_body = request_to_batch_write_row(var_batch_write_row, transaction_id)
+
     result =
       instance
       |> Http.client("/BatchWriteRow", request_body, fn response_body ->
@@ -481,12 +415,7 @@ defmodule ExAliyunOts.Client.Row do
       end)
       |> Http.post()
 
-    debug(fn ->
-      [
-        "batch_write_row result: ",
-        inspect(result)
-      ]
-    end)
+    debug(fn -> ["batch_write_row result: ", inspect(result)] end)
 
     result
   end
@@ -505,96 +434,6 @@ defmodule ExAliyunOts.Client.Row do
       timeout: :infinity
     )
     |> Enum.map(fn {:ok, response} -> response end)
-  end
-
-  defp filter_to_bytes(nil) do
-    nil
-  end
-
-  defp filter_to_bytes(
-         %Var.Filter{filter: %Var.CompositeColumnValueFilter{}, filter_type: filter_type} =
-           var_filter
-       ) do
-    encoded_filter = var_filter |> filter_to_protobuf() |> CompositeColumnValueFilter.encode()
-    Filter.encode(Filter.new(type: filter_type, filter: encoded_filter))
-  end
-
-  defp filter_to_bytes(
-         %Var.Filter{filter: %Var.ColumnPaginationFilter{}, filter_type: filter_type} = var_filter
-       ) do
-    encoded_filter = var_filter |> filter_to_protobuf() |> ColumnPaginationFilter.encode()
-    Filter.encode(Filter.new(type: filter_type, filter: encoded_filter))
-  end
-
-  defp filter_to_bytes(
-         %Var.Filter{filter: %Var.SingleColumnValueFilter{}, filter_type: filter_type} =
-           var_filter
-       ) do
-    encoded_filter = var_filter |> filter_to_protobuf() |> SingleColumnValueFilter.encode()
-    Filter.encode(Filter.new(type: filter_type, filter: encoded_filter))
-  end
-
-  defp filter_to_bytes(%Var.Filter{filter: invalid_filter}) do
-    raise ExAliyunOts.RuntimeError, "Not supported filter: #{inspect(invalid_filter)}"
-  end
-
-  defp filter_to_protobuf(
-         %Var.Filter{filter: filter, filter_type: filter_type},
-         is_sub_filter \\ false
-       ) do
-    case filter do
-      %Var.CompositeColumnValueFilter{} ->
-        prepared_sub_filters =
-          Enum.map(filter.sub_filters, fn sub_filter ->
-            filter_to_protobuf(sub_filter, true)
-          end)
-
-        if prepared_sub_filters == [],
-          do:
-            raise(
-              ExAliyunOts.RuntimeError,
-              "Invalid filter for CompositeColumnValueFilter: #{inspect(filter)}"
-            )
-
-        proto_filter =
-          CompositeColumnValueFilter.new(
-            combinator: filter.combinator,
-            sub_filters: prepared_sub_filters
-          )
-
-        if is_sub_filter do
-          Filter.new(type: filter_type, filter: CompositeColumnValueFilter.encode(proto_filter))
-        else
-          proto_filter
-        end
-
-      %Var.ColumnPaginationFilter{} ->
-        proto_filter = ColumnPaginationFilter.new(offset: filter.offset, limit: filter.limit)
-
-        if is_sub_filter do
-          Filter.new(type: filter_type, filter: ColumnPaginationFilter.encode(proto_filter))
-        else
-          proto_filter
-        end
-
-      %Var.SingleColumnValueFilter{} ->
-        column_value = PlainBuffer.serialize_column_value(filter.column_value)
-
-        proto_filter =
-          SingleColumnValueFilter.new(
-            comparator: filter.comparator,
-            column_name: filter.column_name,
-            column_value: column_value,
-            filter_if_missing: not filter.ignore_if_missing,
-            latest_version_only: filter.latest_version_only
-          )
-
-        if is_sub_filter do
-          Filter.new(type: filter_type, filter: SingleColumnValueFilter.encode(proto_filter))
-        else
-          proto_filter
-        end
-    end
   end
 
   defp prepare_time_range(%Var.TimeRange{

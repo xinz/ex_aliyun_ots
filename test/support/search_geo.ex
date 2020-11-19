@@ -1,12 +1,11 @@
 defmodule ExAliyunOtsTest.Support.SearchGeo do
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
   alias ExAliyunOts.{Var, Client}
   alias ExAliyunOts.Var.Search
-  alias ExAliyunOts.Const.{PKType, RowExistence}
+  alias ExAliyunOts.Const.PKType
   alias ExAliyunOts.Const.Search.FieldType
   require PKType
-  require RowExistence
   require FieldType
 
   import ExAliyunOts.Search,
@@ -81,9 +80,7 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
         table_name: table,
         primary_keys: [{"id", item.name}],
         attribute_columns: attribute_columns,
-        condition: %Var.Condition{
-          row_existence: RowExistence.expect_not_exist()
-        }
+        condition: condition(:expect_not_exist)
       }
 
       {:ok, _result} = Client.put_row(instance_key, var_put_row)

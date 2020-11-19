@@ -1,21 +1,24 @@
 defmodule ExAliyunOts.Filter do
   @moduledoc false
-  require ExAliyunOts.Const.ComparatorType, as: ComparatorType
+  require ExAliyunOts.Const.FilterType, as: FilterType
   require ExAliyunOts.Const.LogicOperator, as: LogicOperator
+  require ExAliyunOts.Const.ComparatorType, as: ComparatorType
+  alias ExAliyunOts.PlainBuffer
 
-  @operator_mapping %{
-    and: LogicOperator.and(),
-    not: LogicOperator.not(),
-    or: LogicOperator.or()
+  alias ExAliyunOts.TableStoreFilter.{
+    Filter,
+    SingleColumnValueFilter,
+    CompositeColumnValueFilter,
+    ColumnPaginationFilter
   }
 
   @comparator_mapping %{
-    ==: ComparatorType.eq(),
-    >: ComparatorType.gt(),
-    >=: ComparatorType.ge(),
-    !=: ComparatorType.not_eq(),
-    <: ComparatorType.lt(),
-    <=: ComparatorType.le()
+    ==: ComparatorType.equal(),
+    !=: ComparatorType.not_equal(),
+    >: ComparatorType.greater_than(),
+    >=: ComparatorType.greater_equal(),
+    <: ComparatorType.less_than(),
+    <=: ComparatorType.less_equal()
   }
 
   @doc """
@@ -74,14 +77,13 @@ defmodule ExAliyunOts.Filter do
 
   defp composite_filter({combinator, _, expressions}) do
     sub_filters = Enum.map(expressions, &build_filter/1)
+    combinator = Map.fetch!(LogicOperator.mapping(), combinator)
 
     quote do
-      require ExAliyunOts.Const.FilterType
-
-      %ExAliyunOts.Var.Filter{
-        filter_type: ExAliyunOts.Const.FilterType.composite_column(),
-        filter: %ExAliyunOts.Var.CompositeColumnValueFilter{
-          combinator: unquote(@operator_mapping[combinator]),
+      %Filter{
+        type: unquote(FilterType.composite_column()),
+        filter: %CompositeColumnValueFilter{
+          combinator: unquote(combinator),
           sub_filters: unquote(sub_filters)
         }
       }
@@ -89,36 +91,61 @@ defmodule ExAliyunOts.Filter do
   end
 
   defp single_filter({comparator, _, [column_name, column_value]}) do
+    filter_type = FilterType.single_column()
+    comparator = @comparator_mapping[comparator]
+
     quote location: :keep do
-      require ExAliyunOts.Const.FilterType
-
-      comparator = unquote(@comparator_mapping[comparator])
-
       case unquote(column_name) do
         {column_name, column_options} ->
-          %ExAliyunOts.Var.Filter{
-            filter_type: ExAliyunOts.Const.FilterType.single_column(),
-            filter: %ExAliyunOts.Var.SingleColumnValueFilter{
-              comparator: comparator,
+          %Filter{
+            type: unquote(filter_type),
+            filter: %SingleColumnValueFilter{
+              comparator: unquote(comparator),
               column_name: column_name,
               column_value: unquote(column_value),
-              ignore_if_missing: Keyword.get(column_options, :ignore_if_missing, false),
+              filter_if_missing: not Keyword.get(column_options, :ignore_if_missing, false),
               latest_version_only: Keyword.get(column_options, :latest_version_only, true)
             }
           }
 
         column_name ->
-          %ExAliyunOts.Var.Filter{
-            filter_type: ExAliyunOts.Const.FilterType.single_column(),
-            filter: %ExAliyunOts.Var.SingleColumnValueFilter{
-              comparator: comparator,
+          %Filter{
+            type: unquote(filter_type),
+            filter: %SingleColumnValueFilter{
+              comparator: unquote(comparator),
               column_name: column_name,
               column_value: unquote(column_value),
-              ignore_if_missing: false,
+              filter_if_missing: true,
               latest_version_only: true
             }
           }
       end
     end
+  end
+
+  def serialize_filter(nil), do: nil
+
+  def serialize_filter(filter) do
+    filter
+    |> do_serialize_filter()
+    |> Filter.encode()
+  end
+
+  defp do_serialize_filter(%Filter{type: FilterType.single_column(), filter: filter} = wrapper) do
+    column_value = PlainBuffer.serialize_column_value(filter.column_value)
+    filter = SingleColumnValueFilter.encode(%{filter | column_value: column_value})
+    %{wrapper | filter: filter}
+  end
+
+  defp do_serialize_filter(%Filter{type: FilterType.composite_column(), filter: filter} = wrapper) do
+    sub_filters = Enum.map(filter.sub_filters, &do_serialize_filter/1)
+    filter = CompositeColumnValueFilter.encode(%{filter | sub_filters: sub_filters})
+    %{wrapper | filter: filter}
+  end
+
+  defp do_serialize_filter(
+         %Filter{type: FilterType.column_pagination(), filter: filter} = wrapper
+       ) do
+    %{wrapper | filter: ColumnPaginationFilter.encode(filter)}
   end
 end
