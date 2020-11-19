@@ -70,6 +70,7 @@ defmodule ExAliyunOts do
   alias ExAliyunOts.{Var, Client, Utils}
   alias ExAliyunOts.TableStore.{ReturnType, Direction, CreateIndexRequest, IndexMeta}
 
+  @before_compile ExAliyunOts.MergeCompiler
   @type instance :: atom
 
   defmacro __using__(opts \\ []) do
