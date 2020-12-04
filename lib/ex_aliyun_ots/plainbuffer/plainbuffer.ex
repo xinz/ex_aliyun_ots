@@ -35,9 +35,7 @@ defmodule ExAliyunOts.PlainBuffer do
   @little_endian_32_size 4
   @little_endian_64_size 8
 
-  @row_data_marker <<@tag_row_data::integer, @tag_cell::integer, @tag_cell_name::integer>>
-  @pk_tag_marker <<@tag_row_pk::integer, @tag_cell::integer, @tag_cell_name::integer>>
-
+  @sum_endian_32_size @little_endian_32_size + 1
   @sum_endian_64_size @little_endian_64_size + 1
 
   alias ExAliyunOts.CRC
@@ -61,26 +59,26 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   def serialize_column_value(value) when is_boolean(value) do
-    [byte_to_binary(@vt_boolean), boolean_to_integer(value)]
+    [<<@vt_boolean::integer>>, boolean_to_integer(value)]
   end
 
   def serialize_column_value(value) when is_integer(value) do
-    [byte_to_binary(@vt_integer), <<value::little-integer-size(64)>>]
+    [<<@vt_integer::integer>>, <<value::little-integer-size(64)>>]
   end
 
   def serialize_column_value(value) when is_binary(value) do
     value_size = byte_size(value)
-    [byte_to_binary(@vt_string), <<value_size::little-integer-size(32)>>, value]
+    [<<@vt_string::integer>>, <<value_size::little-integer-size(32)>>, value]
   end
 
   def serialize_column_value(value) when is_bitstring(value) do
     value_size = byte_size(value)
-    [byte_to_binary(@vt_blob), <<value_size::little-integer-size(32)>>, value]
+    [<<@vt_blob::integer>>, <<value_size::little-integer-size(32)>>, value]
   end
 
   def serialize_column_value(value) when is_float(value) do
     value_to_binary = <<value::little-float>>
-    [byte_to_binary(@vt_double), value_to_binary]
+    [<<@vt_double::integer>>, value_to_binary]
   end
 
   def serialize_column_value(value) do
@@ -127,7 +125,7 @@ defmodule ExAliyunOts.PlainBuffer do
       ]
     end)
 
-    row |> deserialize_filter_header() |> deserialize_row_data()
+    decode_row(row)
   end
 
   def deserialize_rows(<<>>) do
@@ -142,7 +140,7 @@ defmodule ExAliyunOts.PlainBuffer do
       ]
     end)
 
-    rows |> deserialize_filter_header() |> deserialize_rows_data()
+    decode_rows(rows)
   end
 
   defp header() do
@@ -151,8 +149,7 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp primary_keys({buffer, row_checksum}, primary_keys) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_row_pk)::bitstring>>
-
+    buffer = <<buffer::bitstring, @tag_row_pk::integer>>
     do_primary_keys(primary_keys, buffer, row_checksum)
   end
 
@@ -166,7 +163,7 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp columns({buffer, row_checksum}, columns) when is_list(columns) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_row_data)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_row_data::integer>>
     do_columns(columns, buffer, row_checksum)
   end
 
@@ -181,7 +178,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp update_grouping_columns({buffer, row_checksum}, grouping_columns)
        when is_map(grouping_columns) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_row_data)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_row_data::integer>>
 
     grouping_columns
     |> Map.keys()
@@ -195,16 +192,14 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp primary_key_column({pk_name, pk_value}, {buffer, row_checksum}) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell::integer>>
 
     {buffer, cell_checksum} =
       {buffer, 0}
       |> process_cell_name(pk_name)
       |> process_primary_key_value(pk_value)
 
-    buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring,
-        byte_to_binary(cell_checksum)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell_checksum::integer, cell_checksum::integer>>
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {buffer, row_checksum}
@@ -223,7 +218,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp process_cell_name({buffer, cell_checksum}, name) do
     buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_name)::bitstring,
+      <<buffer::bitstring, @tag_cell_name::integer,
         <<String.length(name)::little-integer-size(32)>>, name::bitstring>>
 
     cell_checksum = CRC.crc_string(cell_checksum, name)
@@ -231,16 +226,16 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_primary_key_value({buffer, cell_checksum}, value) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring>>
-    do_process_primary_key_value({buffer, cell_checksum}, value)
+    do_process_primary_key_value(
+      {<<buffer::bitstring, @tag_cell_value::integer>>, cell_checksum},
+      value
+    )
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
        when value == PKType.inf_min()
        when value == :inf_min do
-    buffer =
-      <<buffer::bitstring, <<1::little-integer-size(32)>>,
-        byte_to_binary(@vt_inf_min)::bitstring>>
+    buffer = <<buffer::bitstring, <<1::little-integer-size(32)>>, @vt_inf_min::integer>>
 
     cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_min)
     {buffer, cell_checksum}
@@ -249,9 +244,7 @@ defmodule ExAliyunOts.PlainBuffer do
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
        when value == PKType.inf_max()
        when value == :inf_max do
-    buffer =
-      <<buffer::bitstring, <<1::little-integer-size(32)>>,
-        byte_to_binary(@vt_inf_max)::bitstring>>
+    buffer = <<buffer::bitstring, <<1::little-integer-size(32)>>, @vt_inf_max::integer>>
 
     cell_checksum = CRC.crc_int8(cell_checksum, @vt_inf_max)
     {buffer, cell_checksum}
@@ -259,9 +252,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value)
        when value == PKType.auto_increment() do
-    buffer =
-      <<buffer::bitstring, <<1::little-integer-size(32)>>,
-        byte_to_binary(@vt_auto_increment)::bitstring>>
+    buffer = <<buffer::bitstring, <<1::little-integer-size(32)>>, @vt_auto_increment::integer>>
 
     cell_checksum = CRC.crc_int8(cell_checksum, @vt_auto_increment)
     {buffer, cell_checksum}
@@ -269,21 +260,19 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value) when is_integer(value) do
     buffer =
-      <<buffer::bitstring, <<1 + @little_endian_64_size::little-integer-size(32)>>,
-        byte_to_binary(@vt_integer)::bitstring, (<<value::little-integer-size(64)>>)>>
+      <<buffer::bitstring, <<@sum_endian_64_size::little-integer-size(32)>>, @vt_integer::integer,
+        (<<value::little-integer-size(64)>>)>>
 
     cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
     {buffer, cell_checksum}
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value) when is_binary(value) do
-    prefix_length = @little_endian_32_size + 1
     value_size = byte_size(value)
 
     buffer =
-      <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>,
-        byte_to_binary(@vt_string)::bitstring, <<value_size::little-integer-size(32)>>,
-        value::bitstring>>
+      <<buffer::bitstring, <<@sum_endian_32_size + value_size::little-integer-size(32)>>,
+        @vt_string::integer, <<value_size::little-integer-size(32)>>, value::bitstring>>
 
     cell_checksum =
       cell_checksum
@@ -295,13 +284,11 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp do_process_primary_key_value({buffer, cell_checksum}, value) when is_bitstring(value) do
-    prefix_length = @little_endian_32_size + 1
     value_size = byte_size(value)
 
     buffer =
-      <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>,
-        byte_to_binary(@vt_blob)::bitstring, <<value_size::little-integer-size(32)>>,
-        value::bitstring>>
+      <<buffer::bitstring, <<@sum_endian_32_size + value_size::little-integer-size(32)>>,
+        @vt_blob::integer, <<value_size::little-integer-size(32)>>, value::bitstring>>
 
     cell_checksum =
       cell_checksum
@@ -317,16 +304,14 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_column({column_name, column_value}, {buffer, row_checksum}) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell::integer>>
 
     {buffer, cell_checksum} =
       {buffer, 0}
       |> process_cell_name(column_name)
       |> process_column_value_with_checksum(column_value)
 
-    buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring,
-        byte_to_binary(cell_checksum)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell_checksum::integer, cell_checksum::integer>>
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {buffer, row_checksum}
@@ -334,7 +319,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp process_column({column_name, column_value, timestamp}, {buffer, row_checksum})
        when timestamp != nil do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell::integer>>
 
     {buffer, cell_checksum} =
       {buffer, 0}
@@ -342,14 +327,12 @@ defmodule ExAliyunOts.PlainBuffer do
       |> process_column_value_with_checksum(column_value)
 
     buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_timestamp)::bitstring,
+      <<buffer::bitstring, @tag_cell_timestamp::integer,
         (<<timestamp::little-integer-size(64)>>)>>
 
     cell_checksum = CRC.crc_int64(cell_checksum, timestamp)
 
-    buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring,
-        byte_to_binary(cell_checksum)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell_checksum::integer, cell_checksum::integer>>
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {buffer, row_checksum}
@@ -390,36 +373,34 @@ defmodule ExAliyunOts.PlainBuffer do
   defp process_column_value_with_checksum({buffer, cell_checksum}, value)
        when is_integer(value) do
     buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring,
-        <<1 + @little_endian_64_size::little-integer-size(32)>>,
-        byte_to_binary(@vt_integer)::bitstring, (<<value::little-integer-size(64)>>)>>
+      <<buffer::bitstring, @tag_cell_value::integer,
+        <<@sum_endian_64_size::little-integer-size(32)>>, <<@vt_integer::integer>>,
+        (<<value::little-integer-size(64)>>)>>
 
     cell_checksum = cell_checksum |> CRC.crc_int8(@vt_integer) |> CRC.crc_int64(value)
     {buffer, cell_checksum}
   end
 
   defp process_column_value_with_checksum({buffer, cell_checksum}, value) when is_float(value) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell_value::integer>>
     value_to_binary = <<value::little-float>>
     <<long::unsigned-little-integer-64>> = value_to_binary
 
     buffer =
-      <<buffer::bitstring, <<1 + @little_endian_64_size::little-integer-size(32)>>,
-        byte_to_binary(@vt_double)::bitstring, value_to_binary::bitstring>>
+      <<buffer::bitstring, <<@sum_endian_64_size::little-integer-size(32)>>, @vt_double::integer,
+        value_to_binary::bitstring>>
 
     cell_checksum = cell_checksum |> CRC.crc_int8(@vt_double) |> CRC.crc_int64(long)
     {buffer, cell_checksum}
   end
 
   defp process_column_value_with_checksum({buffer, cell_checksum}, value) when is_binary(value) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring>>
-    prefix_length = @little_endian_32_size + 1
+    buffer = <<buffer::bitstring, @tag_cell_value::integer>>
     value_size = byte_size(value)
 
     buffer =
-      <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>,
-        byte_to_binary(@vt_string)::bitstring, <<value_size::little-integer-size(32)>>,
-        value::bitstring>>
+      <<buffer::bitstring, <<@sum_endian_32_size + value_size::little-integer-size(32)>>,
+        @vt_string::integer, <<value_size::little-integer-size(32)>>, value::bitstring>>
 
     cell_checksum =
       cell_checksum
@@ -432,14 +413,12 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp process_column_value_with_checksum({buffer, cell_checksum}, value)
        when is_bitstring(value) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring>>
-    prefix_length = @little_endian_32_size + 1
+    buffer = <<buffer::bitstring, @tag_cell_value::integer>>
     value_size = byte_size(value)
 
     buffer =
-      <<buffer::bitstring, <<prefix_length + value_size::little-integer-size(32)>>,
-        byte_to_binary(@vt_blob)::bitstring, <<value_size::little-integer-size(32)>>,
-        value::bitstring>>
+      <<buffer::bitstring, <<@sum_endian_32_size + value_size::little-integer-size(32)>>,
+        @vt_blob::integer, <<value_size::little-integer-size(32)>>, value::bitstring>>
 
     cell_checksum =
       cell_checksum
@@ -455,9 +434,8 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp boolean_value_to_buffer(buffer, value) when is_boolean(value) do
-    <<buffer::bitstring, byte_to_binary(@tag_cell_value)::bitstring,
-      <<2::little-integer-size(32)>>, byte_to_binary(@vt_boolean)::bitstring,
-      boolean_to_integer(value)::bitstring>>
+    <<buffer::bitstring, @tag_cell_value::integer, <<2::little-integer-size(32)>>,
+      @vt_boolean::integer, boolean_to_integer(value)::bitstring>>
   end
 
   defp process_update_column({buffer, row_checksum}, update_type, column)
@@ -500,9 +478,7 @@ defmodule ExAliyunOts.PlainBuffer do
        ) do
     {buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
 
-    buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring,
-        byte_to_binary(@op_delete_one_version)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell_type::integer, @op_delete_one_version::integer>>
 
     {buffer, cell_checksum} =
       process_update_column_with_timestamp(buffer, cell_checksum, timestamp)
@@ -520,9 +496,7 @@ defmodule ExAliyunOts.PlainBuffer do
        ) do
     {buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
 
-    buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring,
-        byte_to_binary(@op_delete_all_version)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell_type::integer, @op_delete_all_version::integer>>
 
     {buffer, cell_checksum} =
       process_update_column_with_timestamp(buffer, cell_checksum, timestamp)
@@ -540,9 +514,7 @@ defmodule ExAliyunOts.PlainBuffer do
        ) do
     {buffer, cell_checksum} = process_update_column_with_cell(buffer, column_name, column_value)
 
-    buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_type)::bitstring,
-        byte_to_binary(@op_increment)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell_type::integer, @op_increment::integer>>
 
     {buffer, cell_checksum} =
       process_update_column_with_timestamp(buffer, cell_checksum, timestamp)
@@ -567,7 +539,7 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_update_column_with_cell(buffer, column_name, column_value) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_cell)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell::integer>>
 
     {buffer, 0}
     |> process_cell_name(column_name)
@@ -580,7 +552,7 @@ defmodule ExAliyunOts.PlainBuffer do
 
   defp process_update_column_with_timestamp(buffer, cell_checksum, timestamp) do
     buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_timestamp)::bitstring,
+      <<buffer::bitstring, @tag_cell_timestamp::integer,
         (<<timestamp::little-integer-size(64)>>)>>
 
     cell_checksum = CRC.crc_int64(cell_checksum, timestamp)
@@ -588,604 +560,224 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp process_update_column_with_row_checksum(buffer, cell_checksum, row_checksum) do
-    buffer =
-      <<buffer::bitstring, byte_to_binary(@tag_cell_checksum)::bitstring,
-        byte_to_binary(cell_checksum)::bitstring>>
+    buffer = <<buffer::bitstring, @tag_cell_checksum::integer, cell_checksum::integer>>
 
     row_checksum = CRC.crc_int8(row_checksum, cell_checksum)
     {buffer, row_checksum}
   end
 
   defp process_delete_marker({buffer, row_checksum}) do
-    buffer = <<buffer::bitstring, byte_to_binary(@tag_delete_row_marker)::bitstring>>
-    row_checksum = CRC.crc_int8(row_checksum, 1)
-    {buffer, row_checksum}
+    {
+      <<buffer::bitstring, @tag_delete_row_marker::integer>>,
+      CRC.crc_int8(row_checksum, 1)
+    }
   end
 
   defp boolean_to_integer(true), do: <<1>>
   defp boolean_to_integer(_), do: <<0>>
 
-  defp integer_to_boolean(1), do: true
-  defp integer_to_boolean(_), do: false
-
   defp process_row_checksum(buffer, row_checksum) do
-    <<buffer::bitstring, byte_to_binary(@tag_row_checksum)::bitstring,
-      byte_to_binary(row_checksum)::bitstring>>
-  end
-
-  defp byte_to_binary(byte) do
-    <<byte::integer>>
+    <<buffer::bitstring, @tag_row_checksum::integer, row_checksum::integer>>
   end
 
   # deserialize processing
 
-  defp deserialize_filter_header(<<@header::little-integer-size(32), rest_row::binary>>) do
-    rest_row
+  defp decode_row(<<@header::little-integer-size(32), rest::binary>>) do
+    start_decoding(rest)
   end
 
-  defp deserialize_filter_header(invalid_row) do
-    raise ExAliyunOts.RuntimeError, "Invalid row to deserialize, #{inspect(invalid_row)}"
+  defp decode_rows(<<@header::little-integer-size(32), rest::binary>>) do
+    decode_rows(rest, [])
   end
 
-  defp deserialize_rows_data(rows) do
-    result =
-      rows
-      |> :binary.split(@pk_tag_marker, [:global])
-      |> do_slice_rows()
-
-    debug(fn ->
-      [
-        "\nchecked_rows result:\s",
-        inspect(result, limit: :infinity)
-      ]
-    end)
-
-    Enum.reverse(result.rows)
+  defp decode_rows(<<>>, acc) do
+    Enum.reverse(acc)
   end
 
-  defp do_slice_rows(bytes_rows_list) do
-    do_slice_rows(bytes_rows_list, %{rows: [], processing: <<>>})
+  defp decode_rows(rest, acc) do
+    case start_decoding(rest) do
+      {:cont, rest, row} ->
+        decode_rows(rest, [row | acc])
+
+      row ->
+        decode_rows(<<>>, [row | acc])
+    end
   end
 
-  defp do_slice_rows([], prepared) do
-    prepared
+  defp start_decoding(<<@tag_row_pk::integer, rest::binary>>) do
+    # start decoding from primary key(s)
+    decode_pk(rest, [])
   end
 
-  defp do_slice_rows([<<>> | rest], prepared) do
-    do_slice_rows(rest, prepared)
+  defp start_decoding(<<@tag_row_data::integer, rest::binary>>) do
+    # no primary key(s) decoding, start decoding from attribute column(s)
+    {nil, decode_attr(rest, [])}
   end
 
-  defp do_slice_rows([row | rest], prepared) do
-    second_last_byte = binary_part(row, byte_size(row) - 2, 1)
-    prepared = do_slice_row_binary(second_last_byte, row, prepared)
-    do_slice_rows(rest, prepared)
-  end
-
-  defp do_slice_row_binary(
-         <<@tag_row_checksum::integer>>,
-         row,
-         %{processing: <<>>, rows: rows} = result
+  defp decode_pk(
+         <<@tag_cell::integer, @tag_cell_name::integer, pk_field_size::little-integer-size(32),
+           pk_field::binary-size(pk_field_size), rest::binary>>,
+         acc
        ) do
-    row = deserialize_raw_rows(row)
-    Map.put(result, :rows, [row | rows])
+    # primary key(s) decoding
+    {pk_value, rest} = calculate_pk_value(rest)
+    acc = [{pk_field, pk_value} | acc]
+    decode_pk(rest, acc)
   end
 
-  defp do_slice_row_binary(
-         <<@tag_row_checksum::integer>>,
-         row,
-         %{processing: processing, rows: rows} = result
-       ) do
-    row =
-      deserialize_raw_rows(<<processing::bitstring, @pk_tag_marker::bitstring, row::bitstring>>)
+  defp decode_pk(<<@tag_row_data::integer, rest::binary>>, acc) do
+    # finish primary key(s) decoding and start this row's attribute column(s) decoding
+    case decode_attr(rest, []) do
+      {rest, attrs} ->
+        {:cont, rest, {Enum.reverse(acc), attrs}}
 
-    result
-    |> Map.put(:rows, [row | rows])
-    |> Map.put(:processing, <<>>)
+      attrs ->
+        {Enum.reverse(acc), attrs}
+    end
   end
 
-  defp do_slice_row_binary(_, row, %{processing: <<>>} = result) do
-    Map.put(result, :processing, row)
-  end
-
-  defp do_slice_row_binary(_, row, %{processing: processing} = result) do
-    Map.put(
-      result,
-      :processing,
-      <<processing::bitstring, @pk_tag_marker::bitstring, row::bitstring>>
-    )
-  end
-
-  defp deserialize_raw_rows(row_values) do
-    {primary_keys, attribute_columns} =
-      deserialize_row_data(<<@pk_tag_marker, row_values::bitstring>>)
-
-    debug(fn ->
-      [
-        "\nprimary_keys:\s",
-        inspect(primary_keys),
-        ?\n,
-        "attribute_columns:\s",
-        inspect(attribute_columns)
-      ]
-    end)
-
-    {primary_keys, attribute_columns}
-  end
-
-  defp deserialize_row_data(values) do
-    row_data_parts = :binary.split(values, @row_data_marker, [:global])
-
-    matched_index = Enum.find_index(row_data_parts, &match_tag_cell_checksum?/1)
-
-    debug(fn ->
-      [
-        "\ndeserialize_row_data:\n",
-        inspect(values, limit: :infinity),
-        ?\n,
-        "matched_index:\n",
-        inspect(matched_index),
-        ?\n,
-        "row_data_parts:\n"
-        | inspect(row_data_parts, limit: :infinity)
-      ]
-    end)
-
-    deserialize_row_data_with_match_index(matched_index, values, row_data_parts)
-  end
-
-  defp deserialize_row_data_with_match_index(
-         nil,
-         <<(<<@tag_row_pk::integer>>), primary_keys_binary_rest::binary>>,
-         _
-       ) do
-    {deserialize_process_primary_keys(primary_keys_binary_rest), nil}
-  end
-
-  defp deserialize_row_data_with_match_index(
-         nil,
-         <<(<<@tag_row_data::integer>>), attribute_columns_binary_rest::binary>>,
-         _
-       ) do
-    {nil, deserialize_process_columns(attribute_columns_binary_rest)}
-  end
-
-  defp deserialize_row_data_with_match_index(nil, values, _) do
-    debug(fn ->
-      [
-        "\n** unexcepted row data when deserialize_row_data:\s",
-        inspect(values, limit: :infinity)
-      ]
-    end)
-
-    nil
-  end
-
-  defp deserialize_row_data_with_match_index(matched_index, _values, row_data_parts) do
-    {pks, attribute_columns} = Enum.split(row_data_parts, matched_index + 1)
-
-    primary_keys_binary = Enum.join(pks, @row_data_marker)
-
-    attribute_columns_binary =
-      <<@tag_cell::integer, @tag_cell_name::integer,
-        Enum.join(attribute_columns, @row_data_marker)::bitstring>>
-
-    primary_keys_binary =
-      case primary_keys_binary do
-        <<(<<@tag_row_pk::integer>>), primary_keys_binary_rest::binary>> ->
-          primary_keys_binary_rest
-
-        _ ->
-          raise ExAliyunOts.RuntimeError,
-                "Unexcepted row data when processing primary_keys: #{
-                  inspect(primary_keys_binary, limit: :infinity)
-                }"
-      end
-
+  defp decode_pk(<<@tag_row_checksum::integer, _::integer>>, acc) do
+    # finish primary key(s) decoding and no attribute column(s) decoding
     {
-      deserialize_process_primary_keys(primary_keys_binary),
-      deserialize_process_columns(attribute_columns_binary)
+      Enum.reverse(acc),
+      nil
     }
   end
 
-  defp deserialize_process_primary_keys(primary_keys_binary) do
-    primary_keys_binary |> do_deserialize_process_primary_keys([]) |> Enum.reverse()
+  defp decode_pk(<<@tag_row_checksum::integer, _::integer, rest::binary>>, acc) do
+    # finish primary keys(s) and no attribute column(s) decoding, but still be with other row(s) decoding
+    {
+      :cont,
+      rest,
+      {
+        Enum.reverse(acc),
+        nil
+      }
+    }
   end
 
-  defp do_deserialize_process_primary_keys("", result) do
-    result
+  defp decode_pk(_, acc) do
+    # still some ignorable bytes but can finish row data decoding
+    {
+      Enum.reverse(acc),
+      nil
+    }
   end
 
-  defp do_deserialize_process_primary_keys(
-         <<(<<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>),
-           primary_key_size::little-integer-size(32), rest::binary>> = primary_keys,
-         result
+  defp decode_attr(
+         <<@tag_cell::integer, @tag_cell_name::integer, attr_field_size::little-integer-size(32),
+           attr_field::binary-size(attr_field_size), rest::binary>>,
+         acc
        ) do
-    debug(fn ->
-      [
-        "\n** deserializing primary_keys, prepared result:\n",
-        inspect(result),
-        ?\n,
-        "pk data:\s"
-        | inspect(primary_keys, limit: :infinity)
-      ]
-    end)
-
-    primary_key_name = binary_part(rest, 0, primary_key_size)
-
-    rest_primary_key_value_and_other_pk =
-      binary_part(rest, primary_key_size, byte_size(rest) - primary_key_size)
-
-    debug(fn ->
-      [
-        "\nget primary_key_name:\s",
-        inspect(primary_key_name),
-        ?\n,
-        "rest_primary_key_value_and_other_pk:\s"
-        | inspect(rest_primary_key_value_and_other_pk, limit: :infinity)
-      ]
-    end)
-
-    case calculate_tag_cell_index(rest_primary_key_value_and_other_pk) do
-      next_cell_index when is_integer(next_cell_index) ->
-        value_binary = binary_part(rest_primary_key_value_and_other_pk, 0, next_cell_index)
-        primary_key_value = deserialize_process_primary_key_value(value_binary)
-
-        result = [{primary_key_name, primary_key_value} | result]
-
-        other_pk =
-          binary_part(
-            rest_primary_key_value_and_other_pk,
-            next_cell_index,
-            byte_size(rest_primary_key_value_and_other_pk) - next_cell_index
-          )
-
-        debug(fn ->
-          [
-            "\nfind next_cell_index:\s",
-            next_cell_index,
-            ?\n,
-            "get primary_key_value:\s",
-            inspect(primary_key_value),
-            ?\n,
-            "rest to be deserialized data:\s"
-            | inspect(other_pk, limit: :infinity)
-          ]
-        end)
-
-        do_deserialize_process_primary_keys(other_pk, result)
-
-      nil ->
-        primary_key_value =
-          deserialize_process_primary_key_value(rest_primary_key_value_and_other_pk)
-
-        debug(fn ->
-          [
-            "\nno more cells to deserialized, primary_key_value:\n",
-            inspect(primary_key_value)
-          ]
-        end)
-
-        [{primary_key_name, primary_key_value} | result]
-    end
+    # attribute columns decoding
+    {attr_value, timestamp, rest} = calculate_attr_value(rest)
+    acc = [{attr_field, attr_value, timestamp} | acc]
+    decode_attr(rest, acc)
   end
 
-  defp do_deserialize_process_primary_keys(primary_keys, result) do
-    debug(fn ->
-      [
-        "\n** deserializing primary_keys, prepared result:\n",
-        inspect(result),
-        ?\n,
-        "pk data:\s"
-        | inspect(primary_keys, limit: :infinity)
-      ]
-    end)
-
-    result
+  defp decode_attr(<<@tag_row_checksum::integer, _::integer>>, acc) do
+    # be with an ending flag to finish row data decoding
+    Enum.reverse(acc)
   end
 
-  defp deserialize_process_primary_key_value(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, <<value::signed-little-integer-size(64)>>,
-           (<<_rest::binary>>)>>
-       ) do
-    value
-  end
-
-  defp deserialize_process_primary_key_value(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, (<<value::signed-little-integer-size(64)>>)>>
-       ) do
-    value
-  end
-
-  defp deserialize_process_primary_key_value(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, (<<rest::binary>>)>>
-       ) do
-    raise ExAliyunOts.RuntimeError, "Unexcepted integer value as primary value: #{inspect(rest)}"
-  end
-
-  defp deserialize_process_primary_key_value(
-         <<(<<@tag_cell_value::integer>>), <<total_size::little-integer-size(32)>>,
-           <<@vt_string::integer>>, <<_value_size::little-integer-size(32)>>,
-           (<<value::binary>>)>>
-       ) do
-    value_size = total_size - @little_endian_32_size - 1
-    binary_part(value, 0, value_size)
-  end
-
-  defp deserialize_process_primary_key_value(
-         <<(<<@tag_cell_value::integer>>), <<total_size::little-integer-size(32)>>,
-           <<@vt_blob::integer>>, <<_value_size::little-integer-size(32)>>, (<<value::binary>>)>>
-       ) do
-    value_size = total_size - @little_endian_32_size - 1
-    binary_part(value, 0, value_size)
-  end
-
-  defp deserialize_process_primary_key_value(
-         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-           (<<rest::binary>>)>>
-       ) do
-    raise ExAliyunOts.RuntimeError, "Unexcepted string value as primary value: #{inspect(rest)}"
-  end
-
-  defp deserialize_process_primary_key_value(
-         <<(<<@tag_cell_value::integer>>), (<<rest::binary>>)>>
-       ) do
-    raise ExAliyunOts.RuntimeError, "Unexcepted value as primary value: #{inspect(rest)}"
-  end
-
-  defp deserialize_process_columns(attribute_columns) do
-    debug(fn ->
-      [
-        "\n>>>> attribute_columns <<<<\n",
-        inspect(attribute_columns, limit: :infinity)
-      ]
-    end)
-
-    attribute_columns |> do_deserialize_process_columns([]) |> Enum.reverse()
-  end
-
-  defp do_deserialize_process_columns(
-         <<(<<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>),
-           column_name_size::little-integer-size(32), rest::binary>>,
-         result
-       ) do
-    column_name = binary_part(rest, 0, column_name_size)
-
-    rest_value_and_other_columns =
-      binary_part(rest, column_name_size, byte_size(rest) - column_name_size)
-
-    case calculate_tag_cell_index(rest_value_and_other_columns) do
-      next_cell_index when is_integer(next_cell_index) ->
-        value_binary = binary_part(rest_value_and_other_columns, 0, next_cell_index)
-
-        debug(fn ->
-          [
-            "\ncolumn_name:\s",
-            inspect(column_name),
-            ?\n,
-            "value_binary:\s",
-            inspect(value_binary, limit: :infinity),
-            "\nfind next_cell_index:\s",
-            next_cell_index
-          ]
-        end)
-
-        {column_value, timestamp} = deserialize_process_column_value_with_checksum(value_binary)
-
-        result = [{column_name, column_value, timestamp} | result]
-
-        other_attribute_columns =
-          binary_part(
-            rest_value_and_other_columns,
-            next_cell_index,
-            byte_size(rest_value_and_other_columns) - next_cell_index
-          )
-
-        do_deserialize_process_columns(other_attribute_columns, result)
-
-      nil ->
-        {column_value, timestamp} =
-          deserialize_process_column_value_with_checksum(rest_value_and_other_columns)
-
-        debug(fn ->
-          [
-            "\ncolumn_name:\s",
-            inspect(column_name),
-            "\ncolumn_value:\s",
-            inspect(column_value),
-            "\n=== not find next_cell_index ===\n"
-          ]
-        end)
-
-        [{column_name, column_value, timestamp} | result]
-    end
-  end
-
-  defp do_deserialize_process_columns(_, result) do
-    result
-  end
-
-  defp deserialize_process_column_value_timestamp(
-         <<(<<@tag_cell_timestamp::integer>>), (<<timestamp::little-integer-size(64)>>)>>
-       ) do
-    timestamp
-  end
-
-  defp deserialize_process_column_value_timestamp(
-         <<(<<@tag_cell_timestamp::integer>>), <<timestamp::little-integer-size(64)>>,
-           _rest::binary>>
-       ) do
-    timestamp
-  end
-
-  defp deserialize_process_column_value_timestamp(_) do
+  defp decode_attr(_, []) do
     nil
   end
 
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<2::little-integer-size(32)>>,
-           <<@vt_boolean::integer>>, <<value::integer>>, (<<timestamp_rest::binary>>)>>
+  defp decode_attr(<<@tag_row_checksum::integer, _::integer, rest::binary>>, acc) do
+    # current row data is decoded but still need to process other row(s) data
+    {rest, Enum.reverse(acc)}
+  end
+
+  defp decode_attr(_, acc) do
+    # still some ignorable bytes but can finish row data decoding
+    Enum.reverse(acc)
+  end
+
+  defp decode_attr_timestamp(
+         <<@tag_cell_timestamp::integer, timestamp::little-integer-size(64),
+           @tag_cell_checksum::integer, _row_crc8::integer, rest::binary>>
        ) do
-    value_boolean = integer_to_boolean(value)
-    timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
-    {value_boolean, timestamp}
+    {timestamp, rest}
   end
 
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<2::little-integer-size(32)>>,
-           <<@vt_boolean::integer>>, (<<value::integer>>)>>
+  defp decode_attr_timestamp(<<@tag_cell_checksum::integer, _row_crc8::integer, rest::binary>>) do
+    {nil, rest}
+  end
+
+  defp calculate_pk_value(
+         <<@tag_cell_value::integer, _total_bytes_size::little-integer-size(32),
+           @vt_integer::integer, pk_value::binary-size(8), @tag_cell_checksum::integer,
+           _row_crc8::integer, rest::binary>>
        ) do
-    value_boolean = integer_to_boolean(value)
-    {value_boolean, nil}
+    <<value::signed-little-integer-size(64)>> = pk_value
+    {value, rest}
   end
 
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<2::little-integer-size(32)>>,
-           <<@vt_boolean::integer>>, (<<rest::binary>>)>>
+  defp calculate_pk_value(
+         <<@tag_cell_value::integer, _total_bytes_size::little-integer-size(32), type::integer,
+           pk_value_size::little-integer-size(32), value::binary-size(pk_value_size),
+           @tag_cell_checksum::integer, _row_crc8::integer, rest::binary>>
+       )
+       when type == @vt_string or type == @vt_blob do
+    {value, rest}
+  end
+
+  defp calculate_pk_value(
+         <<@tag_cell_value::integer, _total_bytes_size::little-integer-size(32), type::integer,
+           _rest::binary>> = input
        ) do
-    raise ExAliyunOts.RuntimeError, "Invalid boolean value as: #{inspect(rest)}"
+    raise ExAliyunOts.RuntimeError,
+          "Unexcepted primary type as: `#{inspect(type)}` and its binary input: `#{inspect(input)}`"
   end
 
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, <<value::signed-little-integer-size(64)>>,
-           (<<timestamp_rest::binary>>)>>
+  defp calculate_attr_value(
+         <<@tag_cell_value::integer, _total_size::little-integer-size(32), @vt_boolean::integer,
+           1::integer, rest::binary>>
        ) do
-    timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
-    {value, timestamp}
+    {timestamp, rest} = decode_attr_timestamp(rest)
+    {true, timestamp, rest}
   end
 
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, (<<value::signed-little-integer-size(64)>>)>>
+  defp calculate_attr_value(
+         <<@tag_cell_value::integer, _total_size::little-integer-size(32), @vt_boolean::integer,
+           _::integer, rest::binary>>
        ) do
-    {value, nil}
+    {timestamp, rest} = decode_attr_timestamp(rest)
+    {false, timestamp, rest}
   end
 
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_integer::integer>>, (<<rest::binary>>)>>
+  defp calculate_attr_value(
+         <<@tag_cell_value::integer, _total_size::little-integer-size(32), @vt_integer::integer,
+           value::signed-little-integer-size(64), rest::binary>>
        ) do
-    raise ExAliyunOts.RuntimeError, "Invalid integer value as: #{inspect(rest)}"
+    {timestamp, rest} = decode_attr_timestamp(rest)
+    {value, timestamp, rest}
   end
 
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_double::integer>>, <<value::signed-little-float-size(64)>>,
-           (<<timestamp_rest::binary>>)>>
+  defp calculate_attr_value(
+         <<@tag_cell_value::integer, _total_size::little-integer-size(32), @vt_double::integer,
+           value::signed-little-float-size(64), rest::binary>>
        ) do
-    timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
-    {value, timestamp}
+    {timestamp, rest} = decode_attr_timestamp(rest)
+    {value, timestamp, rest}
   end
 
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_double::integer>>, (<<value::signed-little-float-size(64)>>)>>
+  defp calculate_attr_value(
+         <<@tag_cell_value::integer, _total_size::little-integer-size(32), type::integer,
+           value_size::little-integer-size(32), value::binary-size(value_size), rest::binary>>
+       )
+       when type == @vt_string or type == @vt_blob do
+    {timestamp, rest} = decode_attr_timestamp(rest)
+    {value, timestamp, rest}
+  end
+
+  defp calculate_attr_value(
+         <<@tag_cell_value::integer, _total_size::little-integer-size(32), type::integer>> = input
        ) do
-    {value, nil}
-  end
-
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<@sum_endian_64_size::little-integer-size(32)>>,
-           <<@vt_double::integer>>, (<<rest::binary>>)>>
-       ) do
-    raise ExAliyunOts.RuntimeError, "Invalid float value as: #{inspect(rest)}"
-  end
-
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-           <<@vt_string::integer>>,
-           <<value_size::little-integer-size(32), value::binary-size(value_size)>>,
-           (<<timestamp_rest::binary>>)>>
-       ) do
-    timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
-    {value, timestamp}
-  end
-
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-           <<@vt_string::integer>>,
-           (<<value_size::little-integer-size(32), value::binary-size(value_size)>>)>>
-       ) do
-    {value, nil}
-  end
-
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-           <<@vt_string::integer>>, rest::binary>>
-       ) do
-    raise ExAliyunOts.RuntimeError, "Unexcepted string value as: #{inspect(rest)}"
-  end
-
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-           <<@vt_blob::integer>>,
-           <<value_size::little-integer-size(32), value::binary-size(value_size)>>,
-           (<<timestamp_rest::binary>>)>>
-       ) do
-    timestamp = deserialize_process_column_value_timestamp(timestamp_rest)
-    {value, timestamp}
-  end
-
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-           <<@vt_blob::integer>>,
-           (<<value_size::little-integer-size(32), value::binary-size(value_size)>>)>>
-       ) do
-    {value, nil}
-  end
-
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), <<_total_size::little-integer-size(32)>>,
-           <<@vt_blob::integer>>, rest::binary>>
-       ) do
-    raise ExAliyunOts.RuntimeError, "Unexcepted string value as: #{inspect(rest)}"
-  end
-
-  defp deserialize_process_column_value_with_checksum(
-         <<(<<@tag_cell_value::integer>>), rest::binary>>
-       ) do
-    raise ExAliyunOts.RuntimeError, "Unexcepted value as: #{inspect(rest)}"
-  end
-
-  def calculate_tag_cell_index(values) do
-    splited =
-      :binary.split(values, <<(<<@tag_cell::integer>>), (<<@tag_cell_name::integer>>)>>, [:global])
-
-    index = Enum.find_index(splited, &match_tag_cell_checksum?/1)
-
-    debug(fn ->
-      [
-        "\ncalculate_tag_cell_index:\s",
-        inspect(values, limit: :infinity),
-        "\nsplited:\s",
-        inspect(splited, limit: :infinity),
-        "\nindex:\s",
-        inspect(index)
-      ]
-    end)
-
-    if index == nil do
-      nil
-    else
-      calcuated_index =
-        splited
-        |> Enum.slice(0..index)
-        |> Enum.reduce(0, fn item, acc ->
-          byte_size(item) + acc
-        end)
-
-      calcuated_index + index * 2
-    end
-  end
-
-  defp match_tag_cell_checksum?(<<>>), do: false
-  defp match_tag_cell_checksum?(<<_>>), do: false
-  defp match_tag_cell_checksum?(<<@tag_cell_checksum::integer, _>>), do: true
-
-  defp match_tag_cell_checksum?(binary) do
-    binary_part(binary, byte_size(binary) - 2, 1) == <<@tag_cell_checksum::integer>>
+    raise ExAliyunOts.RuntimeError,
+          "Unexcepted attribute column type as: `#{inspect(type)}` and its binary input: `#{
+            inspect(input)
+          }`"
   end
 end
