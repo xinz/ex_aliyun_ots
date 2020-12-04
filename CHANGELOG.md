@@ -1,7 +1,9 @@
 # Changelog
 
-## v0.9.0 (2020-11-17)
+## v0.10.0 (2020-12-04)
+* Improve plainbuffer decoding performance
 
+## v0.9.0 (2020-11-17)
 * [Http] Use Tesla with Finch adapter
 
 ## v0.8.0 (2020-11-13)
