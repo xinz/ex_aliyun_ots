@@ -616,16 +616,22 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   defp start_decoding(<<@tag_row_pk::integer, rest::binary>>) do
+    # start decoding from primary key(s)
     decode_pk(rest, [])
   end
+  defp start_decoding(<<@tag_row_data::integer, rest::binary>>) do
+    # no primary key(s) decoding, start decoding from attribute column(s)
+    {nil, decode_attr(rest, [])}
+  end
 
-  defp decode_pk(<<@tag_cell::integer, @tag_cell_name::integer, pk_field_size::little-integer-size(32), rest::binary>>, acc) do
-    <<pk_field::binary-size(pk_field_size), rest::binary>> = rest
+  defp decode_pk(<<@tag_cell::integer, @tag_cell_name::integer, pk_field_size::little-integer-size(32), pk_field::binary-size(pk_field_size), rest::binary>>, acc) do
+    # primary key(s) decoding
     {pk_value, rest} = calculate_pk_value(rest)
     acc = [{pk_field, pk_value} | acc]
     decode_pk(rest, acc)
   end
   defp decode_pk(<<@tag_row_data::integer, rest::binary>>, acc) do
+    # finish primary key(s) decoding and start this row's attribute column(s) decoding
     case decode_attr(rest, []) do
       {rest, attrs} ->
         {:cont, rest, {Enum.reverse(acc), attrs}}
@@ -634,19 +640,39 @@ defmodule ExAliyunOts.PlainBuffer do
     end
   end
   defp decode_pk(<<@tag_row_checksum::integer, _::integer>>, acc) do
+    # finish primary key(s) decoding and no attribute column(s) decoding
+    {
+      Enum.reverse(acc),
+      nil
+    }
+  end
+  defp decode_pk(<<@tag_row_checksum::integer, _::integer, rest::binary>>, acc) do
+    # finish primary keys(s) and no attribute column(s) decoding, but still be with other row(s) decoding
+    {
+      :cont,
+      rest,
+      {
+        Enum.reverse(acc),
+        nil
+      }
+    }
+  end
+  defp decode_pk(_, acc) do
+    # still some ignorable bytes but can finish row data decoding
     {
       Enum.reverse(acc),
       nil
     }
   end
 
-  defp decode_attr(<<@tag_cell::integer, @tag_cell_name::integer, attr_field_size::little-integer-size(32), rest::binary>>, acc) do
-    <<attr_field::binary-size(attr_field_size), rest::binary>> = rest
+  defp decode_attr(<<@tag_cell::integer, @tag_cell_name::integer, attr_field_size::little-integer-size(32), attr_field::binary-size(attr_field_size), rest::binary>>, acc) do
+    # attribute columns decoding
     {attr_value, timestamp, rest} = calculate_attr_value(rest)
     acc = [{attr_field, attr_value, timestamp} | acc]
     decode_attr(rest, acc)
   end
   defp decode_attr(<<@tag_row_checksum::integer, _::integer>>, acc) do
+    # be with an ending flag to finish row data decoding
     Enum.reverse(acc)
   end
   defp decode_attr(_, []) do
@@ -656,6 +682,10 @@ defmodule ExAliyunOts.PlainBuffer do
     # current row data is decoded but still need to process other row(s) data
     {rest, Enum.reverse(acc)}
   end
+  defp decode_attr(_, acc) do
+    # still some ignorable bytes but can finish row data decoding
+    Enum.reverse(acc)
+  end
 
   defp decode_attr_timestamp(<<@tag_cell_timestamp::integer, timestamp::little-integer-size(64), @tag_cell_checksum::integer, _row_crc8::integer, rest::binary>>) do
     {timestamp, rest}
@@ -664,16 +694,13 @@ defmodule ExAliyunOts.PlainBuffer do
     {nil, rest}
   end
 
-  defp calculate_pk_value(<<@tag_cell_value::integer, total_bytes_size::little-integer-size(32), @vt_integer::integer, rest::binary>>) do
-    pk_value_size = total_bytes_size - 1
-    <<pk_value::binary-size(pk_value_size), @tag_cell_checksum::integer, _row_crc8::integer, rest::binary>> = rest
+  defp calculate_pk_value(<<@tag_cell_value::integer, _total_bytes_size::little-integer-size(32), @vt_integer::integer, pk_value::binary-size(8), @tag_cell_checksum::integer, _row_crc8::integer, rest::binary>>) do
     <<value::signed-little-integer-size(64)>> = pk_value
     {value, rest}
   end
-  defp calculate_pk_value(<<@tag_cell_value::integer, _total_bytes_size::little-integer-size(32), type::integer, pk_value_size::little-integer-size(32), rest::binary>>)
+  defp calculate_pk_value(<<@tag_cell_value::integer, _total_bytes_size::little-integer-size(32), type::integer, pk_value_size::little-integer-size(32), value::binary-size(pk_value_size), @tag_cell_checksum::integer, _row_crc8::integer, rest::binary>>)
     when type == @vt_string or type == @vt_blob do
-      <<value::binary-size(pk_value_size), @tag_cell_checksum::integer, _row_crc8::integer, rest::binary>> = rest
-      {value, rest}
+    {value, rest}
   end
   defp calculate_pk_value(<<@tag_cell_value::integer, _total_bytes_size::little-integer-size(32), type::integer, _rest::binary>> = input) do
     raise ExAliyunOts.RuntimeError, "Unexcepted primary type as: `#{inspect(type)}` and its binary input: `#{inspect(input)}`"
