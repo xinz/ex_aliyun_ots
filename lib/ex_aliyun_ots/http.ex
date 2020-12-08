@@ -270,6 +270,14 @@ defmodule ExAliyunOts.Http do
     true
   end
 
+  defp match_should_retry?({:error, %Error{message: :timeout}}) do
+    true
+  end
+
+  defp match_should_retry?({:error, %Error{message: "timeout"}}) do
+    true
+  end
+
   defp match_should_retry?(
          {:error, %Error{code: ErrorType.ots_client_unknown(), message: reason} = error}
        )
