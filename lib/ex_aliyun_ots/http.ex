@@ -4,7 +4,7 @@ defmodule ExAliyunOts.Http.Middleware do
 
   alias ExAliyunOts.{PlainBuffer, Protocol, Error}
 
-  alias ExAliyunOts.TableStore.Error, as: ProtoError
+  alias ExAliyunOts.TableStore.Error, as: TableStoreError
   alias ExAliyunOts.Const.ErrorType
 
   require ErrorType
@@ -146,7 +146,7 @@ defmodule ExAliyunOts.Http.Middleware do
     response_body = response.body
 
     try do
-      proto_err = ProtoError.decode(response_body)
+      proto_err = TableStoreError.decode!(response_body)
 
       %Error{
         code: proto_err.code,

@@ -1,16 +1,10 @@
 defmodule ExAliyunOts.TimelineTest do
   use ExUnit.Case
-
-  use ExAliyunOts.Timeline,
-    instance: EDCEXTestInstance
-
+  use ExAliyunOts.Timeline, instance: EDCEXTestInstance
+  require ExAliyunOts.Const.Search.FieldType, as: FieldType
   alias ExAliyunOts.Var.Search
   alias ExAliyunOts.{Timeline, Utils}
   alias ExAliyunOts.Timeline.{Entry, BatchWrite}
-
-  alias ExAliyunOts.Const.Search.FieldType
-
-  require FieldType
 
   test "new timeline" do
     t1 = new()

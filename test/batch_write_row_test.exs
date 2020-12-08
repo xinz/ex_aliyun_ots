@@ -1,15 +1,13 @@
 defmodule ExAliyunOtsTest.BatchWriteRow do
   use ExUnit.Case
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
-  @instance_key EDCEXTestInstance
-
   alias ExAliyunOts.{Var, Client}
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence}
+  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType}
   require PKType
   require OperationType
   require ReturnType
-  require RowExistence
+  @instance_key EDCEXTestInstance
 
   test "batch get row" do
     cur_timestamp = Timex.to_unix(Timex.now())
@@ -26,9 +24,7 @@ defmodule ExAliyunOtsTest.BatchWriteRow do
     result = Client.create_table(@instance_key, var_create_table)
     assert result == :ok
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.expect_not_exist()
-    }
+    condition = condition(:expect_not_exist)
 
     for partition_key <- 1..10 do
       var_put_row = %Var.PutRow{
@@ -46,13 +42,8 @@ defmodule ExAliyunOtsTest.BatchWriteRow do
       {:ok, _result} = Client.put_row(@instance_key, var_put_row)
     end
 
-    condition_exist = %Var.Condition{
-      row_existence: RowExistence.expect_exist()
-    }
-
-    condition_not_exist = %Var.Condition{
-      row_existence: RowExistence.expect_not_exist()
-    }
+    condition_exist = condition(:expect_exist)
+    condition_not_exist = condition(:expect_not_exist)
 
     batch_write_request = [
       %Var.BatchWriteRequest{

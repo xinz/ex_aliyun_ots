@@ -2,16 +2,13 @@ defmodule ExAliyunOts.Timeline do
   @moduledoc """
   Tablestore Timeline model implements.
   """
-
+  use ExAliyunOts.Constants
+  import ExAliyunOts.Utils.Guards
+  import ExAliyunOts.DSL, only: [condition: 1]
+  require Logger
   alias ExAliyunOts.{Client, Var, Utils}
   alias ExAliyunOts.Var.Search
   alias __MODULE__
-
-  use ExAliyunOts.Constants
-
-  import ExAliyunOts.Utils.Guards
-
-  require Logger
 
   @seq_id_generation_auto :auto
   @seq_id_generation_manual :manual
@@ -46,7 +43,7 @@ defmodule ExAliyunOts.Timeline do
 
       use ExAliyunOts.Constants
 
-      import ExAliyunOts, only: [filter: 1]
+      import ExAliyunOts.DSL, only: [filter: 1]
 
       def new(options \\ []) when is_list(options) do
         options = Keyword.merge(@initialized_opts, options)
@@ -574,9 +571,7 @@ defmodule ExAliyunOts.Timeline do
       table_name: table_name,
       primary_keys: primary_keys,
       attribute_columns: Utils.attrs_to_row(message),
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      },
+      condition: condition(:ignore),
       return_type: ReturnType.pk()
     }
 
@@ -605,9 +600,7 @@ defmodule ExAliyunOts.Timeline do
       updates: %{
         OperationType.put() => Utils.attrs_to_row(message)
       },
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      }
+      condition: condition(:ignore)
     }
 
     Client.update_row(instance, var_update_row)
@@ -636,9 +629,7 @@ defmodule ExAliyunOts.Timeline do
     var_delete_row = %Var.DeleteRow{
       table_name: table_name,
       primary_keys: primary_keys,
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      }
+      condition: condition(:ignore)
     }
 
     Client.delete_row(instance, var_delete_row)
@@ -656,9 +647,7 @@ defmodule ExAliyunOts.Timeline do
       type: OperationType.put(),
       primary_keys: identifier ++ [{seq_id_col_name, PKType.auto_increment()}],
       updates: Utils.attrs_to_row(message),
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      },
+      condition: condition(:ignore),
       return_type: ReturnType.pk()
     }
   end
@@ -675,9 +664,7 @@ defmodule ExAliyunOts.Timeline do
       type: OperationType.put(),
       primary_keys: identifier ++ [{seq_id_col_name, sequence_id}],
       updates: Utils.attrs_to_row(message),
-      condition: %Var.Condition{
-        row_existence: RowExistence.ignore()
-      },
+      condition: condition(:ignore),
       return_type: ReturnType.pk()
     }
   end

@@ -59,26 +59,25 @@ defmodule ExAliyunOts.PlainBuffer do
   end
 
   def serialize_column_value(value) when is_boolean(value) do
-    [<<@vt_boolean::integer>>, boolean_to_integer(value)]
+    <<@vt_boolean::integer, boolean_to_integer(value)::bitstring>>
   end
 
   def serialize_column_value(value) when is_integer(value) do
-    [<<@vt_integer::integer>>, <<value::little-integer-size(64)>>]
+    <<@vt_integer::integer, value::little-integer-size(64)>>
   end
 
   def serialize_column_value(value) when is_binary(value) do
     value_size = byte_size(value)
-    [<<@vt_string::integer>>, <<value_size::little-integer-size(32)>>, value]
+    <<@vt_string::integer, value_size::little-integer-size(32), value::binary>>
   end
 
   def serialize_column_value(value) when is_bitstring(value) do
     value_size = byte_size(value)
-    [<<@vt_blob::integer>>, <<value_size::little-integer-size(32)>>, value]
+    <<@vt_blob::integer, value_size::little-integer-size(32), value::binary>>
   end
 
   def serialize_column_value(value) when is_float(value) do
-    value_to_binary = <<value::little-float>>
-    [<<@vt_double::integer>>, value_to_binary]
+    <<@vt_double::integer, value::little-float>>
   end
 
   def serialize_column_value(value) do

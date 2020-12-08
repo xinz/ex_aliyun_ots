@@ -200,7 +200,7 @@ defmodule ExAliyunOts.MixinTest.ParallelScan do
           splits_size,
           session_id
         )
-      end)
+      end, timeout: :infinity)
       |> Stream.map(fn {:ok, response} -> response end)
       |> Enum.reduce([], fn(response, acc) ->
         acc ++ response.rows
@@ -222,7 +222,7 @@ defmodule ExAliyunOts.MixinTest.ParallelScan do
           splits_size,
           session_id
         )
-      end)
+      end, timeout: :infinity)
       |> Stream.map(fn {:ok, response} -> response end)
       |> Enum.reduce([], fn(response, acc) ->
         acc ++ response.rows

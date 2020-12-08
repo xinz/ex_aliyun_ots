@@ -40,22 +40,22 @@ defmodule ExAliyunOts.Tunnel.Utils do
   end
 
   defp content_v2(token_str) do
-    token = Token.decode(Base.decode64!(token_str))
+    token = Token.decode!(Base.decode64!(token_str))
     version = token.version
 
     case version do
       1 ->
-        token_content = TokenContent.decode(token.content)
+        token_content = TokenContent.decode!(token.content)
 
-        TokenContentV2.new(
+        %TokenContentV2{
           primary_key: token_content.primary_key,
           iterator: token_content.iterator,
           timestamp: token_content.timestamp,
           total_count: 0
-        )
+        }
 
       2 ->
-        TokenContentV2.decode(token.content)
+        TokenContentV2.decode!(token.content)
 
       _ ->
         Logger.error(fn ->

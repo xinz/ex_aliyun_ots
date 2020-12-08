@@ -1,14 +1,12 @@
 defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   use ExUnit.Case
-
+  import ExAliyunOts.DSL, only: [condition: 1]
   require Logger
-
   alias ExAliyunOts.Var
-  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType, RowExistence}
+  alias ExAliyunOts.Const.{PKType, OperationType, ReturnType}
   require PKType
   require OperationType
   require ReturnType
-  require RowExistence
 
   @instance_key EDCEXTestInstance
 
@@ -79,9 +77,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     partition_key = "c3be8617-10d7-422b-8f80-58603d1603d6"
     order_id = "order2"
     # PutRow with an auto increment primary key, the `row_existence` field should be as "IGNORE".
-    condition = %Var.Condition{
-      row_existence: RowExistence.ignore()
-    }
+    condition = condition(:ignore)
 
     var_put_row = %Var.PutRow{
       table_name: table_name,
@@ -109,9 +105,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     {"order_id", return_order_id} = Enum.at(primary_keys_result, 2)
     assert return_order_id == order_id
 
-    condition = %Var.Condition{
-      row_existence: RowExistence.expect_exist()
-    }
+    condition = condition(:expect_exist)
 
     var_update_row = %Var.UpdateRow{
       table_name: table_name,

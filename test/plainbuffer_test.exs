@@ -419,7 +419,7 @@ defmodule ExAliyunOtsTest.PlainBuffer do
         19, 0, 0, 0, 13, 0, 0, 0, 0, 14, 137, 74, 156, 146, 157, 181, 5, 0, 15, 1, 0,
         0, 0, 9, 126>>
 
-    data = ExAliyunOts.PlainBuffer.deserialize_row(row)
+    data = PlainBuffer.deserialize_row(row)
 
     assert data == {[{"id", 10}],
       [
@@ -436,8 +436,17 @@ defmodule ExAliyunOtsTest.PlainBuffer do
         0, 0, 0, 10, 70, 8, 11, 24, 0, 0, 0, 12, 19, 0, 0, 0, 13, 0, 0, 0, 0, 14, 166,
         121, 63, 49, 158, 181, 5, 0, 15, 1, 0, 0, 0, 9, 34>>
 
-    data = ExAliyunOts.PlainBuffer.deserialize_row(row)
+    data = PlainBuffer.deserialize_row(row)
 
     assert data == {[{"id", 5}], nil}
+  end
+
+  test "serialize_column_value" do
+    assert <<2, 1>> == PlainBuffer.serialize_column_value(true)
+    assert <<2, 0>> == PlainBuffer.serialize_column_value(false)
+    assert <<0, 69, 51, 111, 224, 11, 28, 1, 0>> == PlainBuffer.serialize_column_value(312312312312645)
+    assert <<3, 3, 0, 0, 0, 97, 98, 99>> == PlainBuffer.serialize_column_value("abc")
+    assert <<3, 3, 0, 0, 0, 97, 98, 99>> == PlainBuffer.serialize_column_value(<<"abc">>)
+    assert <<1, 164, 112, 61, 10, 215, 163, 40, 64>> == PlainBuffer.serialize_column_value(12.32)
   end
 end

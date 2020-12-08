@@ -10,12 +10,8 @@ defmodule ExAliyunOtsTest.Sequence do
   @sequence_name "test_sequence"
 
   setup_all do
-    var_new = %Var.NewSequence{
-      name: @sequence_name
-    }
-
-    result = Sequence.create(@instance_key, var_new)
-    assert result == :ok
+    var_new = %Var.NewSequence{name: @sequence_name}
+    assert Sequence.create(@instance_key, var_new) == :ok
 
     on_exit(fn ->
       del_result = Sequence.delete_event(@instance_key, @sequence_name, "default")

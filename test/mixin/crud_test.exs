@@ -26,6 +26,8 @@ defmodule ExAliyunOts.MixinTest.CRUD do
       assert del_table2_reslt == :ok
     end)
 
+    Process.sleep(3_000)
+
     {:ok, %{table1: table_name1, table2: table_name2}}
   end
 

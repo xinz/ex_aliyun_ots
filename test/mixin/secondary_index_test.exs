@@ -4,6 +4,8 @@ defmodule ExAliyunOts.MixinTest.SecondaryIndexTest do
 
   use ExUnit.Case
 
+  @tag :skip
+
   @index_name "TestIndex"
 
   test "global secondary index test" do

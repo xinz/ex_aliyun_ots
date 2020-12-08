@@ -28,12 +28,11 @@ defmodule ExAliyunOts.Mixfile do
 
   defp deps do
     [
-      {:exprotobuf, "~> 1.2"},
+      {:tablestore_protos, "~> 0.1"},
       {:finch, "~> 0.5"},
       {:gen_state_machine, "~> 2.0"},
       {:tesla, "~> 1.4"},
       {:timex, "~> 3.3"},
-
       {:benchee, "~> 1.0", only: :dev, runtime: false},
       {:credo, "~> 1.2", only: :dev, runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
