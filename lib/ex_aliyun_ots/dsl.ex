@@ -1,6 +1,6 @@
 defmodule ExAliyunOts.DSL do
   require ExAliyunOts.Const.FilterType, as: FilterType
-  alias ExAliyunOts.TableStore.{Condition, IndexMeta}
+  alias ExAliyunOts.TableStore.Condition
   alias ExAliyunOts.TableStoreFilter.{Filter, ColumnPaginationFilter}
 
   @type row_existence :: ExAliyunOts.Const.RowExistence.supported()
@@ -151,21 +151,4 @@ defmodule ExAliyunOts.DSL do
       "Invalid existence: #{inspect(row_existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
   end
 
-  @doc false
-  @spec index_meta(
-          index_name :: String.t(),
-          primary_keys :: [String.t()],
-          defined_columns :: [String.t()]
-        ) :: IndexMeta.t()
-  defmacro index_meta(index_name, primary_keys, defined_columns) do
-    quote do
-      %IndexMeta{
-        name: unquote(index_name),
-        primary_key: unquote(primary_keys),
-        defined_column: unquote(defined_columns),
-        index_update_mode: :IUM_ASYNC_INDEX,
-        index_type: :IT_GLOBAL_INDEX
-      }
-    end
-  end
 end

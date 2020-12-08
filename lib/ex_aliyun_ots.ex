@@ -65,15 +65,12 @@ defmodule ExAliyunOts do
   All defined functions and macros in `ExAliyunOts` are available and referable for your own ExAliyunOts module as well, except that the given arity of functions may
   different, because the `instance` parameter of each invoke request is NOT needed from your own ExAliyunOts module although the `ExAliyunOts` module defines it.
   """
-  require ExAliyunOts.DSL, as: DSL
   require ExAliyunOts.Const.OperationType, as: OperationType
   alias ExAliyunOts.{Var, Client, Utils}
-  alias ExAliyunOts.TableStore.{ReturnType, Direction, CreateIndexRequest, IndexMeta}
+  alias ExAliyunOts.TableStore.{ReturnType, Direction}
 
   @before_compile ExAliyunOts.MergeCompiler
   @type instance :: atom
-
-  require Logger
 
   require Logger
 
@@ -134,20 +131,30 @@ defmodule ExAliyunOts do
   end
 
   @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/91947.html) | [English](https://www.alibabacloud.com/help/doc-detail/91947.html)
+  Create global secondary indexes. Official document in [Chinese](https://help.aliyun.com/document_detail/91947.html) | [English](https://www.alibabacloud.com/help/doc-detail/91947.html)
 
   ## Example
 
-    create_index "table_name",
-      "table_index_name1"
-      ["pk1", "pk2", "col0"],
-      ["col1", "col2"]
+      create_index "table_name",
+        "table_index_name1"
+        ["pk1", "pk2", "col0"],
+        ["col1", "col2"]
 
-    create_index "table_name",
-      "table_index_name2"
-      ["col0", "pk1"],
-      ["col1", "col2", "col3"],
-      false
+      create_index "table_name",
+        "table_index_name2"
+        ["col0", "pk1"],
+        ["col1", "col2", "col3"],
+        include_base_data: false
+
+  ## Options
+
+    * `:index_update_mode`, the update mode of the index table, optional, currently only support `:IUM_ASYNC_INDEX`,
+    by default it is `:IUM_ASYNC_INDEX`;
+    * `:index_type`, the type of the index table, optional, currently only support `:IT_GLOBAL_INDEX`,
+    by default it is `:IT_GLOBAL_INDEX`;
+    * `:include_base_data`, specifies whether the index table includes the existing data in the base table, if set it to
+    `true` means the index includes the existing data, if set it to `false` means the index excludes the existing data,
+    optional, by default it is `true`.
   """
   @doc table: :table
   @spec create_index(
@@ -156,7 +163,7 @@ defmodule ExAliyunOts do
           index_name :: String.t(),
           primary_keys :: [String.t()],
           defined_columns :: [String.t()],
-          include_base_data :: boolean()
+          options :: Keyword.t()
         ) :: :ok | {:error, ExAliyunOts.Error.t()}
   def create_index(
         instance,
@@ -164,35 +171,17 @@ defmodule ExAliyunOts do
         index_name,
         primary_keys,
         defined_columns,
-        include_base_data \\ true
+        options \\ []
       ) do
-    create_index(
+
+    Client.create_index(
       instance,
       table_name,
-      DSL.index_meta(index_name, primary_keys, defined_columns),
-      include_base_data
+      index_name,
+      primary_keys,
+      defined_columns,
+      options
     )
-  end
-
-  @spec create_index(
-          instance,
-          table_name :: String.t(),
-          index_meta :: IndexMeta.t(),
-          include_base_data :: boolean()
-        ) :: :ok | {:error, ExAliyunOts.Error.t()}
-  def create_index(
-        instance,
-        table_name,
-        index_meta,
-        include_base_data \\ true
-      ) do
-    create_index_request = %CreateIndexRequest{
-      main_table_name: table_name,
-      index_meta: index_meta,
-      include_base_data: include_base_data
-    }
-
-    Client.create_index(instance, create_index_request)
   end
 
   @doc """

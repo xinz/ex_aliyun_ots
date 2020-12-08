@@ -8,8 +8,8 @@ defmodule ExAliyunOts.Client do
     Table.remote_create_table(Config.get(instance_key), var_create_table)
   end
 
-  def create_index(instance_key, create_index_request) do
-    Table.remote_create_index(Config.get(instance_key), create_index_request)
+  def create_index(instance_key, table_name, index_name, primary_keys, defined_columns, options) do
+    Table.remote_create_index(Config.get(instance_key), table_name, index_name, primary_keys, defined_columns, options)
   end
 
   def delete_index(instance_key, table_name, index_name) do

@@ -8,6 +8,7 @@ defmodule ExAliyunOts.Client.Table do
     DefinedColumnSchema,
     DefinedColumnType,
     TableMeta,
+    IndexMeta,
     CreateIndexRequest,
     DropIndexRequest,
     ReservedThroughput,
@@ -78,7 +79,19 @@ defmodule ExAliyunOts.Client.Table do
     result
   end
 
-  def remote_create_index(instance, create_index_request) do
+  def remote_create_index(instance, table_name, index_name, primary_keys, defined_columns, options) do
+
+    create_index_request = %CreateIndexRequest{
+      main_table_name: table_name,
+      index_meta: %IndexMeta{
+        name: index_name,
+        primary_key: primary_keys,
+        defined_column: defined_columns,
+        index_update_mode: :IUM_ASYNC_INDEX,
+        index_type: :IT_GLOBAL_INDEX
+      },
+      include_base_data: Keyword.get(options, :include_base_data, true)
+    }
 
     request_body = create_index_request |> CreateIndexRequest.encode!() |> IO.iodata_to_binary()
 
