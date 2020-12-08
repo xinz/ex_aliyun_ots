@@ -7,7 +7,7 @@
 * [Http] Use Tesla with Finch adapter
 
 ## v0.8.0 (2020-11-13)
-* [Table] Add `ExAliyunOts.compute_split_points_by_size/2`
+* [Table] Add `ExAliyunOts.compute_split_points_by_size/3`
 * [Table] Fix `shard_splits` of DescribeTable response in proper decoded format
 * [SearchIndex] Add ParallelScan functions
 	- Implement standard api `ExAliyunOts.compute_splits/3`
