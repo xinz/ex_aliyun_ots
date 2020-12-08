@@ -1,4 +1,5 @@
 Code.require_file("plainbuffer.ex", "./benchmark/v1")
+Code.require_file("plainbuffer.ex", "./benchmark/a96291c")
 
 defmodule Plainbuffer.Benchmark do
   require Integer
@@ -17,6 +18,7 @@ defmodule Plainbuffer.Benchmark do
     Benchee.run(
       %{
         "deserialize row binary old"          => fn -> bench_deserialize_row(serialized_row, ExAliyunOts.PlainBuffer.Old) end,
+        "deserialize row binary Commit_a96291c"          => fn -> bench_deserialize_row(serialized_row, ExAliyunOts.PlainBuffer.Commit_a96291c) end,
         "deserialize row binary new"          => fn -> bench_deserialize_row(serialized_row, ExAliyunOts.PlainBuffer) end,
       },
       time: 10,
@@ -27,6 +29,7 @@ defmodule Plainbuffer.Benchmark do
     Benchee.run(
       %{
         "deserialize rows binary old"          => fn -> bench_deserialize_rows(serialized_rows, ExAliyunOts.PlainBuffer.Old) end,
+        "deserialize rows binary Commit_a96291c"          => fn -> bench_deserialize_rows(serialized_rows, ExAliyunOts.PlainBuffer.Commit_a96291c) end,
         "deserialize rows binary new"          => fn -> bench_deserialize_rows(serialized_rows, ExAliyunOts.PlainBuffer) end,
       },
       time: 10,
@@ -37,6 +40,7 @@ defmodule Plainbuffer.Benchmark do
     Benchee.run(
       %{
         "serialize put_row old"           => fn -> bench_serialize_for_put_row(input_raw_rows, ExAliyunOts.PlainBuffer.Old) end,
+        "serialize put_row Commit_a96291c"           => fn -> bench_serialize_for_put_row(input_raw_rows, ExAliyunOts.PlainBuffer.Commit_a96291c) end,
         "serialize put_row new"           => fn -> bench_serialize_for_put_row(input_raw_rows, ExAliyunOts.PlainBuffer) end
       },
       time: 10,
@@ -47,6 +51,7 @@ defmodule Plainbuffer.Benchmark do
     Benchee.run(
       %{
         "serialize primary keys old"           => fn -> bench_serialize_primary_keys(pks, ExAliyunOts.PlainBuffer.Old) end,
+        "serialize primary keys Commit_a96291c"           => fn -> bench_serialize_primary_keys(pks, ExAliyunOts.PlainBuffer.Commit_a96291c) end,
         "serialize primary keys new"           => fn -> bench_serialize_primary_keys(pks, ExAliyunOts.PlainBuffer) end
       },
       time: 10,

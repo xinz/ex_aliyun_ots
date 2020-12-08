@@ -443,6 +443,3 @@ defmodule ExAliyunOts.Var.Transaction do
     defstruct table_name: "", partition_key: {}
   end
 end
-
-# ParallelScan
-#

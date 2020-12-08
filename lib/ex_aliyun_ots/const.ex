@@ -63,9 +63,9 @@ defmodule ExAliyunOts.Const.ErrorType do
 
   #
   # Will retry when occur the following errors:
-  # 
+  #
   # reference: https://help.aliyun.com/document_detail/27300.html
-  # 
+  #
   const(:row_operation_conflict, "OTSRowOperationConflict")
   const(:not_enough_capacity_unit, "OTSNotEnoughCapacityUnit")
   const(:table_not_ready, "OTSTableNotReady")

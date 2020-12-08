@@ -62,7 +62,7 @@ defmodule ExAliyunOts do
     * using macros and functions from your own ExAliyunOts module, like `MyApp.TableStore`.
     * using macros and functions from the `ExAliyunOts` module.
 
-  All defined functions and macros in `ExAliyunOts` are available and referrible for your own ExAliyunOts module as well, except that the given arity of functions may
+  All defined functions and macros in `ExAliyunOts` are available and referable for your own ExAliyunOts module as well, except that the given arity of functions may
   different, because the `instance` parameter of each invoke request is NOT needed from your own ExAliyunOts module although the `ExAliyunOts` module defines it.
   """
   require ExAliyunOts.DSL, as: DSL
@@ -72,6 +72,8 @@ defmodule ExAliyunOts do
 
   @before_compile ExAliyunOts.MergeCompiler
   @type instance :: atom
+
+  require Logger
 
   require Logger
 
@@ -94,7 +96,7 @@ defmodule ExAliyunOts do
       create_table "table_name2",
         [{"key1", :string}, {"key2", :auto_increment}]
 
-      create_table "table_name3", 
+      create_table "table_name3",
         [{"key1", :string}],
         reserved_throughput_write: 1,
         reserved_throughput_read: 1,
@@ -107,7 +109,7 @@ defmodule ExAliyunOts do
 
     * `:reserved_throughput_write`, optional, the reserved throughput write of table, by default it is 0.
     * `:reserved_throughput_read`, optional, the reserved throughput read of table, by default it is 0.
-    * `time_to_live`, optional, the data storage time to live in seconds, the minimux settable value is 864_000 seconds (one day), by default it is -1 (for permanent).
+    * `time_to_live`, optional, the data storage time to live in seconds, the minimum settable value is 864_000 seconds (one day), by default it is -1 (for permanent).
     * `:max_versions`, optional, the version of table, by default it is 1 that specifies there is only one version for columns.
     * `:deviation_cell_version_in_sec`, optional, maximum version deviation, by default it is 864_000 seconds (one day).
     * `:stream_spec`, specifies whether enable stream, by default it is not enable stream feature.
@@ -333,7 +335,7 @@ defmodule ExAliyunOts do
         ]}
       ]
 
-  The batch write operation can be considered as a collection of mulitple `write_put/3`, `write_update/2` and `write_delete/2` operations.
+  The batch write operation can be considered as a collection of multiple `write_put/3`, `write_update/2` and `write_delete/2` operations.
   """
   @doc row: :row
   @spec batch_write(instance, requests :: list(), options :: Keyword.t()) ::
@@ -393,7 +395,7 @@ defmodule ExAliyunOts do
     * `:time_range`, optional, read data by timestamp range, support two ways to use it:
       - `time_range: {start_timestamp, end_timestamp}`, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
       and then will return in the results.
-      - `time_range: specail_timestamp`, exactly match and then will return in the results.
+      - `time_range: special_timestamp`, exactly match and then will return in the results.
       - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
     * `:transaction_id`, optional, read operation within local transaction.
   """
@@ -493,9 +495,9 @@ defmodule ExAliyunOts do
     * `:put`, optional, require to be valid value, e.g. `[{"field1", "value"}, {...}]`, insert a new column if this field is not existed, or overwrite this field if existed.
     * `:delete`, optional, delete the special version of a column or columns, please pass the column's version (timestamp) in `:delete` option, e.g. [{"field1", nil, 1524464460}, ...].
     * `:delete_all`, optional, delete all versions of a column or columns, e.g. ["field1", "field2", ...].
-    * `:increment`, optional, attribute column(s) base on atomic counters for increment or decreasement, require the value of column is integer.
+    * `:increment`, optional, attribute column(s) base on atomic counters for increment or decrement, require the value of column is integer.
       - for increment, `increment: [{"count", 1}]`;
-      - for decreasement, `increment: [{"count", -1}]`.
+      - for decrement, `increment: [{"count", -1}]`.
     * `:return_type`, optional, whether return the primary keys after update row, available options are `:pk` | `:none` | `:after_modify`, by default it is `:none`.
       - if use atomic counters, must set `return_type: :after_modify`.
     * `:condition`, required, please see `condition/1` or `condition/2` for details.
@@ -670,7 +672,7 @@ defmodule ExAliyunOts do
     * `:time_range`, optional, read data by timestamp range, support two ways to use it:
       - `time_range: {start_timestamp, end_timestamp}`, the timestamp in the range (include `start_timestamp` but exclude `end_timestamp`)
         and then will return in the results.
-      - `time_range: specail_timestamp`, exactly match and then will return in the results.
+      - `time_range: special_timestamp`, exactly match and then will return in the results.
       - `:time_range` and `:max_versions` are mutually exclusive, by default use `max_versions: 1` and `time_range: nil`.
   """
   @doc row: :row
@@ -771,7 +773,7 @@ defmodule ExAliyunOts do
   end
 
   @doc """
-  As a wrapper built on `get_range/5` to create composable and lazy enumerables stream for iteration.
+  As a wrapper built on `get_range/5` to create composable and lazy enumerable stream for iteration.
 
   ## Example
 
@@ -972,7 +974,7 @@ defmodule ExAliyunOts do
       |> fun.()
     case result do
       {:error, %ExAliyunOts.Error{code: "OTSSessionExpired"}} ->
-        Logger.info("scan_query session expired, will renew a parallelscan task.")
+        Logger.info("scan_query session expired, will renew a parallel scan task.")
         iterate_parallel_scan(instance, table, index_name, fun, options)
       other ->
         other
@@ -1023,7 +1025,7 @@ defmodule ExAliyunOts do
     value = stream_parallel_scan(instance, table, index_name, options)
     case apply(mod, fun, [value | args]) do
       {:error, %ExAliyunOts.Error{code: "OTSSessionExpired"}} ->
-        Logger.info("scan_query session expired, will renew a parallelscan task.")
+        Logger.info("scan_query session expired, will renew a parallel scan task.")
         iterate_parallel_scan(instance, table, index_name, mod, fun, args, options)
       other ->
         other
@@ -1031,7 +1033,7 @@ defmodule ExAliyunOts do
   end
 
   @doc """
-  Integrate `parallel_scan/4` with `compute_splits/3` as a complete use, base on the response of `compute_splits/3` to create the corrsponding
+  Integrate `parallel_scan/4` with `compute_splits/3` as a complete use, base on the response of `compute_splits/3` to create the corresponding
   number of concurrency task(s), use `Task.async_stream/3` to make parallel scan as a stream which properly process `token`
   in every request of the internal, when use this function need to consider the possibility of the `OTSSessionExpired` error in the external.
 
