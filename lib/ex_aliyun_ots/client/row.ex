@@ -39,15 +39,16 @@ defmodule ExAliyunOts.Client.Row do
     serialized_row =
       PlainBuffer.serialize_for_put_row(var_put_row.primary_keys, var_put_row.attribute_columns)
 
-    [
+    PutRowRequest
+    |> struct([
       table_name: var_put_row.table_name,
       row: serialized_row,
       condition: proto_condition,
       transaction_id: var_put_row.transaction_id
-    ]
-    |> PutRowRequest.new()
+    ])
     |> map_return_content(var_put_row.return_type, nil)
-    |> PutRowRequest.encode()
+    |> PutRowRequest.encode!()
+    |> IO.iodata_to_binary()
   end
 
   def remote_put_row(instance, var_put_row) do
@@ -55,7 +56,7 @@ defmodule ExAliyunOts.Client.Row do
 
     result =
       instance
-      |> Http.client("/PutRow", request_body, &PutRowResponse.decode/1)
+      |> Http.client("/PutRow", request_body, &PutRowResponse.decode!/1)
       |> Http.post()
 
     debug(fn -> ["put_row result: ", inspect(result)] end)
@@ -68,7 +69,7 @@ defmodule ExAliyunOts.Client.Row do
     filter = Filter.serialize_filter(var_get_row.filter)
 
     get_row_request =
-      GetRowRequest.new(
+      %GetRowRequest{
         table_name: var_get_row.table_name,
         primary_key: primary_keys,
         columns_to_get: var_get_row.columns_to_get,
@@ -76,7 +77,7 @@ defmodule ExAliyunOts.Client.Row do
         start_column: var_get_row.start_column,
         end_column: var_get_row.end_column,
         transaction_id: var_get_row.transaction_id
-      )
+      }
 
     parameter_time_range = var_get_row.time_range
 
@@ -90,7 +91,7 @@ defmodule ExAliyunOts.Client.Row do
           Map.put(get_row_request, :max_versions, var_get_row.max_versions)
       end
 
-    GetRowRequest.encode(get_row_request)
+    GetRowRequest.encode!(get_row_request) |> IO.iodata_to_binary()
   end
 
   def remote_get_row(instance, var_get_row) do
@@ -98,7 +99,7 @@ defmodule ExAliyunOts.Client.Row do
 
     result =
       instance
-      |> Http.client("/GetRow", request_body, &GetRowResponse.decode/1)
+      |> Http.client("/GetRow", request_body, &GetRowResponse.decode!/1)
       |> Http.post()
 
     debug(fn -> ["get_row result: ", inspect(result)] end)
@@ -112,15 +113,16 @@ defmodule ExAliyunOts.Client.Row do
 
     proto_condition = Map.update!(var_update_row.condition, :column_condition, &Filter.serialize_filter/1)
 
-    [
+    UpdateRowRequest
+    |> struct([
       table_name: var_update_row.table_name,
       row_change: serialized_row,
       condition: proto_condition,
       transaction_id: var_update_row.transaction_id
-    ]
-    |> UpdateRowRequest.new()
+    ])
     |> map_return_content(var_update_row.return_type, var_update_row.return_columns)
-    |> UpdateRowRequest.encode()
+    |> UpdateRowRequest.encode!()
+    |> IO.iodata_to_binary()
   end
 
   def remote_update_row(instance, var_update_row) do
@@ -128,7 +130,7 @@ defmodule ExAliyunOts.Client.Row do
 
     result =
       instance
-      |> Http.client("/UpdateRow", request_body, &UpdateRowResponse.decode/1)
+      |> Http.client("/UpdateRow", request_body, &UpdateRowResponse.decode!/1)
       |> Http.post()
 
     debug(fn -> ["update_row result: ", inspect(result)] end)
@@ -141,15 +143,16 @@ defmodule ExAliyunOts.Client.Row do
 
     proto_condition = Map.update!(var_delete_row.condition, :column_condition, &Filter.serialize_filter/1)
 
-    [
+    DeleteRowRequest
+    |> struct([
       table_name: var_delete_row.table_name,
       primary_key: serialized_primary_keys,
       condition: proto_condition,
       transaction_id: var_delete_row.transaction_id
-    ]
-    |> DeleteRowRequest.new()
+    ])
     |> map_return_content(var_delete_row.return_type, nil)
-    |> DeleteRowRequest.encode()
+    |> DeleteRowRequest.encode!()
+    |> IO.iodata_to_binary()
   end
 
   def remote_delete_row(instance, var_delete_row) do
@@ -157,7 +160,7 @@ defmodule ExAliyunOts.Client.Row do
 
     result =
       instance
-      |> Http.client("/DeleteRow", request_body, &DeleteRowResponse.decode/1)
+      |> Http.client("/DeleteRow", request_body, &DeleteRowResponse.decode!/1)
       |> Http.post()
 
     debug(fn -> ["delete_row result: ", inspect(result)] end)
@@ -181,7 +184,7 @@ defmodule ExAliyunOts.Client.Row do
     filter = Filter.serialize_filter(var_get_range.filter)
 
     get_range_request =
-      GetRangeRequest.new(
+      %GetRangeRequest{
         table_name: var_get_range.table_name,
         direction: var_get_range.direction,
         columns_to_get: var_get_range.columns_to_get,
@@ -192,7 +195,7 @@ defmodule ExAliyunOts.Client.Row do
         start_column: var_get_range.start_column,
         end_column: var_get_range.end_column,
         transaction_id: var_get_range.transaction_id
-      )
+      }
 
     get_range_request =
       case parameter_time_range do
@@ -204,7 +207,7 @@ defmodule ExAliyunOts.Client.Row do
           Map.put(get_range_request, :max_versions, var_get_range.max_versions)
       end
 
-    GetRangeRequest.encode(get_range_request)
+    GetRangeRequest.encode!(get_range_request) |> IO.iodata_to_binary()
   end
 
   def remote_get_range(instance, var_get_range, next_start_primary_key \\ nil) do
@@ -212,7 +215,7 @@ defmodule ExAliyunOts.Client.Row do
 
     result =
       instance
-      |> Http.client("/GetRange", request_body, &GetRangeResponse.decode/1)
+      |> Http.client("/GetRange", request_body, &GetRangeResponse.decode!/1)
       |> Http.post()
 
     debug(fn -> ["get_range result: ", inspect(result)] end)
@@ -231,8 +234,7 @@ defmodule ExAliyunOts.Client.Row do
       )
 
     encoded_tables = Enum.map(stream, fn {:ok, request} -> request end)
-    request = BatchGetRowRequest.new(tables: encoded_tables)
-    BatchGetRowRequest.encode(request)
+    %BatchGetRowRequest{tables: encoded_tables} |> BatchGetRowRequest.encode!() |> IO.iodata_to_binary()
   end
 
   defp do_request_to_batch_get_row(var_batch_get_row) do
@@ -240,14 +242,14 @@ defmodule ExAliyunOts.Client.Row do
     filter = Filter.serialize_filter(var_batch_get_row.filter)
 
     batch_get_row_request =
-      TableInBatchGetRowRequest.new(
+      %TableInBatchGetRowRequest{
         table_name: var_batch_get_row.table_name,
         primary_key: bytes_primary_keys,
         columns_to_get: var_batch_get_row.columns_to_get,
         filter: filter,
         start_column: var_batch_get_row.start_column,
         end_column: var_batch_get_row.end_column
-      )
+      }
 
     parameter_time_range = var_batch_get_row.time_range
 
@@ -273,7 +275,7 @@ defmodule ExAliyunOts.Client.Row do
           PlainBuffer.serialize_primary_keys(primary_keys_query_group)
         else
           raise ExAliyunOts.RuntimeError,
-                "Invalid primary_keys group #{inspect(primary_keys_query_group)}, expect it as list"
+            "Invalid primary_keys group #{inspect(primary_keys_query_group)}, expect it as list"
         end
       end,
       timeout: :infinity
@@ -283,7 +285,7 @@ defmodule ExAliyunOts.Client.Row do
 
   defp pks_to_batch_get_row(primary_keys) do
     raise ExAliyunOts.RuntimeError,
-          "Invalid primary_keys #{inspect(primary_keys)}, expect it as list"
+      "Invalid primary_keys #{inspect(primary_keys)}, expect it as list"
   end
 
   def remote_batch_get_row(instance, vars_batch_get_row) do
@@ -292,7 +294,7 @@ defmodule ExAliyunOts.Client.Row do
     result =
       instance
       |> Http.client("/BatchGetRow", request_body, fn response_body ->
-        decoded = BatchGetRowResponse.decode(response_body)
+        decoded = BatchGetRowResponse.decode!(response_body)
         readable_tables = decode_rows_from_batch_get_row(decoded.tables)
         %{decoded | tables: readable_tables}
       end)
@@ -326,8 +328,7 @@ defmodule ExAliyunOts.Client.Row do
         map_table_in_batch_write_row_request(var_batch_write_row)
       end)
 
-    request = BatchWriteRowRequest.new(tables: tables)
-    BatchWriteRowRequest.encode(request)
+    %BatchWriteRowRequest{tables: tables} |> BatchWriteRowRequest.encode!() |> IO.iodata_to_binary()
   end
 
   defp request_to_batch_write_row([var_batch_write_row], transaction_id)
@@ -338,8 +339,7 @@ defmodule ExAliyunOts.Client.Row do
   defp request_to_batch_write_row(var_batch_write_row, transaction_id)
        when is_map(var_batch_write_row) do
     table = map_table_in_batch_write_row_request(var_batch_write_row)
-    request = BatchWriteRowRequest.new(tables: [table], transaction_id: transaction_id)
-    BatchWriteRowRequest.encode(request)
+    %BatchWriteRowRequest{tables: [table], transaction_id: transaction_id} |> BatchWriteRowRequest.encode!() |> IO.iodata_to_binary()
   end
 
   defp map_table_in_batch_write_row_request(var_batch_write_row) do
@@ -364,10 +364,10 @@ defmodule ExAliyunOts.Client.Row do
       )
       |> Enum.map(fn {:ok, request} -> request end)
 
-    TableInBatchWriteRowRequest.new(
+    %TableInBatchWriteRowRequest{
       table_name: var_batch_write_row.table_name,
       rows: encoded_rows
-    )
+    }
   end
 
   defp do_request_to_batch_write_row(var_row_in_request) do
@@ -398,8 +398,8 @@ defmodule ExAliyunOts.Client.Row do
                 "Invalid OperationType: #{inspect(type)}, please ensure the operation type of BatchWriteRow as [UPDATE, PUT, DELETE]"
       end
 
-    [type: var_row_in_request.type, row_change: serialized_row, condition: proto_condition]
-    |> RowInBatchWriteRowRequest.new()
+    RowInBatchWriteRowRequest
+    |> struct([type: var_row_in_request.type, row_change: serialized_row, condition: proto_condition])
     |> map_return_content(var_row_in_request.return_type, var_row_in_request.return_columns)
   end
 
@@ -409,7 +409,7 @@ defmodule ExAliyunOts.Client.Row do
     result =
       instance
       |> Http.client("/BatchWriteRow", request_body, fn response_body ->
-        decoded = BatchWriteRowResponse.decode(response_body)
+        decoded = BatchWriteRowResponse.decode!(response_body)
         readable_tables = decode_row_from_batch_write_row(decoded.tables)
         %{decoded | tables: readable_tables}
       end)
@@ -443,10 +443,10 @@ defmodule ExAliyunOts.Client.Row do
        }) do
     cond do
       is_integer(start_time) and is_integer(end_time) ->
-        TimeRange.new(start_time: start_time, end_time: end_time)
+        %TimeRange{start_time: start_time, end_time: end_time}
 
       is_integer(specific_time) ->
-        TimeRange.new(specific_time: specific_time)
+        %TimeRange{specific_time: specific_time}
 
       true ->
         raise ExAliyunOts.RuntimeError,
@@ -466,7 +466,7 @@ defmodule ExAliyunOts.Client.Row do
   end
 
   defp map_return_content(request, ReturnType.pk() = return_type, _return_columns) do
-    Map.put(request, :return_content, ReturnContent.new(return_type: return_type))
+    Map.put(request, :return_content, %ReturnContent{return_type: return_type})
   end
 
   defp map_return_content(request, ReturnType.after_modify() = return_type, return_columns)
@@ -474,7 +474,7 @@ defmodule ExAliyunOts.Client.Row do
     Map.put(
       request,
       :return_content,
-      ReturnContent.new(return_type: return_type, return_column_names: return_columns)
+      %ReturnContent{return_type: return_type, return_column_names: return_columns}
     )
   end
 

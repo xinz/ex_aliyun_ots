@@ -1,6 +1,5 @@
 defmodule ExAliyunOts.DSL do
   require ExAliyunOts.Const.FilterType, as: FilterType
-  require ExAliyunOts.Const.RowExistence, as: RowExistence
   alias ExAliyunOts.TableStore.{Condition, IndexMeta}
   alias ExAliyunOts.TableStoreFilter.{Filter, ColumnPaginationFilter}
 
@@ -139,12 +138,17 @@ defmodule ExAliyunOts.DSL do
     end
   end
 
+  ExAliyunOts.TableStore.RowExistenceExpectation.constants()
+  |> Enum.map(fn {_value, row_existence} ->
+    downcase_row_existence = row_existence |> Atom.to_string() |> String.downcase() |> String.to_atom()
+    defp map_row_existence(unquote(downcase_row_existence)) do
+      unquote(row_existence)
+    end
+  end)
+
   defp map_row_existence(row_existence) do
-    Map.fetch!(RowExistence.mapping(), row_existence)
-  rescue
-    _ ->
-      raise ExAliyunOts.RuntimeError,
-            "Invalid existence: #{inspect(row_existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
+    raise ExAliyunOts.RuntimeError,
+      "Invalid existence: #{inspect(row_existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
   end
 
   @doc false

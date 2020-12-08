@@ -1250,11 +1250,10 @@ defmodule ExAliyunOts do
 
   defp map_return_type(nil), do: :RT_NONE
 
-  ReturnType.mapping()
-  |> Map.keys()
-  |> Enum.map(fn type ->
+  ReturnType.constants()
+  |> Enum.map(fn {_value, type} ->
     downcase_type =
-      type |> to_string() |> String.slice(3..-1) |> String.downcase() |> String.to_atom()
+      type |> to_string() |> String.slice(3..-1) |> Utils.downcase_atom()
 
     defp map_return_type(unquote(downcase_type)), do: unquote(type)
     defp map_return_type(unquote(type)), do: unquote(type)
@@ -1264,9 +1263,8 @@ defmodule ExAliyunOts do
     raise ExAliyunOts.RuntimeError, "invalid return_type: #{inspect(invalid_return_type)}"
   end
 
-  Direction.mapping()
-  |> Map.keys()
-  |> Enum.map(fn type ->
+  Direction.constants()
+  |> Enum.map(fn {_value, type} ->
     defp map_direction(unquote(Utils.downcase_atom(type))), do: unquote(type)
     defp map_direction(unquote(type)), do: unquote(type)
   end)

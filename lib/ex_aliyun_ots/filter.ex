@@ -128,24 +128,25 @@ defmodule ExAliyunOts.Filter do
   def serialize_filter(filter) do
     filter
     |> do_serialize_filter()
-    |> Filter.encode()
+    |> Filter.encode!()
+    |> IO.iodata_to_binary()
   end
 
   defp do_serialize_filter(%Filter{type: FilterType.single_column(), filter: filter} = wrapper) do
     column_value = PlainBuffer.serialize_column_value(filter.column_value)
-    filter = SingleColumnValueFilter.encode(%{filter | column_value: column_value})
+    filter = SingleColumnValueFilter.encode!(%{filter | column_value: column_value}) |> IO.iodata_to_binary()
     %{wrapper | filter: filter}
   end
 
   defp do_serialize_filter(%Filter{type: FilterType.composite_column(), filter: filter} = wrapper) do
     sub_filters = Enum.map(filter.sub_filters, &do_serialize_filter/1)
-    filter = CompositeColumnValueFilter.encode(%{filter | sub_filters: sub_filters})
+    filter = CompositeColumnValueFilter.encode!(%{filter | sub_filters: sub_filters}) |> IO.iodata_to_binary()
     %{wrapper | filter: filter}
   end
 
   defp do_serialize_filter(
          %Filter{type: FilterType.column_pagination(), filter: filter} = wrapper
        ) do
-    %{wrapper | filter: ColumnPaginationFilter.encode(filter)}
+    %{wrapper | filter: ColumnPaginationFilter.encode!(filter) |> IO.iodata_to_binary()}
   end
 end

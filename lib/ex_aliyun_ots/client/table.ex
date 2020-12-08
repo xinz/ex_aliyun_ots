@@ -33,11 +33,11 @@ defmodule ExAliyunOts.Client.Table do
     defined_column_list = Enum.map(var_create_table.defined_columns, &map_defined_column_schema/1)
 
     table_meta =
-      TableMeta.new(
+      %TableMeta{
         table_name: var_create_table.table_name,
         primary_key: primary_key_list,
         defined_column: defined_column_list
-      )
+      }
 
     cu =
       throughput_to_cu(
@@ -45,23 +45,24 @@ defmodule ExAliyunOts.Client.Table do
         var_create_table.reserved_throughput_write
       )
 
-    reserved_throughput = ReservedThroughput.new(capacity_unit: cu)
+    reserved_throughput = %ReservedThroughput{capacity_unit: cu}
 
     table_options =
-      TableOptions.new(
+      %TableOptions{
         time_to_live: var_create_table.time_to_live,
         max_versions: var_create_table.max_versions,
         deviation_cell_version_in_sec: var_create_table.deviation_cell_version_in_sec
-      )
+      }
 
-    CreateTableRequest.new(
+    %CreateTableRequest{
       table_meta: table_meta,
       reserved_throughput: reserved_throughput,
       table_options: table_options,
       index_metas: var_create_table.index_metas
-    )
+    }
     |> put_stream_spec(var_create_table.stream_spec)
-    |> CreateTableRequest.encode()
+    |> CreateTableRequest.encode!()
+    |> IO.iodata_to_binary()
   end
 
   def remote_create_table(instance, var_create_table) do
@@ -78,7 +79,8 @@ defmodule ExAliyunOts.Client.Table do
   end
 
   def remote_create_index(instance, create_index_request) do
-    request_body = CreateIndexRequest.encode(create_index_request)
+
+    request_body = create_index_request |> CreateIndexRequest.encode!() |> IO.iodata_to_binary()
 
     result =
       instance
@@ -96,7 +98,8 @@ defmodule ExAliyunOts.Client.Table do
         main_table_name: table_name,
         index_name: index_name
       }
-      |> DropIndexRequest.encode()
+      |> DropIndexRequest.encode!()
+      |> IO.iodata_to_binary()
 
     result =
       instance
@@ -109,11 +112,11 @@ defmodule ExAliyunOts.Client.Table do
   end
 
   def remote_list_table(instance) do
-    request_body = ListTableRequest.new() |> ListTableRequest.encode()
+    request_body = %ListTableRequest{} |> ListTableRequest.encode!() |> IO.iodata_to_binary()
 
     result =
       instance
-      |> Http.client("/ListTable", request_body, &ListTableResponse.decode/1)
+      |> Http.client("/ListTable", request_body, &ListTableResponse.decode!/1)
       |> Http.post()
 
     debug(["list_table result: ", inspect(result)])
@@ -122,7 +125,7 @@ defmodule ExAliyunOts.Client.Table do
   end
 
   def remote_delete_table(instance, table_name) do
-    request_body = DeleteTableRequest.new(table_name: table_name) |> DeleteTableRequest.encode()
+    request_body = %DeleteTableRequest{table_name: table_name} |> DeleteTableRequest.encode!() |> IO.iodata_to_binary()
 
     result =
       instance
@@ -138,22 +141,23 @@ defmodule ExAliyunOts.Client.Table do
     reserved_throughput_read = var_update_table.reserved_throughput_read
     reserved_throughput_write = var_update_table.reserved_throughput_write
     cu = throughput_to_cu(reserved_throughput_read, reserved_throughput_write)
-    reserved_throughput = ReservedThroughput.new(capacity_unit: cu)
+    reserved_throughput = %ReservedThroughput{capacity_unit: cu}
 
     table_options =
-      TableOptions.new(
+      %TableOptions{
         time_to_live: var_update_table.time_to_live,
         max_versions: var_update_table.max_versions,
         deviation_cell_version_in_sec: var_update_table.deviation_cell_version_in_sec
-      )
+      }
 
-    UpdateTableRequest.new(
+    %UpdateTableRequest{
       table_name: var_update_table.table_name,
       reserved_throughput: reserved_throughput,
       table_options: table_options
-    )
+    }
     |> put_stream_spec(var_update_table.stream_spec)
-    |> UpdateTableRequest.encode()
+    |> UpdateTableRequest.encode!()
+    |> IO.iodata_to_binary()
   end
 
   def remote_update_table(instance, var_update_table) do
@@ -161,7 +165,7 @@ defmodule ExAliyunOts.Client.Table do
 
     result =
       instance
-      |> Http.client("/UpdateTable", request_body, &UpdateTableResponse.decode/1)
+      |> Http.client("/UpdateTable", request_body, &UpdateTableResponse.decode!/1)
       |> Http.post()
 
     debug(["update_table result: ", inspect(result)])
@@ -171,11 +175,11 @@ defmodule ExAliyunOts.Client.Table do
 
   def remote_describe_table(instance, table_name) do
     request_body =
-      DescribeTableRequest.new(table_name: table_name) |> DescribeTableRequest.encode()
+      %DescribeTableRequest{table_name: table_name} |> DescribeTableRequest.encode!() |> IO.iodata_to_binary()
 
     result =
       instance
-      |> Http.client("/DescribeTable", request_body, &DescribeTableResponse.decode/1)
+      |> Http.client("/DescribeTable", request_body, &DescribeTableResponse.decode!/1)
       |> Http.post()
 
     debug(["describe_table result: ", inspect(result)])
@@ -184,17 +188,18 @@ defmodule ExAliyunOts.Client.Table do
   end
 
   def request_to_compute_split_points_by_size(table_name, split_size) do
-    ComputeSplitPointsBySizeRequest.new(
+    %ComputeSplitPointsBySizeRequest{
       table_name: table_name,
       split_size: split_size
-    )
-    |> ComputeSplitPointsBySizeRequest.encode()
+    }
+    |> ComputeSplitPointsBySizeRequest.encode!()
+    |> IO.iodata_to_binary()
   end
 
   def remote_compute_split_points_by_size(instance, request_body) do
     result =
       instance
-      |> Http.client("/ComputeSplitPointsBySize", request_body, &ComputeSplitPointsBySizeResponse.decode/1)
+      |> Http.client("/ComputeSplitPointsBySize", request_body, &ComputeSplitPointsBySizeResponse.decode!/1)
       |> Http.post()
 
     debug([
@@ -206,15 +211,15 @@ defmodule ExAliyunOts.Client.Table do
   end
 
   defp throughput_to_cu(read, write) when is_integer(read) and is_integer(write) do
-    CapacityUnit.new(read: read, write: write)
+    %CapacityUnit{read: read, write: write}
   end
 
   defp throughput_to_cu(read, write) when read == nil and is_integer(write) do
-    CapacityUnit.new(write: write)
+    %CapacityUnit{write: write}
   end
 
   defp throughput_to_cu(read, write) when is_integer(read) and write == nil do
-    CapacityUnit.new(read: read)
+    %CapacityUnit{read: read}
   end
 
   defp throughput_to_cu(read, write) do
@@ -230,18 +235,19 @@ defmodule ExAliyunOts.Client.Table do
        )
        when is_integer(stream_expiration_time) and
               (stream_expiration_time >= 1 and stream_expiration_time <= 24) do
-    stream_spec =
-      StreamSpecification.new(
-        enable_stream: true,
-        expiration_time: stream_expiration_time
-      )
 
-    %{request | stream_spec: stream_spec}
+    %{
+      request |
+      stream_spec:
+        %StreamSpecification{
+          enable_stream: true,
+          expiration_time: stream_expiration_time
+        }
+    }
   end
 
   defp put_stream_spec(request, %Var.StreamSpec{is_enabled: false}) do
-    stream_spec = StreamSpecification.new(enable_stream: false)
-    %{request | stream_spec: stream_spec}
+    %{request | stream_spec: %StreamSpecification{enable_stream: false}}
   end
 
   defp put_stream_spec(request, %Var.StreamSpec{is_enabled: nil}) do
@@ -250,46 +256,44 @@ defmodule ExAliyunOts.Client.Table do
 
   defp put_stream_spec(_request, spec) do
     raise ExAliyunOts.RuntimeError,
-          "Invalid stream_spec #{inspect(spec)}, is_enabled should be boolean and expiration_time should be an integer and in (1, 24)"
+      "Invalid stream_spec #{inspect(spec)}, is_enabled should be boolean and expiration_time should be an integer and in (1, 24)"
   end
 
   defp map_defined_column_schema({key_name, :binary}),
-    do: DefinedColumnSchema.new(name: key_name, type: :DCT_BLOB)
+    do: %DefinedColumnSchema{name: key_name, type: :DCT_BLOB}
 
-  DefinedColumnType.mapping()
-  |> Map.keys()
-  |> Enum.map(fn type ->
+  DefinedColumnType.constants()
+  |> Enum.map(fn {_value, type} ->
     downcase_type =
-      type |> to_string() |> String.slice(4..-1) |> String.downcase() |> String.to_atom()
+      type |> to_string() |> String.slice(4..-1) |> Utils.downcase_atom()
 
     defp map_defined_column_schema({key_name, unquote(downcase_type)}),
-      do: DefinedColumnSchema.new(name: key_name, type: unquote(type))
+      do: %DefinedColumnSchema{name: key_name, type: unquote(type)}
 
     defp map_defined_column_schema({key_name, unquote(type)}),
-      do: DefinedColumnSchema.new(name: key_name, type: unquote(type))
+      do: %DefinedColumnSchema{name: key_name, type: unquote(type)}
   end)
 
   defp map_defined_column_schema(defined_column) do
     raise ExAliyunOts.RuntimeError, "Invalid defined_column #{inspect(defined_column)}"
   end
 
-  PrimaryKeyType.mapping()
-  |> Map.keys()
-  |> Enum.map(fn type ->
+  PrimaryKeyType.constants()
+  |> Enum.map(fn {_value, type} ->
     defp map_primary_key_schema({key_name, unquote(Utils.downcase_atom(type))}),
-      do: PrimaryKeySchema.new(name: key_name, type: unquote(type))
+      do: %PrimaryKeySchema{name: key_name, type: unquote(type)}
 
     defp map_primary_key_schema({key_name, unquote(type)}),
-      do: PrimaryKeySchema.new(name: key_name, type: unquote(type))
+      do: %PrimaryKeySchema{name: key_name, type: unquote(type)}
   end)
 
   defp map_primary_key_schema({key_name, type}) when type in [:auto_increment, :AUTO_INCREMENT] do
-    PrimaryKeySchema.new(name: key_name, type: :INTEGER, option: :AUTO_INCREMENT)
+    %PrimaryKeySchema{name: key_name, type: :INTEGER, option: :AUTO_INCREMENT}
   end
 
   defp map_primary_key_schema({key_name, _type, option})
        when option in [:auto_increment, :AUTO_INCREMENT] do
-    PrimaryKeySchema.new(name: key_name, type: :INTEGER, option: :AUTO_INCREMENT)
+    %PrimaryKeySchema{name: key_name, type: :INTEGER, option: :AUTO_INCREMENT}
   end
 
   defp map_primary_key_schema(primary_key) do

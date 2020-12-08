@@ -28,7 +28,7 @@ defmodule ExAliyunOts.Client do
     Table.remote_update_table(Config.get(instance_key), var_update_table)
   end
 
-  def describe_table(instance_key, var_describe_table) do
+  def describe_table(instance_key, table_name) do
     case Table.remote_describe_table(Config.get(instance_key), table_name) do
       {:ok, response} ->
         {:ok, %{response | shard_splits: decode_rows(response.shard_splits)}}
