@@ -1,9 +1,10 @@
 defmodule ExAliyunOts.DSL do
+
   require ExAliyunOts.Const.FilterType, as: FilterType
   alias ExAliyunOts.TableStore.Condition
   alias ExAliyunOts.TableStoreFilter.{Filter, ColumnPaginationFilter}
 
-  @type row_existence :: ExAliyunOts.Const.RowExistence.supported()
+  @type row_existence :: :ignore | :expect_exist | :expect_not_exist
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/35193.html) | [English](https://www.alibabacloud.com/help/doc-detail/35193.html)
