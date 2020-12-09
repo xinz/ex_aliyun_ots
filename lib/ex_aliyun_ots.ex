@@ -137,13 +137,13 @@ defmodule ExAliyunOts do
   @spec create_table(
           instance,
           table :: String.t(),
-          pk_keys :: list(),
+          primary_keys :: list(),
           options :: Keyword.t()
         ) :: :ok | {:error, ExAliyunOts.Error.t()}
-  def create_table(instance, table, pk_keys, options \\ []) do
+  def create_table(instance, table, primary_keys, options \\ []) do
     var_create_table = %Var.CreateTable{
       table_name: table,
-      primary_keys: pk_keys
+      primary_keys: primary_keys
     }
 
     prepared_var = map_options(var_create_table, options)
@@ -412,12 +412,12 @@ defmodule ExAliyunOts do
   @spec get_row(
           instance,
           table :: String.t(),
-          pk_keys :: list(),
+          primary_keys :: list(),
           options :: Keyword.t()
         ) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def get_row(instance, table, pk_keys, options \\ []) do
-    prepared_var = get(table, pk_keys, options)
+  def get_row(instance, table, primary_keys, options \\ []) do
+    prepared_var = get(table, primary_keys, options)
     Client.get_row(instance, prepared_var)
   end
 
@@ -452,15 +452,15 @@ defmodule ExAliyunOts do
   @spec put_row(
           instance,
           table :: String.t(),
-          pk_keys :: list(),
+          primary_keys :: list(),
           options :: Keyword.t()
         ) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def put_row(instance, table, pk_keys, attrs, options \\ []) do
+  def put_row(instance, table, primary_keys, attrs, options \\ []) do
     prepared_var =
       %Var.PutRow{
         table_name: table,
-        primary_keys: pk_keys,
+        primary_keys: primary_keys,
         attribute_columns: attrs
       }
       |> map_options(options)
@@ -516,15 +516,15 @@ defmodule ExAliyunOts do
   @spec update_row(
           instance,
           table :: String.t(),
-          pk_keys :: list(),
+          primary_keys :: list(),
           options :: Keyword.t()
         ) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def update_row(instance, table, pk_keys, options \\ []) do
+  def update_row(instance, table, primary_keys, options \\ []) do
     prepared_var =
       %Var.UpdateRow{
         table_name: table,
-        primary_keys: pk_keys
+        primary_keys: primary_keys
       }
       |> map_options(options)
       |> Map.put(:updates, map_updates(options))
@@ -557,15 +557,15 @@ defmodule ExAliyunOts do
   @spec delete_row(
           instance,
           table :: String.t(),
-          pk_keys :: list(),
+          primary_keys :: list(),
           options :: Keyword.t()
         ) ::
           {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def delete_row(instance, table, pk_keys, options \\ []) do
+  def delete_row(instance, table, primary_keys, options \\ []) do
     prepared_var =
       %Var.DeleteRow{
         table_name: table,
-        primary_keys: pk_keys
+        primary_keys: primary_keys
       }
       |> map_options(options)
 
@@ -580,9 +580,9 @@ defmodule ExAliyunOts do
   The available options are same as `get_row/4`.
   """
   @doc row: :row
-  @spec get(table :: String.t(), pk_keys :: list(), options :: Keyword.t()) :: map()
-  def get(table, pk_keys, options \\ []) do
-    %Var.GetRow{table_name: table, primary_keys: pk_keys}
+  @spec get(table :: String.t(), primary_keys :: list(), options :: Keyword.t()) :: map()
+  def get(table, primary_keys, options \\ []) do
+    %Var.GetRow{table_name: table, primary_keys: primary_keys}
     |> map_options(options)
   end
 
@@ -594,11 +594,11 @@ defmodule ExAliyunOts do
   The available options are same as `put_row/5`.
   """
   @doc row: :row
-  @spec write_put(pk_keys :: list(), attrs :: list(), options :: Keyword.t()) :: map()
-  def write_put(pk_keys, attrs, options \\ []) do
+  @spec write_put(primary_keys :: list(), attrs :: list(), options :: Keyword.t()) :: map()
+  def write_put(primary_keys, attrs, options \\ []) do
     %Var.RowInBatchWriteRequest{
       type: :PUT,
-      primary_keys: pk_keys,
+      primary_keys: primary_keys,
       updates: attrs
     }
     |> map_options(options)
@@ -612,11 +612,11 @@ defmodule ExAliyunOts do
   The available options are same as `update_row/4`.
   """
   @doc row: :row
-  @spec write_update(pk_keys :: list(), options :: Keyword.t()) :: map()
-  def write_update(pk_keys, options \\ []) do
+  @spec write_update(primary_keys :: list(), options :: Keyword.t()) :: map()
+  def write_update(primary_keys, options \\ []) do
     %Var.RowInBatchWriteRequest{
       type: :UPDATE,
-      primary_keys: pk_keys,
+      primary_keys: primary_keys,
       updates: map_updates(options)
     }
     |> map_options(options)
@@ -630,9 +630,9 @@ defmodule ExAliyunOts do
   The available operation same as `delete_row/4`.
   """
   @doc row: :row
-  @spec write_delete(pk_keys :: list(), options :: Keyword.t()) :: map()
-  def write_delete(pk_keys, options \\ []) do
-    %Var.RowInBatchWriteRequest{type: :DELETE, primary_keys: pk_keys}
+  @spec write_delete(primary_keys :: list(), options :: Keyword.t()) :: map()
+  def write_delete(primary_keys, options \\ []) do
+    %Var.RowInBatchWriteRequest{type: :DELETE, primary_keys: primary_keys}
     |> map_options(options)
   end
 
