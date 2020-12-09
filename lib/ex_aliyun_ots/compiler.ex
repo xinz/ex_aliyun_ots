@@ -22,29 +22,25 @@ defmodule ExAliyunOts.Compiler do
 
   defp table_functions() do
     quote do
-      def create_table(table, pk_keys, opts \\ []) do
-        ExAliyunOts.create_table(@instance, table, pk_keys, opts)
+      def create_table(table, primary_keys, opts \\ []) do
+        ExAliyunOts.create_table(@instance, table, primary_keys, opts)
       end
 
       def create_index(
             table,
             index_name,
-            pk_keys,
+            primary_keys,
             defined_columns,
-            include_base_data \\ true
+            opts \\ []
           ) do
         ExAliyunOts.create_index(
           @instance,
           table,
           index_name,
-          pk_keys,
+          primary_keys,
           defined_columns,
-          include_base_data
+          opts
         )
-      end
-
-      def create_index(table, index_meta, include_base_data \\ true) do
-        ExAliyunOts.create_index(@instance, table, index_meta, include_base_data)
       end
 
       def delete_index(table, index_name) do
@@ -83,20 +79,20 @@ defmodule ExAliyunOts.Compiler do
         ExAliyunOts.batch_write(@instance, requests, opts)
       end
 
-      def get_row(table, pk_keys, opts \\ []) do
-        ExAliyunOts.get_row(@instance, table, pk_keys, opts)
+      def get_row(table, primary_keys, opts \\ []) do
+        ExAliyunOts.get_row(@instance, table, primary_keys, opts)
       end
 
-      def put_row(table, pk_keys, attrs, opts \\ []) do
-        ExAliyunOts.put_row(@instance, table, pk_keys, attrs, opts)
+      def put_row(table, primary_keys, attrs, opts \\ []) do
+        ExAliyunOts.put_row(@instance, table, primary_keys, attrs, opts)
       end
 
-      def update_row(table, pk_keys, opts \\ []) do
-        ExAliyunOts.update_row(@instance, table, pk_keys, opts)
+      def update_row(table, primary_keys, opts \\ []) do
+        ExAliyunOts.update_row(@instance, table, primary_keys, opts)
       end
 
-      def delete_row(table, pk_keys, opts \\ []) do
-        ExAliyunOts.delete_row(@instance, table, pk_keys, opts)
+      def delete_row(table, primary_keys, opts \\ []) do
+        ExAliyunOts.delete_row(@instance, table, primary_keys, opts)
       end
 
       def get_range(table, inclusive_start_primary_keys, exclusive_end_primary_keys, opts \\ []) do
@@ -143,20 +139,20 @@ defmodule ExAliyunOts.Compiler do
 
   defp row_batch_helper_functions() do
     quote do
-      def get(table, pk_keys, opts \\ []) do
-        ExAliyunOts.get(table, pk_keys, opts)
+      def get(table, primary_keys, opts \\ []) do
+        ExAliyunOts.get(table, primary_keys, opts)
       end
 
-      def write_put(pk_keys, attrs, opts \\ []) do
-        ExAliyunOts.write_put(pk_keys, attrs, opts)
+      def write_put(primary_keys, attrs, opts \\ []) do
+        ExAliyunOts.write_put(primary_keys, attrs, opts)
       end
 
-      def write_update(pk_keys, opts \\ []) do
-        ExAliyunOts.write_update(pk_keys, opts)
+      def write_update(primary_keys, opts \\ []) do
+        ExAliyunOts.write_update(primary_keys, opts)
       end
 
-      def write_delete(pk_keys, opts \\ []) do
-        ExAliyunOts.write_delete(pk_keys, opts)
+      def write_delete(primary_keys, opts \\ []) do
+        ExAliyunOts.write_delete(primary_keys, opts)
       end
     end
   end

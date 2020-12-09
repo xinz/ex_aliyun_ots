@@ -55,11 +55,19 @@ defmodule ExAliyunOts.Client.Table do
         deviation_cell_version_in_sec: var_create_table.deviation_cell_version_in_sec
       }
 
+    index_metas =
+      Enum.map(
+        var_create_table.index_metas,
+        fn({index_name, primary_keys, defined_columns}) ->
+          map_index_meta(index_name, primary_keys, defined_columns)
+        end
+      )
+
     %CreateTableRequest{
       table_meta: table_meta,
       reserved_throughput: reserved_throughput,
       table_options: table_options,
-      index_metas: var_create_table.index_metas
+      index_metas: index_metas
     }
     |> put_stream_spec(var_create_table.stream_spec)
     |> CreateTableRequest.encode!()
@@ -83,13 +91,7 @@ defmodule ExAliyunOts.Client.Table do
 
     create_index_request = %CreateIndexRequest{
       main_table_name: table_name,
-      index_meta: %IndexMeta{
-        name: index_name,
-        primary_key: primary_keys,
-        defined_column: defined_columns,
-        index_update_mode: :IUM_ASYNC_INDEX,
-        index_type: :IT_GLOBAL_INDEX
-      },
+      index_meta: map_index_meta(index_name, primary_keys, defined_columns),
       include_base_data: Keyword.get(options, :include_base_data, true)
     }
 
@@ -311,5 +313,15 @@ defmodule ExAliyunOts.Client.Table do
 
   defp map_primary_key_schema(primary_key) do
     raise ExAliyunOts.RuntimeError, "Invalid primary_key #{inspect(primary_key)}"
+  end
+
+  defp map_index_meta(index_name, primary_keys, defined_columns) do
+    %IndexMeta{
+      name: index_name,
+      primary_key: primary_keys,
+      defined_column: defined_columns,
+      index_update_mode: :IUM_ASYNC_INDEX,
+      index_type: :IT_GLOBAL_INDEX
+    }
   end
 end

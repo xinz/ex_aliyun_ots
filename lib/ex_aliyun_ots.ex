@@ -102,6 +102,23 @@ defmodule ExAliyunOts do
         deviation_cell_version_in_sec: 6_400,
         stream_spec: [is_enabled: true, expiration_time: 2]
 
+      create_table "table_name",
+        [{"key1", :string}],
+        defined_columns: [
+          {"attr1", :string},
+          {"attr2", :integer},
+          {"attr3", :boolean},
+          {"attr4", :double},
+          {"attr5", :binary}
+        ]
+
+      create_table "table_name",
+        [{"key1", :string}],
+        index_metas: [
+          {"indexname1", ["key1"], ["attr1", "attr2"]},
+          {"indexname2", ["key1"], ["attr4"]}
+        ]
+
   ## Options
 
     * `:reserved_throughput_write`, optional, the reserved throughput write of table, by default it is 0.
@@ -112,6 +129,9 @@ defmodule ExAliyunOts do
     * `:stream_spec`, specifies whether enable stream, by default it is not enable stream feature.
       - `:is_enabled`, enable or not enable stream, use `true` or `false`;
       - `:expiration_time`, the expiration time of stream.
+    * `:index_metas`, optional, the index meta of table, each item of `:index_metas` is in {String.t(), list(), list()} format, by default it is [].
+    * `:defined_columns`, optional, the indexed attribute column, which is a combination of predefined columns of the base table, each item of `:defined_columns`
+    is in {String.t(), :integer | :double | :boolean | :string | :binary} format, by default it is [].
   """
   @doc table: :table
   @spec create_table(
