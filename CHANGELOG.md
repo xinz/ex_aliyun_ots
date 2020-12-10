@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.11.0 (2020-12-10)
+
+**NOTICE**: Since this version changes, when upgrade this library to `0.11.0` or higher version, if also use
+`ecto_tablestore`, please upgrade `ecto_tablestore` to `0.8.0` or higher version.
+
+* Use `protox` to replace `exportobuf` for google protobuf library, and maintain the generated modules in [hexpm](https://hex.pm/packages/tablestore_protos)
+* Add retry for http request timeout
+* Some implicit modules are removed and directly use the generated protobuf modules, cover:
+    - Use `ExAliyunOts.TableStoreFilter.Filter` to replace `ExAliyunOts.Var.Filter`
+    - Use `ExAliyunOts.TableStoreFilter.SingleColumnValueFilter` to replace `ExAliyunOts.Var.SingleColumnValueFilter`
+    - Use `ExAliyunOts.TableStoreFilter.ColumnPaginationFilter` to replace `ExAliyunOts.Var.ColumnPaginationFilter`
+    - Use `ExAliyunOts.TableStore.Condition` to replace `ExAliyunOts.Var.Condition`
+* Improve module file struct/naming
+* Add `ExAliyunOts.create_index/6` to create global secondary indexes
+* Add `index_metas` and `defined_columns` optional options when use `ExAliyunOts.create_table/4`
+
 ## v0.10.0 (2020-12-04)
 * Improve plainbuffer decoding performance
 
