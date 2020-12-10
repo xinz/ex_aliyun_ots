@@ -16,7 +16,7 @@ Aliyun [TableStore](https://www.alibabacloud.com/product/table-store) SDK for El
 ```elixir
 def deps do
   [
-    {:ex_aliyun_ots, "~> 0.6"}
+    {:ex_aliyun_ots, "~> 0.11"}
   ]
 end
 ```
