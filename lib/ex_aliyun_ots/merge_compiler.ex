@@ -8,6 +8,8 @@ defmodule ExAliyunOts.MergeCompiler do
   end
 
   defmacro __before_compile__(_env) do
+    base_path = base_path()
+
     Enum.flat_map(@merge_modules, fn module ->
       file = module.__info__(:compile)[:source]
 
@@ -18,10 +20,11 @@ defmodule ExAliyunOts.MergeCompiler do
 
       file =
         to_string(file)
-        |> Path.relative_to(base_path())
+        |> Path.relative_to(base_path)
 
       {:defmodule, _c_m, [_alias, [do: {:__block__, _, defs}]]} = ast
       [quote(do: @external_resource(unquote(file))), defs]
     end)
+
   end
 end
