@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.11.1 (2021-01-12)
+
+* Remove internal error logger print when occurs `OTSConditionCheckFail`, `OTSObjectAlreadyExist` and `OTSObjectNotExist`
+
 ## v0.11.0 (2020-12-10)
 
 **NOTICE**: Since this version changes, when upgrade this library to `0.11.0` or higher version, if also use
