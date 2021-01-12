@@ -303,6 +303,11 @@ defmodule ExAliyunOts.Http do
     false
   end
 
+  defp match_should_retry?({:error, %Error{code: ErrorType.object_not_exist()}}) do
+    # Do not log error for this use case.
+    false
+  end
+
   defp match_should_retry?({:error, %Error{} = error}) do
     error(fn ->
       [
