@@ -76,6 +76,8 @@ defmodule ExAliyunOts.Const.ErrorType do
   const(:storage_timeout, "OTSTimeout")
   const(:server_unavailable, "OTSServerUnavailable")
   const(:internal_server_error, "OTSInternalServerError")
+  const(:condition_check_fail, "OTSConditionCheckFail")
+  const(:object_already_exist, "OTSObjectAlreadyExist")
 
   const(
     :too_frequent_reserved_throughput_adjustment,
