@@ -5,8 +5,6 @@ defmodule ExAliyunOts.Application do
 
   alias ExAliyunOts.Instance
 
-  import Supervisor.Spec, warn: false
-
   def start(_type, _args) do
     app = Application.get_application(__MODULE__)
     enable_tunnel = Application.get_env(app, :enable_tunnel, false)
@@ -31,22 +29,23 @@ defmodule ExAliyunOts.Application do
   end
 
   defp child_spec(app, true, instance_keys) do
-    {instances, pools} = load_instances(app, instance_keys)
-
-    [
-      child_spec_http_client(pools),
-      worker(ExAliyunOts.Config, [instances]),
-      worker(ExAliyunOts.Tunnel.Registry, []),
-      supervisor(ExAliyunOts.Tunnel.DynamicSupervisor, [])
-    ]
+    child_spec_base(app, instance_keys) ++
+      [
+        ExAliyunOts.Tunnel.Registry,
+        ExAliyunOts.Tunnel.DynamicSupervisor
+      ]
   end
 
   defp child_spec(app, false, instance_keys) do
+    child_spec_base(app, instance_keys)
+  end
+
+  defp child_spec_base(app, instance_keys) do
     {instances, pools} = load_instances(app, instance_keys)
 
     [
       child_spec_http_client(pools),
-      worker(ExAliyunOts.Config, [instances])
+      {ExAliyunOts.Config, instances}
     ]
   end
 

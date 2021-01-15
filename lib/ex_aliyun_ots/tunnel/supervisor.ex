@@ -5,7 +5,7 @@ defmodule ExAliyunOts.Tunnel.DynamicSupervisor do
 
   alias ExAliyunOts.Tunnel.Worker
 
-  def start_link() do
+  def start_link([]) do
     DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
