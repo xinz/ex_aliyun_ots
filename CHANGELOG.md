@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.12.0 (2021-01-15)
+
+* Fix Elixir 1.11 compilation warnings
+
 ## v0.11.1 (2021-01-12)
 
 * Remove internal error logger print when occurs `OTSConditionCheckFail`, `OTSObjectAlreadyExist` and `OTSObjectNotExist`
