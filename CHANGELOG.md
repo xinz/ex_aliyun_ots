@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.12.1 (2021-01-15)
+
+* Fix Elixir 1.11 compilation warnings, explicitly add `Jason` into mix.exs deps
+
 ## v0.12.0 (2021-01-15)
 
 * Fix Elixir 1.11 compilation warnings
