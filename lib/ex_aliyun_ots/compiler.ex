@@ -183,6 +183,14 @@ defmodule ExAliyunOts.Compiler do
         ExAliyunOts.search(@instance, table, index_name, opts)
       end
 
+      def stream_search(table, index_name, opts \\ []) do
+        ExAliyunOts.search(@instance, table, index_name, opts)
+      end
+
+      def iterate_search(table, index_name, opts \\ []) do
+        ExAliyunOts.search(@instance, table, index_name, opts)
+      end
+
       def list_search_index(table) do
         ExAliyunOts.list_search_index(@instance, table)
       end
@@ -208,7 +216,15 @@ defmodule ExAliyunOts.Compiler do
       end
 
       def iterate_parallel_scan(table, index_name, module, function_name, args, opts \\ []) do
-        ExAliyunOts.iterate_parallel_scan(@instance, table, index_name, module, function_name, args, opts)
+        ExAliyunOts.iterate_parallel_scan(
+          @instance,
+          table,
+          index_name,
+          module,
+          function_name,
+          args,
+          opts
+        )
       end
 
       def stream_parallel_scan(table, index_name, opts \\ []) do
@@ -266,7 +282,7 @@ defmodule ExAliyunOts.Compiler do
       defdelegate exists_query(field_name), to: Search
 
       # Aggreation
-      #
+
       defdelegate agg_min(agg_name, field_name, opts \\ []), to: Search
 
       defdelegate agg_max(agg_name, field_name, opts \\ []), to: Search
@@ -280,7 +296,7 @@ defmodule ExAliyunOts.Compiler do
       defdelegate agg_count(agg_name, field_name), to: Search
 
       # GroupBys
-      #
+
       defdelegate group_by_field(group_name, field_name, opts \\ []), to: Search
 
       defdelegate group_by_range(group_name, field_name, ranges, opts \\ []), to: Search
@@ -290,7 +306,7 @@ defmodule ExAliyunOts.Compiler do
       defdelegate group_by_geo_distance(group_name, field_name, ranges, opts \\ []), to: Search
 
       # Sort
-      #
+
       defdelegate group_key_sort(order), to: Search
 
       defdelegate row_count_sort(order), to: Search
