@@ -9,7 +9,14 @@ defmodule ExAliyunOts.Client do
   end
 
   def create_index(instance_key, table_name, index_name, primary_keys, defined_columns, options) do
-    Table.remote_create_index(Config.get(instance_key), table_name, index_name, primary_keys, defined_columns, options)
+    Table.remote_create_index(
+      Config.get(instance_key),
+      table_name,
+      index_name,
+      primary_keys,
+      defined_columns,
+      options
+    )
   end
 
   def delete_index(instance_key, table_name, index_name) do
@@ -32,6 +39,7 @@ defmodule ExAliyunOts.Client do
     case Table.remote_describe_table(Config.get(instance_key), table_name) do
       {:ok, response} ->
         {:ok, %{response | shard_splits: decode_rows(response.shard_splits)}}
+
       error ->
         error
     end
@@ -39,9 +47,11 @@ defmodule ExAliyunOts.Client do
 
   def compute_split_points_by_size(instance_key, table_name, split_size) do
     encoded_request = Table.request_to_compute_split_points_by_size(table_name, split_size)
+
     case Table.remote_compute_split_points_by_size(Config.get(instance_key), encoded_request) do
       {:ok, response} ->
         {:ok, %{response | split_points: decode_rows(response.split_points)}}
+
       error ->
         error
     end
@@ -91,12 +101,27 @@ defmodule ExAliyunOts.Client do
   end
 
   def search(instance_key, var_search_request) do
-    case Search.remote_search(Config.get(instance_key), var_search_request) do
-      {:ok, response} ->
-        {:ok, %{response | rows: decode_rows(response.rows)}}
-      error ->
-        error
-    end
+    remote_search(Config.get(instance_key), var_search_request)
+  end
+
+  def stream_search(instance_key, var_search_request) do
+    remote_stream_search(Config.get(instance_key), var_search_request)
+  end
+
+  def iterate_search(instance_key, var_search_request) do
+    Config.get(instance_key)
+    |> remote_stream_search(var_search_request)
+    |> Enum.reduce(nil, fn
+      {:ok, response}, nil ->
+        {:ok, response}
+
+      {:ok, response}, {:ok, acc} ->
+        response = merge_search_response(response, acc)
+        {:ok, response}
+
+      {:error, _error} = response, _acc ->
+        response
+    end)
   end
 
   def compute_splits(instance_key, table_name, index_name) do
@@ -106,9 +131,11 @@ defmodule ExAliyunOts.Client do
 
   def parallel_scan(instance_key, var_scan_request) do
     encoded_request = Search.request_to_parallel_scan(var_scan_request)
+
     case Search.remote_parallel_scan(Config.get(instance_key), encoded_request) do
       {:ok, response} ->
         {:ok, %{response | rows: decode_rows(response.rows)}}
+
       error ->
         error
     end
@@ -211,7 +238,6 @@ defmodule ExAliyunOts.Client do
     |> remote_stream_range(var_get_range)
     |> Enum.reduce(nil, fn
       {:ok, response}, nil ->
-        response = merge_get_range_response(response, nil)
         {:ok, response}
 
       {:ok, response}, {:ok, acc} ->
@@ -221,6 +247,51 @@ defmodule ExAliyunOts.Client do
       {:error, _error} = response, _acc ->
         response
     end)
+  end
+
+  defp remote_search(instance, var_search_request) do
+    case Search.remote_search(instance, var_search_request) do
+      {:ok, response} ->
+        {:ok, %{response | rows: decode_rows(response.rows)}}
+
+      error ->
+        error
+    end
+  end
+
+  defp remote_stream_search(instance, var_search_request) do
+    # remove [sort, collapse, ...]
+    # can't set [sort, collapse] when token is not null
+    next_var_search_request = %{
+      var_search_request
+      | search_query: %{var_search_request.search_query | sort: nil, collapse: nil}
+    }
+
+    Stream.unfold(
+      var_search_request.search_query.token || :init,
+      fn
+        nil ->
+          nil
+
+        :init ->
+          do_remote_stream_search(instance, var_search_request)
+
+        token ->
+          next_var_search_request = %{
+            next_var_search_request
+            | search_query: %{next_var_search_request.search_query | token: token}
+          }
+
+          do_remote_stream_search(instance, next_var_search_request)
+      end
+    )
+  end
+
+  defp do_remote_stream_search(instance, var_search_request) do
+    case remote_search(instance, var_search_request) do
+      {:ok, %{next_token: token}} = result -> {result, token}
+      error -> {error, nil}
+    end
   end
 
   defp decode_rows_per_get_range_response(
@@ -236,33 +307,26 @@ defmodule ExAliyunOts.Client do
     {response, nil}
   end
 
-  defp merge_get_range_response(response, nil) do
-    %{response | rows: response.rows}
-  end
-
   defp merge_get_range_response(
          response,
          %{consumed: consumed, rows: merged_rows} = merged_response
        ) do
     cu = response.consumed.capacity_unit
-    consumed_read = cu.read
-    consumed_write = cu.write
-    rows = response.rows
-
     summarized_cu = consumed.capacity_unit
 
     updated_cu = %{
       summarized_cu
-      | read: summarized_cu.read + consumed_read,
-        write: summarized_cu.write + consumed_write
+      | read: summarized_cu.read + cu.read,
+        write: summarized_cu.write + cu.write
     }
 
     updated_consumed = %{consumed | capacity_unit: updated_cu}
 
-    merged_response
-    |> Map.put(:consumed, updated_consumed)
-    |> Map.put(:rows, merged_rows ++ rows)
-    |> Map.put(:next_start_primary_key, response.next_start_primary_key)
+    Map.merge(merged_response, %{
+      consumed: updated_consumed,
+      rows: merged_rows ++ response.rows,
+      next_start_primary_key: response.next_start_primary_key
+    })
   end
 
   defp decode_rows(binary_rows) when is_bitstring(binary_rows) do
@@ -282,5 +346,14 @@ defmodule ExAliyunOts.Client do
     Enum.reduce(stream, [], fn {:ok, readable_rows}, acc ->
       acc ++ readable_rows
     end)
+  end
+
+  defp merge_search_response(response, merged_response) do
+    # not merge total_hits / is_all_succeeded / aggs / group_bys
+    %{
+      merged_response
+      | rows: merged_response.rows ++ response.rows,
+        next_token: response.next_token
+    }
   end
 end

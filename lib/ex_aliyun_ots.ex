@@ -71,6 +71,13 @@ defmodule ExAliyunOts do
 
   @before_compile ExAliyunOts.MergeCompiler
   @type instance :: atom
+  @type table_name :: String.t()
+  @type primary_keys :: list
+  @type inclusive_start_primary_keys :: list
+  @type exclusive_end_primary_keys :: list
+  @type index_name :: String.t()
+  @type options :: Keyword.t()
+  @type result :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
 
   require Logger
 
@@ -134,15 +141,11 @@ defmodule ExAliyunOts do
     is in {String.t(), :integer | :double | :boolean | :string | :binary} format, by default it is [].
   """
   @doc table: :table
-  @spec create_table(
-          instance,
-          table :: String.t(),
-          primary_keys :: list(),
-          options :: Keyword.t()
-        ) :: :ok | {:error, ExAliyunOts.Error.t()}
-  def create_table(instance, table, primary_keys, options \\ []) do
+  @spec create_table(instance, table_name, primary_keys, options) ::
+          :ok | {:error, ExAliyunOts.Error.t()}
+  def create_table(instance, table_name, primary_keys, options \\ []) do
     var_create_table = %Var.CreateTable{
-      table_name: table,
+      table_name: table_name,
       primary_keys: primary_keys
     }
 
@@ -179,11 +182,11 @@ defmodule ExAliyunOts do
   @doc table: :table
   @spec create_index(
           instance,
-          table_name :: String.t(),
-          index_name :: String.t(),
+          table_name,
+          index_name,
           primary_keys :: [String.t()],
           defined_columns :: [String.t()],
-          options :: Keyword.t()
+          options
         ) :: :ok | {:error, ExAliyunOts.Error.t()}
   def create_index(
         instance,
@@ -193,7 +196,6 @@ defmodule ExAliyunOts do
         defined_columns,
         options \\ []
       ) do
-
     Client.create_index(
       instance,
       table_name,
@@ -214,8 +216,7 @@ defmodule ExAliyunOts do
       delete_index("table_name", "index_name")
   """
   @doc table: :table
-  @spec delete_index(instance, table_name :: String.t(), index_name :: String.t()) ::
-          :ok | {:error, ExAliyunOts.Error.t()}
+  @spec delete_index(instance, table_name, index_name) :: :ok | {:error, ExAliyunOts.Error.t()}
   defdelegate delete_index(instance, table_name, index_name), to: Client
 
   @doc """
@@ -228,8 +229,8 @@ defmodule ExAliyunOts do
       delete_table("table_name")
   """
   @doc table: :table
-  @spec delete_table(instance, table :: String.t()) :: :ok | {:error, ExAliyunOts.Error.t()}
-  defdelegate delete_table(instance, table), to: Client
+  @spec delete_table(instance, table_name) :: :ok | {:error, ExAliyunOts.Error.t()}
+  defdelegate delete_table(instance, table_name), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/27313.html) | [English](https://www.alibabacloud.com/help/doc-detail/27313.html)
@@ -241,7 +242,7 @@ defmodule ExAliyunOts do
       list_table()
   """
   @doc table: :table
-  @spec list_table(instance :: atom()) :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec list_table(instance) :: result
   defdelegate list_table(instance), to: Client
 
   @doc """
@@ -261,11 +262,10 @@ defmodule ExAliyunOts do
     Please see options of `create_table/4`.
   """
   @doc table: :table
-  @spec update_table(instance, table :: String.t(), options :: Keyword.t()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def update_table(instance, table, options \\ []) do
+  @spec update_table(instance, table_name, options) :: result
+  def update_table(instance, table_name, options \\ []) do
     var_update_table = %Var.UpdateTable{
-      table_name: table
+      table_name: table_name
     }
 
     prepared_var = map_options(var_update_table, options)
@@ -282,17 +282,16 @@ defmodule ExAliyunOts do
       describe_table(table_name)
   """
   @doc table: :table
-  @spec describe_table(instance, table :: String.t()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  defdelegate describe_table(instance, table), to: Client
+  @spec describe_table(instance, table_name) :: result
+  defdelegate describe_table(instance, table_name), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/53813.html) | [English](https://www.alibabacloud.com/help/doc-detail/53813.html)
   """
   @doc table: :table
-  @spec compute_split_points_by_size(instance :: atom(), table :: String.t(), splits_size :: integer()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  defdelegate compute_split_points_by_size(instance, table, splits_size), to: Client
+  @spec compute_split_points_by_size(instance, table_name, splits_size :: integer()) ::
+          result
+  defdelegate compute_split_points_by_size(instance, table_name, splits_size), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/27310.html) | [English](https://www.alibabacloud.com/help/doc-detail/27310.html)
@@ -314,7 +313,7 @@ defmodule ExAliyunOts do
   The batch get operation can be considered as a collection of mulitple `get/3` operations.
   """
   @doc row: :row
-  @spec batch_get(instance, requests :: list()) :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec batch_get(instance, requests :: list()) :: result
   defdelegate batch_get(instance, requests), to: Client, as: :batch_get_row
 
   @doc """
@@ -347,15 +346,14 @@ defmodule ExAliyunOts do
   The batch write operation can be considered as a collection of multiple `write_put/3`, `write_update/2` and `write_delete/2` operations.
   """
   @doc row: :row
-  @spec batch_write(instance, requests :: list(), options :: Keyword.t()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec batch_write(instance, requests :: list(), options) :: result
   def batch_write(instance, requests, options \\ [])
 
   def batch_write(instance, requests, options) when is_list(requests) do
     batch_write_requests =
-      Enum.map(requests, fn {table, write_rows} ->
+      Enum.map(requests, fn {table_name, write_rows} ->
         %Var.BatchWriteRequest{
-          table_name: table,
+          table_name: table_name,
           rows: write_rows
         }
       end)
@@ -363,9 +361,9 @@ defmodule ExAliyunOts do
     Client.batch_write_row(instance, batch_write_requests, options)
   end
 
-  def batch_write(instance, {table, write_rows}, options) do
+  def batch_write(instance, {table_name, write_rows}, options) do
     batch_write_request = %Var.BatchWriteRequest{
-      table_name: table,
+      table_name: table_name,
       rows: write_rows
     }
 
@@ -409,15 +407,9 @@ defmodule ExAliyunOts do
     * `:transaction_id`, optional, read operation within local transaction.
   """
   @doc row: :row
-  @spec get_row(
-          instance,
-          table :: String.t(),
-          primary_keys :: list(),
-          options :: Keyword.t()
-        ) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def get_row(instance, table, primary_keys, options \\ []) do
-    prepared_var = get(table, primary_keys, options)
+  @spec get_row(instance, table_name, primary_keys, options) :: result
+  def get_row(instance, table_name, primary_keys, options \\ []) do
+    prepared_var = get(table_name, primary_keys, options)
     Client.get_row(instance, prepared_var)
   end
 
@@ -449,17 +441,11 @@ defmodule ExAliyunOts do
 
   """
   @doc row: :row
-  @spec put_row(
-          instance,
-          table :: String.t(),
-          primary_keys :: list(),
-          options :: Keyword.t()
-        ) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def put_row(instance, table, primary_keys, attrs, options \\ []) do
+  @spec put_row(instance, table_name, primary_keys, options) :: result
+  def put_row(instance, table_name, primary_keys, attrs, options \\ []) do
     prepared_var =
       %Var.PutRow{
-        table_name: table,
+        table_name: table_name,
         primary_keys: primary_keys,
         attribute_columns: attrs
       }
@@ -513,17 +499,11 @@ defmodule ExAliyunOts do
     * `:transaction_id`, optional, write operation within local transaction.
   """
   @doc row: :row
-  @spec update_row(
-          instance,
-          table :: String.t(),
-          primary_keys :: list(),
-          options :: Keyword.t()
-        ) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def update_row(instance, table, primary_keys, options \\ []) do
+  @spec update_row(instance, table_name, primary_keys, options) :: result
+  def update_row(instance, table_name, primary_keys, options \\ []) do
     prepared_var =
       %Var.UpdateRow{
-        table_name: table,
+        table_name: table_name,
         primary_keys: primary_keys
       }
       |> map_options(options)
@@ -554,17 +534,11 @@ defmodule ExAliyunOts do
     * `:transaction_id`, optional, write operation within local transaction.
   """
   @doc row: :row
-  @spec delete_row(
-          instance,
-          table :: String.t(),
-          primary_keys :: list(),
-          options :: Keyword.t()
-        ) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def delete_row(instance, table, primary_keys, options \\ []) do
+  @spec delete_row(instance, table_name, primary_keys, options) :: result
+  def delete_row(instance, table_name, primary_keys, options \\ []) do
     prepared_var =
       %Var.DeleteRow{
-        table_name: table,
+        table_name: table_name,
         primary_keys: primary_keys
       }
       |> map_options(options)
@@ -580,9 +554,9 @@ defmodule ExAliyunOts do
   The available options are same as `get_row/4`.
   """
   @doc row: :row
-  @spec get(table :: String.t(), primary_keys :: list(), options :: Keyword.t()) :: map()
-  def get(table, primary_keys, options \\ []) do
-    %Var.GetRow{table_name: table, primary_keys: primary_keys}
+  @spec get(table_name, primary_keys, options) :: map()
+  def get(table_name, primary_keys, options \\ []) do
+    %Var.GetRow{table_name: table_name, primary_keys: primary_keys}
     |> map_options(options)
   end
 
@@ -594,7 +568,7 @@ defmodule ExAliyunOts do
   The available options are same as `put_row/5`.
   """
   @doc row: :row
-  @spec write_put(primary_keys :: list(), attrs :: list(), options :: Keyword.t()) :: map()
+  @spec write_put(primary_keys, attrs :: list(), options) :: map()
   def write_put(primary_keys, attrs, options \\ []) do
     %Var.RowInBatchWriteRequest{
       type: :PUT,
@@ -612,7 +586,7 @@ defmodule ExAliyunOts do
   The available options are same as `update_row/4`.
   """
   @doc row: :row
-  @spec write_update(primary_keys :: list(), options :: Keyword.t()) :: map()
+  @spec write_update(primary_keys, options) :: map()
   def write_update(primary_keys, options \\ []) do
     %Var.RowInBatchWriteRequest{
       type: :UPDATE,
@@ -630,7 +604,7 @@ defmodule ExAliyunOts do
   The available operation same as `delete_row/4`.
   """
   @doc row: :row
-  @spec write_delete(primary_keys :: list(), options :: Keyword.t()) :: map()
+  @spec write_delete(primary_keys, options) :: map()
   def write_delete(primary_keys, options \\ []) do
     %Var.RowInBatchWriteRequest{type: :DELETE, primary_keys: primary_keys}
     |> map_options(options)
@@ -687,14 +661,13 @@ defmodule ExAliyunOts do
   @doc row: :row
   @spec get_range(
           instance,
-          inclusive_start_primary_keys :: list(),
-          exclusive_end_primary_keys :: list(),
-          options :: Keyword.t()
-        ) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+          inclusive_start_primary_keys,
+          exclusive_end_primary_keys,
+          options
+        ) :: result
   def get_range(
         instance,
-        table,
+        table_name,
         inclusive_start_primary_keys,
         exclusive_end_primary_keys,
         options \\ []
@@ -702,26 +675,26 @@ defmodule ExAliyunOts do
 
   def get_range(
         instance,
-        table,
+        table_name,
         inclusive_start_primary_keys,
         exclusive_end_primary_keys,
         options
       )
       when is_list(inclusive_start_primary_keys) do
     prepared_var =
-      %Var.GetRange{
-        table_name: table,
-        inclusive_start_primary_keys: inclusive_start_primary_keys,
-        exclusive_end_primary_keys: exclusive_end_primary_keys
-      }
-      |> map_options(options)
+      prepared_get_range(
+        table_name,
+        inclusive_start_primary_keys,
+        exclusive_end_primary_keys,
+        options
+      )
 
     Client.get_range(instance, prepared_var, nil)
   end
 
   def get_range(
         instance,
-        table,
+        table_name,
         inclusive_start_primary_keys,
         exclusive_end_primary_keys,
         options
@@ -729,7 +702,7 @@ defmodule ExAliyunOts do
       when is_binary(inclusive_start_primary_keys) do
     prepared_var =
       %Var.GetRange{
-        table_name: table,
+        table_name: table_name,
         exclusive_end_primary_keys: exclusive_end_primary_keys
       }
       |> map_options(options)
@@ -749,34 +722,32 @@ defmodule ExAliyunOts do
         [{"key1", 1}, {"key2", :inf_min}],
         [{"key1", 4}, {"key2", :inf_max}],
         direction: :forward
-
   ## Options
 
-  Please see options of `get_range/5` for details.
+    Please see options of `get_range/5` for details.
   """
   @doc row: :row
   @spec iterate_all_range(
           instance,
-          table :: String.t(),
-          inclusive_start_primary_keys :: list(),
-          exclusive_end_primary_keys :: list(),
-          options :: Keyword.t()
-        ) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+          table_name,
+          inclusive_start_primary_keys,
+          exclusive_end_primary_keys,
+          options
+        ) :: result
   def iterate_all_range(
         instance,
-        table,
+        table_name,
         inclusive_start_primary_keys,
         exclusive_end_primary_keys,
         options \\ []
       ) do
     prepared_var =
-      %Var.GetRange{
-        table_name: table,
-        inclusive_start_primary_keys: inclusive_start_primary_keys,
-        exclusive_end_primary_keys: exclusive_end_primary_keys
-      }
-      |> map_options(options)
+      prepared_get_range(
+        table_name,
+        inclusive_start_primary_keys,
+        exclusive_end_primary_keys,
+        options
+      )
 
     Client.iterate_get_all_range(instance, prepared_var)
   end
@@ -803,32 +774,48 @@ defmodule ExAliyunOts do
 
   ## Options
 
-  Please see options of `get_range/5` for details.
+    Please see options of `get_range/5` for details.
   """
   @doc row: :row
   @spec stream_range(
           instance,
-          inclusive_start_primary_keys :: list(),
-          exclusive_end_primary_keys :: list(),
-          options :: Keyword.t()
-        ) ::
-          Enumerable.t()
+          inclusive_start_primary_keys,
+          exclusive_end_primary_keys,
+          options
+        ) :: Enumerable.t()
   def stream_range(
         instance,
-        table,
+        table_name,
         inclusive_start_primary_keys,
         exclusive_end_primary_keys,
         options \\ []
       ) do
     prepared_var =
-      %Var.GetRange{
-        table_name: table,
-        inclusive_start_primary_keys: inclusive_start_primary_keys,
-        exclusive_end_primary_keys: exclusive_end_primary_keys
-      }
-      |> map_options(options)
+      prepared_get_range(
+        table_name,
+        inclusive_start_primary_keys,
+        exclusive_end_primary_keys,
+        options
+      )
 
     Client.stream_range(instance, prepared_var)
+  end
+
+  @compile {:inline, prepared_get_range: 4}
+  defp prepared_get_range(
+         table_name,
+         inclusive_start_primary_keys,
+         exclusive_end_primary_keys,
+         options
+       ) do
+    map_options(
+      %Var.GetRange{
+        table_name: table_name,
+        inclusive_start_primary_keys: inclusive_start_primary_keys,
+        exclusive_end_primary_keys: exclusive_end_primary_keys
+      },
+      options
+    )
   end
 
   @doc """
@@ -874,22 +861,45 @@ defmodule ExAliyunOts do
       - `["field1", "field2"]`, specifies the expected return attribute column fields.
   """
   @doc search: :search
-  @spec search(
-          instance,
-          table :: String.t(),
-          index_name :: String.t(),
-          options :: Keyword.t()
-        ) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def search(instance, table, index_name, options) do
-    prepared_var =
-      %Var.Search.SearchRequest{
-        table_name: table,
-        index_name: index_name
-      }
-      |> ExAliyunOts.Search.map_search_options(options)
-
+  @spec search(instance, table_name, index_name, options) :: result
+  def search(instance, table_name, index_name, options) do
+    prepared_var = prepared_search(table_name, index_name, options)
     Client.search(instance, prepared_var)
+  end
+
+  @doc """
+  As a wrapper built on `search/4` to create composable and lazy enumerable stream for iteration.
+
+  ## Options
+
+    Please see options of `search/4` for details.
+  """
+  @doc search: :search
+  @spec stream_search(instance, table_name, index_name, options) :: Enumerable.t()
+  def stream_search(instance, table_name, index_name, options) do
+    prepared_var = prepared_search(table_name, index_name, options)
+    Client.stream_search(instance, prepared_var)
+  end
+
+  @doc """
+  As a wrapper built on `search/4` to create composable and lazy enumerable stream for iteration.
+
+  ## Options
+
+    Please see options of `search/4` for details.
+  """
+  @doc search: :search
+  @spec iterate_search(instance, table_name, index_name, options) :: result
+  def iterate_search(instance, table_name, index_name, options) do
+    prepared_var = prepared_search(table_name, index_name, options)
+    Client.iterate_search(instance, prepared_var)
+  end
+
+  defp prepared_search(table_name, index_name, options) do
+    ExAliyunOts.Search.map_search_options(
+      %Var.Search.SearchRequest{table_name: table_name, index_name: index_name},
+      options
+    )
   end
 
   @doc """
@@ -898,8 +908,8 @@ defmodule ExAliyunOts do
   Official document in [Chinese](https://help.aliyun.com/document_detail/153862.html) | [English](https://www.alibabacloud.com/help/doc-detail/153862.htm)
   """
   @doc search: :search
-  @spec compute_splits(atom(), String.t(), String.t()) :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  defdelegate compute_splits(instance, table, index_name), to: Client
+  @spec compute_splits(instance, table_name, index_name) :: result
+  defdelegate compute_splits(instance, table_name, index_name), to: Client
 
   @doc """
   Leverage concurrent tasks to query matched raw data (still be with search function) more quickly, in this use case, this function is improved for speed up
@@ -926,10 +936,9 @@ defmodule ExAliyunOts do
     duplicate data, refer the official document, once occurs an `OTSSessionExpired` error, must initiate another parallel scan task to re-query data.
   """
   @doc search: :search
-  @spec parallel_scan(instance :: atom(), table :: String.t(), index_name :: String.t(), options :: Keyword.t())
-          :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def parallel_scan(instance, table, index_name, options) do
-    request = ExAliyunOts.Search.map_scan_options(table, index_name, options)
+  @spec parallel_scan(instance, table_name, index_name, options) :: result
+  def parallel_scan(instance, table_name, index_name, options) do
+    request = ExAliyunOts.Search.map_scan_options(table_name, index_name, options)
     Client.parallel_scan(instance, request)
   end
 
@@ -974,17 +983,20 @@ defmodule ExAliyunOts do
 
   """
   @doc search: :search
-  @spec iterate_parallel_scan(instance :: atom(), table :: String.t(), index_name :: String.t(),
-          fun :: (term -> term), options :: Keyword.t()) :: term()
-  def iterate_parallel_scan(instance, table, index_name, fun, options) when is_function(fun) do
+  @spec iterate_parallel_scan(instance, table_name, index_name, fun :: (term -> term), options) ::
+          term()
+  def iterate_parallel_scan(instance, table_name, index_name, fun, options)
+      when is_function(fun) do
     result =
       instance
-      |> stream_parallel_scan(table, index_name, options)
+      |> stream_parallel_scan(table_name, index_name, options)
       |> fun.()
+
     case result do
       {:error, %ExAliyunOts.Error{code: "OTSSessionExpired"}} ->
         Logger.info("scan_query session expired, will renew a parallel scan task.")
-        iterate_parallel_scan(instance, table, index_name, fun, options)
+        iterate_parallel_scan(instance, table_name, index_name, fun, options)
+
       other ->
         other
     end
@@ -1028,14 +1040,23 @@ defmodule ExAliyunOts do
 
   """
   @doc search: :search
-  @spec iterate_parallel_scan(instance :: atom(), table :: String.t(), index_name :: String.t(),
-    mod :: module(), fun :: atom(), args :: [term], options :: Keyword.t()) :: term()
-  def iterate_parallel_scan(instance, table, index_name, mod, fun, args, options) do
-    value = stream_parallel_scan(instance, table, index_name, options)
+  @spec iterate_parallel_scan(
+          instance,
+          table_name,
+          index_name,
+          mod :: module(),
+          fun :: atom(),
+          args :: [term],
+          options
+        ) :: term()
+  def iterate_parallel_scan(instance, table_name, index_name, mod, fun, args, options) do
+    value = stream_parallel_scan(instance, table_name, index_name, options)
+
     case apply(mod, fun, [value | args]) do
       {:error, %ExAliyunOts.Error{code: "OTSSessionExpired"}} ->
         Logger.info("scan_query session expired, will renew a parallel scan task.")
-        iterate_parallel_scan(instance, table, index_name, mod, fun, args, options)
+        iterate_parallel_scan(instance, table_name, index_name, mod, fun, args, options)
+
       other ->
         other
     end
@@ -1051,10 +1072,9 @@ defmodule ExAliyunOts do
     Please see options of `iterate_parallel_scan/5`.
   """
   @doc search: :search
-  @spec stream_parallel_scan(instance :: atom(), table :: String.t(), index_name :: String.t(),
-          options :: Keyword.t()) :: Enumerable.t()
-  defdelegate stream_parallel_scan(instance, table, index_name, options), to: ExAliyunOts.Search
-
+  @spec stream_parallel_scan(instance, table_name, index_name, options) :: Enumerable.t()
+  defdelegate stream_parallel_scan(instance, table_name, index_name, options),
+    to: ExAliyunOts.Search
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/117477.html) | [English](https://www.alibabacloud.com/help/doc-detail/117477.html)
@@ -1066,9 +1086,8 @@ defmodule ExAliyunOts do
       list_search_index("table")
   """
   @doc search: :search
-  @spec list_search_index(instance, table :: String.t()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  defdelegate list_search_index(instance, table), to: Client
+  @spec list_search_index(instance, table_name) :: result
+  defdelegate list_search_index(instance, table_name), to: Client
 
   @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/117452.html) | [English](https://www.alibabacloud.com/help/doc-detail/117452.html)
@@ -1117,16 +1136,10 @@ defmodule ExAliyunOts do
       - `ExAliyunOts.Search.geo_distance_sort/3`
   """
   @doc search: :search
-  @spec create_search_index(
-          instance,
-          table :: String.t(),
-          index_name :: String.t(),
-          options :: Keyword.t()
-        ) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def create_search_index(instance, table, index_name, options) do
+  @spec create_search_index(instance, table_name, index_name, options) :: result
+  def create_search_index(instance, table_name, index_name, options) do
     var_request = %Var.Search.CreateSearchIndexRequest{
-      table_name: table,
+      table_name: table_name,
       index_name: index_name,
       index_schema: %Var.Search.IndexSchema{
         field_schemas: Keyword.fetch!(options, :field_schemas),
@@ -1147,11 +1160,10 @@ defmodule ExAliyunOts do
       delete_search_index("table", "index_name")
   """
   @doc search: :search
-  @spec delete_search_index(instance, table :: String.t(), index_name :: String.t()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def delete_search_index(instance, table, index_name) do
+  @spec delete_search_index(instance, table_name, index_name) :: result
+  def delete_search_index(instance, table_name, index_name) do
     var_delete_request = %Var.Search.DeleteSearchIndexRequest{
-      table_name: table,
+      table_name: table_name,
       index_name: index_name
     }
 
@@ -1168,11 +1180,10 @@ defmodule ExAliyunOts do
       describe_search_index("table", "index_name")
   """
   @doc search: :search
-  @spec describe_search_index(instance, table :: String.t(), index_name :: String.t()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def describe_search_index(instance, table, index_name) do
+  @spec describe_search_index(instance, table_name, index_name) :: result
+  def describe_search_index(instance, table_name, index_name) do
     var_describe_request = %Var.Search.DescribeSearchIndexRequest{
-      table_name: table,
+      table_name: table_name,
       index_name: index_name
     }
 
@@ -1190,11 +1201,10 @@ defmodule ExAliyunOts do
       start_local_transaction("table", partition_key)
   """
   @doc local_transaction: :local_transaction
-  @spec start_local_transaction(instance, table :: String.t(), partition_key :: tuple()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
-  def start_local_transaction(instance, table, partition_key) do
+  @spec start_local_transaction(instance, table_name, partition_key :: tuple()) :: result
+  def start_local_transaction(instance, table_name, partition_key) do
     var_start_local_transaction = %Var.Transaction.StartLocalTransactionRequest{
-      table_name: table,
+      table_name: table_name,
       partition_key: partition_key
     }
 
@@ -1211,8 +1221,7 @@ defmodule ExAliyunOts do
       commit_transaction("transaction_id")
   """
   @doc local_transaction: :local_transaction
-  @spec commit_transaction(instance, transaction_id :: String.t()) ::
-          {:ok, map()} | {:error, ExAliyunOts.Error.t()}
+  @spec commit_transaction(instance, transaction_id :: String.t()) :: result
   defdelegate commit_transaction(instance, transaction_id), to: Client
 
   @doc """
@@ -1226,7 +1235,6 @@ defmodule ExAliyunOts do
   """
   @doc local_transaction: :local_transaction
   defdelegate abort_transaction(instance, transaction_id), to: Client
-
 
   defp map_options(var, nil), do: var
 
@@ -1263,8 +1271,7 @@ defmodule ExAliyunOts do
 
   ReturnType.constants()
   |> Enum.map(fn {_value, type} ->
-    downcase_type =
-      type |> to_string() |> String.slice(3..-1) |> Utils.downcase_atom()
+    downcase_type = type |> to_string() |> String.slice(3..-1) |> Utils.downcase_atom()
 
     defp map_return_type(unquote(downcase_type)), do: unquote(type)
     defp map_return_type(unquote(type)), do: unquote(type)
@@ -1306,5 +1313,4 @@ defmodule ExAliyunOts do
       end
     end)
   end
-
 end
