@@ -147,9 +147,11 @@ Here is a [Tablestore adapter for Ecto](https://hex.pm/packages/ecto_tablestore)
 * SDK built-in
   * IterateAllRange
   * IterateParallelScan
+  * IterateSearch
   * Sequence
   * StreamParallelScan
   * StreamRange
+  * StreamSearch
 
 * Tunnel service
 * Timeline mode

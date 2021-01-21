@@ -882,7 +882,8 @@ defmodule ExAliyunOts do
   end
 
   @doc """
-  As a wrapper built on `search/4` to create composable and lazy enumerable stream for iteration.
+  As a wrapper built on `search/4` to fetch a full matched data set by iterate, if process a large items,
+  recommend to use `stream_search/4`.
 
   ## Options
 
