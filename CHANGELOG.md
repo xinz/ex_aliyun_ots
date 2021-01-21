@@ -20,10 +20,10 @@
 * Use `protox` to replace `exportobuf` for google protobuf library, and maintain the generated modules in [hexpm](https://hex.pm/packages/tablestore_protos)
 * Add retry for http request timeout
 * Some implicit modules are removed and directly use the generated protobuf modules, cover:
-    - Use `ExAliyunOts.TableStoreFilter.Filter` to replace `ExAliyunOts.Var.Filter`
-    - Use `ExAliyunOts.TableStoreFilter.SingleColumnValueFilter` to replace `ExAliyunOts.Var.SingleColumnValueFilter`
-    - Use `ExAliyunOts.TableStoreFilter.ColumnPaginationFilter` to replace `ExAliyunOts.Var.ColumnPaginationFilter`
-    - Use `ExAliyunOts.TableStore.Condition` to replace `ExAliyunOts.Var.Condition`
+    - Use ExAliyunOts.TableStoreFilter.Filter(in `tablestore_protos`) to replace `ExAliyunOts.Var.Filter`
+    - Use ExAliyunOts.TableStoreFilter.SingleColumnValueFilter(in `tablestore_protos`) to replace `ExAliyunOts.Var.SingleColumnValueFilter`
+    - Use ExAliyunOts.TableStoreFilter.ColumnPaginationFilter(in `tablestore_protos`) to replace `ExAliyunOts.Var.ColumnPaginationFilter`
+    - Use ExAliyunOts.TableStore.Condition(in `tablestore_protos`) to replace `ExAliyunOts.Var.Condition`
 * Improve module file struct/naming
 * Add `ExAliyunOts.create_index/6` to create global secondary indexes
 * Add `index_metas` and `defined_columns` optional options when use `ExAliyunOts.create_table/4`
