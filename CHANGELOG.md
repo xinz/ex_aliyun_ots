@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.12.2 (2021-01-21)
+
+* Add `ExAliyunOts.stream_search/4`
+* Add `ExAliyunOts.iterate_search/4`
+* Fix compile warning when generate docs
+
 ## v0.12.1 (2021-01-15)
 
 * Fix Elixir 1.11 compilation warnings, explicitly add `Jason` into mix.exs deps
