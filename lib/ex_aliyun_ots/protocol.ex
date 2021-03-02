@@ -96,7 +96,18 @@ defmodule ExAliyunOts.Protocol do
       ]
     end)
 
-    Base.encode64(:crypto.hmac(:sha, request.instance.access_key_secret, data_to_sign))
+    sign_encode(request.instance.access_key_secret, data_to_sign)
+  end
+
+  # TODO: remove when we require OTP 22.1
+  if Code.ensure_loaded?(:crypto) and function_exported?(:crypto, :mac, 4) do
+    defp hmac_fun(digest, key), do: &:crypto.mac(:hmac, digest, key, &1)
+  else
+    defp hmac_fun(digest, key), do: &:crypto.hmac(digest, key, &1)
+  end
+
+  defp sign_encode(secret, data) do
+    Base.encode64(hmac_fun(:sha, secret).(data))
   end
 
   defp headers_to_str(headers) do
