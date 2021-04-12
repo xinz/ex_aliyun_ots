@@ -1,9 +1,13 @@
 # Changelog
 
-## v0.12.3 (2021-04-12)
+## v0.12.4 (2021-04-12)
+
+* Add `:is_atomic` option to `ExAliyunOts.batch_write/3`
+* Tweak document of `ExAliyunOts` module
+
+## v0.12.3 (2021-03-02)
 
 * Make compatible to use :crypto mac
-* Add `:is_atomic` option to `ExAliyunOts.batch_write/3`
 
 ## v0.12.2 (2021-01-21)
 
