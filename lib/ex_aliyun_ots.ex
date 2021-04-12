@@ -888,8 +888,8 @@ defmodule ExAliyunOts do
   end
 
   @doc """
-  As a wrapper built on `search/4` to fetch a full matched data set by iterate, if process a large items,
-  recommend to use `stream_search/4`.
+  As a wrapper built on `stream_search/4` to fetch a full matched data set as a stream, then use `Enum.reduce/2` to iteratively
+  format all data into a list, if process a large items, recommend to use `stream_search/4`.
 
   ## Options
 
