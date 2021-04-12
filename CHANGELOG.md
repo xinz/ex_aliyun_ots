@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.12.3 (2021-04-12)
+
+* Make compatible to use :crypto mac
+* Add `:is_atomic` option to `ExAliyunOts.batch_write/3`
+
 ## v0.12.2 (2021-01-21)
 
 * Add `ExAliyunOts.stream_search/4`
