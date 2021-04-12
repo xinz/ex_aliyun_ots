@@ -304,4 +304,101 @@ defmodule ExAliyunOts.MixinTest.CRUD do
 
     assert attrs_key_1 == q3_attrs_key_1
   end
+
+  test "batch write with is_atomic with different partition keys per table", %{table1: table_name1, table2: table_name2} do
+    {:ok, response} =
+      batch_write(
+        [
+          {
+            table_name1,
+            [
+              write_put(
+                [{"key1", 1001}, {"key2", "1001"}],
+                [{"v1", "val01_1"}, {"v2", "val01_2"}],
+                condition: condition(:ignore),
+                return_type: :pk
+              ),
+              write_put(
+                [{"key1", 1001}, {"key2", "1002"}],
+                [{"v1", "val02_1"}, {"v2", "val02_2"}],
+                condition: condition(:ignore),
+                return_type: :pk
+              )
+            ]
+          },
+          {
+            table_name2,
+            [
+              write_put(
+                [{"key1", "t2_01"}],
+                [{"v1", "val1"}, {"v2", 2}],
+                condition: condition(:ignore)
+              ),
+              write_put(
+                [{"key1", "t2_02"}],
+                [{"v1", "val2"}, {"v2", 20}],
+                condition: condition(:ignore)
+              )
+            ]
+          }
+        ],
+        is_atomic: true
+      )
+
+    [resp_table1, resp_table2] = response.tables
+
+    Enum.map(resp_table1.rows, fn(row) ->
+      assert row.is_ok == true
+    end)
+
+    Enum.map(resp_table2.rows, fn(row) ->
+      assert row.is_ok == false
+    end)
+  end
+
+  test "batch write with is_atomic with unique partition keys per table", %{table1: table_name1, table2: table_name2} do
+    {:ok, response} =
+      batch_write(
+        [
+          {
+            table_name1,
+            [
+              write_put(
+                [{"key1", 1001}, {"key2", "1001"}],
+                [{"v1", "val01_1"}, {"v2", "val01_2"}],
+                condition: condition(:ignore),
+                return_type: :pk
+              ),
+              write_put(
+                [{"key1", 1001}, {"key2", "1002"}],
+                [{"v1", "val02_1"}, {"v2", "val02_2"}],
+                condition: condition(:ignore),
+                return_type: :pk
+              )
+            ]
+          },
+          {
+            table_name2,
+            [
+              write_put(
+                [{"key1", "t2_01"}],
+                [{"v1", "val1"}, {"v2", 2}],
+                condition: condition(:ignore)
+              ),
+            ]
+          }
+        ],
+        is_atomic: true
+      )
+
+    [resp_table1, resp_table2] = response.tables
+
+    Enum.map(resp_table1.rows, fn(row) ->
+      assert row.is_ok == true
+    end)
+
+    Enum.map(resp_table2.rows, fn(row) ->
+      assert row.is_ok == true
+    end)
+  end
 end

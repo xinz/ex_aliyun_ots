@@ -89,11 +89,10 @@ defmodule ExAliyunOts.Client do
     Row.remote_batch_get_row(Config.get(instance_key), vars_batch_get_row)
   end
 
-  def batch_write_row(instance_key, var_batch_write_row, options \\ [transaction_id: nil])
+  def batch_write_row(instance_key, var_batch_write_row, options \\ [])
       when is_map(var_batch_write_row) and is_list(options)
       when is_list(var_batch_write_row) and is_list(options) do
-    transaction_id = Keyword.get(options, :transaction_id, nil)
-    Row.remote_batch_write_row(Config.get(instance_key), var_batch_write_row, transaction_id)
+    Row.remote_batch_write_row(Config.get(instance_key), var_batch_write_row, options)
   end
 
   def create_search_index(instance_key, var_create_search_index) do

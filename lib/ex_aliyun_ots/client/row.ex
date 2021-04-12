@@ -321,25 +321,31 @@ defmodule ExAliyunOts.Client.Row do
     |> Enum.map(fn {:ok, response} -> response end)
   end
 
-  defp request_to_batch_write_row(vars_batch_write_row, nil) when is_list(vars_batch_write_row) do
+  defp request_to_batch_write_row(vars_batch_write_row, options) when is_list(vars_batch_write_row) do
     # BatchWriteRow for multi tables with local transaction are not supported.
     tables =
       Enum.map(vars_batch_write_row, fn var_batch_write_row ->
         map_table_in_batch_write_row_request(var_batch_write_row)
       end)
 
-    %BatchWriteRowRequest{tables: tables} |> BatchWriteRowRequest.encode!() |> IO.iodata_to_binary()
+    options
+    |> Keyword.put(:tables, tables)
+    |> encode_batch_write_row_request()
   end
 
-  defp request_to_batch_write_row([var_batch_write_row], transaction_id)
-       when is_map(var_batch_write_row) do
-    request_to_batch_write_row(var_batch_write_row, transaction_id)
-  end
-
-  defp request_to_batch_write_row(var_batch_write_row, transaction_id)
-       when is_map(var_batch_write_row) do
+  defp request_to_batch_write_row(var_batch_write_row, options) when is_map(var_batch_write_row) do
     table = map_table_in_batch_write_row_request(var_batch_write_row)
-    %BatchWriteRowRequest{tables: [table], transaction_id: transaction_id} |> BatchWriteRowRequest.encode!() |> IO.iodata_to_binary()
+
+    options
+    |> Keyword.put(:tables, [table])
+    |> encode_batch_write_row_request()
+  end
+
+  defp encode_batch_write_row_request(options) do
+    BatchWriteRowRequest
+    |> struct(options)
+    |> BatchWriteRowRequest.encode!()
+    |> IO.iodata_to_binary()
   end
 
   defp map_table_in_batch_write_row_request(var_batch_write_row) do
@@ -403,8 +409,8 @@ defmodule ExAliyunOts.Client.Row do
     |> map_return_content(var_row_in_request.return_type, var_row_in_request.return_columns)
   end
 
-  def remote_batch_write_row(instance, var_batch_write_row, transaction_id) do
-    request_body = request_to_batch_write_row(var_batch_write_row, transaction_id)
+  def remote_batch_write_row(instance, var_batch_write_row, options) do
+    request_body = request_to_batch_write_row(var_batch_write_row, options)
 
     result =
       instance

@@ -151,6 +151,57 @@ defmodule ExAliyunOts.MixinTest.Transaction do
     end)
   end
 
+  test "batch write with transaction_id and is_atomic" do
+    partition_key = {"key", "atomic_key"}
+    {:ok, response} = start_local_transaction(@table_range, partition_key)
+    transaction_id = response.transaction_id
+
+    {:ok, response} =
+      batch_write(
+        {
+          @table_range,
+          [
+            write_update(
+              [partition_key, {"key2", 1}],
+              put: [{"field1", 1}, {"field2", 2}],
+              condition: condition(:ignore)
+            ),
+            write_update(
+              [partition_key, {"key2", 2}],
+              put: [{"field1", 3}, {"field2", 4}],
+              condition: condition(:ignore)
+            ),
+            write_delete(
+              [partition_key, {"key2", 0}],
+              condition: condition(:ignore)
+            )
+          ]
+        },
+        transaction_id: transaction_id,
+        is_atomic: true
+      )
+
+    [table] = response.tables
+
+    Enum.map(table.rows, fn(row) ->
+      assert row.is_ok == true
+    end)
+
+    commit_transaction(transaction_id)
+
+    {:ok, response} = get_row(@table_range, [partition_key, {"key2", 1}])
+    {_pks, attrs} = response.row
+
+    Enum.map(attrs, fn {key, value, _ts} ->
+      case key do
+        "field1" -> assert value == 1
+        "field2" -> assert value == 2
+        true -> :ok
+      end
+    end)
+
+  end
+
   test "get row with transaction_id" do
     partition_key = {"key", "key1"}
 

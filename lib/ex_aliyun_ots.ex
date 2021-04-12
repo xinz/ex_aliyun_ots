@@ -344,6 +344,12 @@ defmodule ExAliyunOts do
       ]
 
   The batch write operation can be considered as a collection of multiple `write_put/3`, `write_update/2` and `write_delete/2` operations.
+
+  ## Options
+
+    * `:transaction_id`, optional, batch write operation within local transaction.
+    * `:is_atomic`, optional, defaults to false, whether set this batch write request be with an atomic operation, if this option is `true`,
+      keep the partition key of each table in the batch write operation is unique, or the corresponding write operation of the table will fail.
   """
   @doc row: :row
   @spec batch_write(instance, requests :: list(), options) :: result
