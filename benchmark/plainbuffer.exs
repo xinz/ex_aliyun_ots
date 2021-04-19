@@ -1,14 +1,13 @@
-Code.require_file("plainbuffer.ex", "./benchmark/v1")
-Code.require_file("plainbuffer.ex", "./benchmark/a96291c")
+Code.require_file("plainbuffer.ex", "./benchmark/3a4a442")
 
 defmodule Plainbuffer.Benchmark do
   require Integer
 
   def benchmark do
 
-    serialized_row = test_data(1..10)
+    serialized_row = test_data(1..1000)
 
-    input_raw_rows = load_raw_rows(1..20)
+    input_raw_rows = load_raw_row(1..20)
 
     pks = [{"id", 1000}, {"sid", "testsid_9"}]
 
@@ -17,8 +16,7 @@ defmodule Plainbuffer.Benchmark do
 
     Benchee.run(
       %{
-        "deserialize row binary old"          => fn -> bench_deserialize_row(serialized_row, ExAliyunOts.PlainBuffer.Old) end,
-        "deserialize row binary Commit_a96291c"          => fn -> bench_deserialize_row(serialized_row, ExAliyunOts.PlainBuffer.Commit_a96291c) end,
+        "deserialize row binary Commit_3a4a442"          => fn -> bench_deserialize_row(serialized_row, ExAliyunOts.PlainBuffer.Commit_3a4a442) end,
         "deserialize row binary new"          => fn -> bench_deserialize_row(serialized_row, ExAliyunOts.PlainBuffer) end,
       },
       time: 10,
@@ -28,8 +26,7 @@ defmodule Plainbuffer.Benchmark do
 
     Benchee.run(
       %{
-        "deserialize rows binary old"          => fn -> bench_deserialize_rows(serialized_rows, ExAliyunOts.PlainBuffer.Old) end,
-        "deserialize rows binary Commit_a96291c"          => fn -> bench_deserialize_rows(serialized_rows, ExAliyunOts.PlainBuffer.Commit_a96291c) end,
+        "deserialize rows binary Commit_3a4a442"          => fn -> bench_deserialize_rows(serialized_rows, ExAliyunOts.PlainBuffer.Commit_3a4a442) end,
         "deserialize rows binary new"          => fn -> bench_deserialize_rows(serialized_rows, ExAliyunOts.PlainBuffer) end,
       },
       time: 10,
@@ -39,8 +36,7 @@ defmodule Plainbuffer.Benchmark do
 
     Benchee.run(
       %{
-        "serialize put_row old"           => fn -> bench_serialize_for_put_row(input_raw_rows, ExAliyunOts.PlainBuffer.Old) end,
-        "serialize put_row Commit_a96291c"           => fn -> bench_serialize_for_put_row(input_raw_rows, ExAliyunOts.PlainBuffer.Commit_a96291c) end,
+        "serialize put_row Commit_3a4a442"           => fn -> bench_serialize_for_put_row(input_raw_rows, ExAliyunOts.PlainBuffer.Commit_3a4a442) end,
         "serialize put_row new"           => fn -> bench_serialize_for_put_row(input_raw_rows, ExAliyunOts.PlainBuffer) end
       },
       time: 10,
@@ -50,9 +46,23 @@ defmodule Plainbuffer.Benchmark do
 
     Benchee.run(
       %{
-        "serialize primary keys old"           => fn -> bench_serialize_primary_keys(pks, ExAliyunOts.PlainBuffer.Old) end,
-        "serialize primary keys Commit_a96291c"           => fn -> bench_serialize_primary_keys(pks, ExAliyunOts.PlainBuffer.Commit_a96291c) end,
+        "serialize primary keys Commit_3a4a442"           => fn -> bench_serialize_primary_keys(pks, ExAliyunOts.PlainBuffer.Commit_3a4a442) end,
         "serialize primary keys new"           => fn -> bench_serialize_primary_keys(pks, ExAliyunOts.PlainBuffer) end
+      },
+      time: 10,
+      memory_time: 2,
+      print: [fast_warning: false]
+    )
+
+    {pks, attrs} = load_raw_row(1..200)
+    updates = %{
+      PUT: attrs
+    }
+
+    Benchee.run(
+      %{
+        "serialize for update row Commit_3a4a442" => fn -> bench_serialize_for_update_row({pks, updates}, ExAliyunOts.PlainBuffer.Commit_3a4a442) end,
+        "serialize for update row new" => fn -> bench_serialize_for_update_row({pks, updates}, ExAliyunOts.PlainBuffer) end
       },
       time: 10,
       memory_time: 2,
@@ -72,17 +82,21 @@ defmodule Plainbuffer.Benchmark do
     module.serialize_for_put_row(pks, attrs)
   end
 
+  def bench_serialize_for_update_row({pks, updates}, module) do
+    module.serialize_for_update_row(pks, updates)
+  end
+
   def bench_serialize_primary_keys(pks, module) do
     module.serialize_primary_keys(pks)
   end
 
   defp test_data(input) do
-    {pks, attrs} = load_raw_rows(input)
+    {pks, attrs} = load_raw_row(input)
     ExAliyunOts.PlainBuffer.serialize_for_put_row(pks, attrs)
   end
 
-  defp load_raw_rows(input) do
-    pks = [{"key1", "key1"}]
+  defp load_raw_row(input) do
+    pks = [{"key1", "key1"}, {"secondary_id", 1002123}]
     attrs = Enum.map(input, fn(value) ->
       [{"string#{value}", "#{value}", 1551922128}, {"int#{value}", value, 1551922128}, {"boolean#{value}", Integer.is_even(value), 1551922128}]
     end) |> List.flatten()
