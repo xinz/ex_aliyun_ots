@@ -1,3 +1,5 @@
+Code.require_file("crc.ex", "./benchmark/3a4a442")
+
 defmodule ExAliyunOts.PlainBuffer.Commit_3a4a442 do
   @moduledoc false
 
@@ -38,7 +40,7 @@ defmodule ExAliyunOts.PlainBuffer.Commit_3a4a442 do
   @sum_endian_32_size @little_endian_32_size + 1
   @sum_endian_64_size @little_endian_64_size + 1
 
-  alias ExAliyunOts.CRC
+  alias ExAliyunOts.Commit3a4a442.CRC
   alias ExAliyunOts.Const.{PKType, OperationType}
   require PKType
   require OperationType
