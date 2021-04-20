@@ -1,4 +1,4 @@
-defmodule ExAliyunOts.CRC do
+defmodule ExAliyunOts.Commit938fdd9.CRC do
   @moduledoc false
 
   use Bitwise
@@ -37,29 +37,20 @@ defmodule ExAliyunOts.CRC do
               0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3>>
 
 
-  @int32_bytes <<0, 1, 2, 3>>
-
-  @int64_bytes <<0, 1, 2, 3, 4, 5, 6, 7>>
-
   def crc_int8(crc, byte) do
     :binary.at(@crc8_table, ((crc &&& 0xFF) ^^^ byte))
   end
 
   def crc_int32(crc, byte) do
-    do_crc_int8_with_bytes(crc, byte, @int32_bytes)
+    Enum.reduce(0..3, crc, fn i, acc ->
+      crc_int8(acc, byte >>> (i * 8) &&& 0xFF)
+    end)
   end
 
   def crc_int64(crc, byte) do
-    do_crc_int8_with_bytes(crc, byte, @int64_bytes)
-  end
-
-  defp do_crc_int8_with_bytes(acc, _byte, <<>>) do
-    acc
-  end
-  defp do_crc_int8_with_bytes(acc, byte, <<i::integer, rest::bitstring>>) do
-    acc
-    |> crc_int8(byte >>> (i * 8) &&& 0xFF)
-    |> do_crc_int8_with_bytes(byte, rest)
+    Enum.reduce(0..7, crc, fn i, acc ->
+      crc_int8(acc, byte >>> (i * 8) &&& 0xFF)
+    end)
   end
 
   def crc_string(crc, bytes) do
