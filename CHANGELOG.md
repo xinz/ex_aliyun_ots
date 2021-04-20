@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.13.0 (2021-04-20)
+
+* Enhance `ExAliyunOts.CRC` module to imporve plainbuffer encoding performance
+
 ## v0.12.4 (2021-04-12)
 
 * Add `:is_atomic` option to `ExAliyunOts.batch_write/3`
