@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.13.1 (2021-04-20)
+
+* Imporve further plainbuffer encoding(cover `crc_int32` and `crc_int64`) performance
+
 ## v0.13.0 (2021-04-20)
 
 * Enhance CRC module to imporve plainbuffer encoding performance
