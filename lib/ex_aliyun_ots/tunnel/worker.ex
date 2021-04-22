@@ -1,6 +1,6 @@
 defmodule ExAliyunOts.Tunnel.Worker do
   @moduledoc """
-  The primary entry to use the tunnel servcice.
+  The primary entry to use the tunnel service.
 
   This bases on a `GenServer` module and runs under a `DynamicSupervisor` to maintain the completed
   life cycle of the heartbeat connection, it is charge of forward the received data records to the outside
@@ -91,7 +91,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   end
 
   @doc """
-  Start a supervised tunnel worker which maintains a heartbeat connection to the tunnel services internally,
+  Start a supervised tunnel worker which maintains a heartbeat connection to the tunnel service internally,
   it will make the current process who calls this function as a subscriber, the subscriber will receive
   data records status information via `handle_call/3` in `{:record_event, {records, next_token}}` message format
   later once there are some data records changed with insert/update/delete operations, please inspect `records`
