@@ -4,7 +4,7 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
   alias ExAliyunOts.Client
   alias ExAliyunOts.Logger
 
-  defstruct [:tunnel_id, :client_id, :instance_key, :channel_id, :sequence_number, :token]
+  defstruct [:tunnel_id, :client_id, :instance, :channel_id, :sequence_number, :token]
 
   def finish_tag(), do: "finished"
 
@@ -23,7 +23,7 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
           # and then retry checkpoint.
 
           get_checkpoint_result =
-            Client.get_checkpoint(checkpointer.instance_key,
+            Client.get_checkpoint(checkpointer.instance,
               tunnel_id: checkpointer.tunnel_id,
               client_id: checkpointer.client_id,
               channel_id: checkpointer.channel_id
@@ -55,7 +55,7 @@ defmodule ExAliyunOts.Tunnel.Checkpointer do
     token = if checkpointer.token == nil, do: finish_tag(), else: checkpointer.token
 
     Client.checkpoint(
-      checkpointer.instance_key,
+      checkpointer.instance,
       tunnel_id: checkpointer.tunnel_id,
       client_id: checkpointer.client_id,
       channel_id: checkpointer.channel_id,

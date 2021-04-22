@@ -14,7 +14,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
             channel_id: nil,
             client_id: nil,
             token: nil,
-            instance_key: nil,
+            instance: nil,
             backoff: nil,
             sequence_number: nil
 
@@ -46,7 +46,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
     if token != nil and token != finish_tag do
       result =
         Client.read_records(
-          state.instance_key,
+          state.instance,
           tunnel_id: state.tunnel_id,
           client_id: state.client_id,
           channel_id: state.channel_id,
@@ -143,7 +143,7 @@ defmodule ExAliyunOts.Tunnel.Channel.Agent do
         checkpointer = %Checkpointer{
           tunnel_id: state.tunnel_id,
           client_id: state.client_id,
-          instance_key: state.instance_key,
+          instance: state.instance,
           channel_id: state.channel_id,
           sequence_number: state.sequence_number
         }

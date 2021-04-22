@@ -1,4 +1,66 @@
 defmodule ExAliyunOts.Tunnel.Worker do
+  @moduledoc """
+  The primary entry to use the tunnel servcice.
+
+  This bases on a `GenServer` module and runs under a `DynamicSupervisor` to maintain the completed
+  life cycle of the heartbeat connection, it is charge of forward the received data records to the outside
+  subscriber.
+
+  Here is an example for reference:
+
+      defmodule Sync do
+        use GenServer
+
+        def start(instance, tunnel_id) do
+          GenServer.start(__MODULE__, %{instance: instance, tunnel_id: tunnel_id})
+        end
+
+        def listen(pid) do
+          GenServer.cast(pid, :listen)
+        end
+
+        @impl true
+        def init(config) do
+          {:ok, config}
+        end
+
+        @impl true
+        def handle_cast(:listen, state) do
+          ExAliyunOts.Tunnel.Worker.start_connect(state.instance, [tunnel_id: state.tunnel_id])
+          {:noreply, state}
+        end
+
+        @impl true
+        def handle_call({:record_event, {records, _next_token}}, _from, state) do
+          # ...
+          # data records changes will be received in here,
+          # and handle them in the `continue` processing,
+          # please inspect `records` for details.
+          # ...
+          {:reply, :ok, state, {:continue, records}}
+        end
+
+        @impl true
+        def handle_continue([record | reset] = records, state) do
+          # process `records` in he
+          {:noreply, state, {:continue, reset}}
+        end
+        def handle_continue([], state) do
+          {:noreply, state}
+        end
+      end
+
+  Here we define a module named `Sync`, and use it like this:
+
+      instance = :my_instance
+      tunnel_id = "..."
+      {:ok, pid} = Sync.start(instance, tunnel_id)
+      Sync.listen(pid)
+      Process.sleep(:infinity)
+
+  Or we can use this `Sync` module with other process/supervisor.
+  """
+
   use GenServer
 
   alias ExAliyunOts.Client
@@ -13,28 +75,50 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
   # Public
 
-  def start_link(instance_key), do: GenServer.start_link(__MODULE__, instance_key, [])
+  @doc """
+  Used for the supervisor.
+  """
+  def start_link(instance), do: GenServer.start_link(__MODULE__, instance, [])
 
-  def init(instance_key) do
+  def init(instance) do
     Process.flag(:trap_exit, true)
 
     state = %{
-      instance_key: instance_key
+      instance: instance
     }
 
     {:ok, state}
   end
 
-  @spec start(instance_key :: atom(), opts :: Keyword.t()) :: term()
-  def start(instance_key, opts) do
-    {:ok, pid} = DynamicSupervisor.start_tunnel_worker(instance_key)
+  @doc """
+  Start a supervised tunnel worker which maintains a heartbeat connection to the tunnel services internally,
+  it will make the current process who calls this function as a subscriber, the subscriber will receive
+  data records status information via `handle_call/3` in `{:record_event, {records, next_token}}` message format
+  later once there are some data records changed with insert/update/delete operations, please inspect `records`
+  for details.
+
+  ## Options
+
+    * `:tunnel_id`, required, the tunnel id to setup the tunnel working flow.
+    * `:heartbeat_interval`, time to run heartbeat internally, defaults to 30 seconds, at least 5 seconds. 
+    * `:heartbeat_timeout`, heartbeat timeout, defaults to 300 seconds.
+    * `:connect_timeout`, timeout setting in "ClientConfig" tunnel proto file, defaults to 300 seconds.
+    * `:client_tag`, optional, the custom client tag that is used to generate a tunnel client id, can customize
+    this parameter to uniquely identify tunnel workers.
+  """
+  @spec start_connect(instance :: atom(), opts :: Keyword.t()) :: {:ok, pid()}
+  def start_connect(instance, opts) do
+    {:ok, pid} = DynamicSupervisor.start_tunnel_worker(instance)
     opts = validate(opts)
     subscriber_pid = self()
-    GenServer.cast(pid, {:start, opts, subscriber_pid})
+    GenServer.cast(pid, {:start_connect, opts, subscriber_pid})
     {:ok, pid}
   end
 
-  @spec stop(tunnel_id :: String.t()) :: term()
+  @doc """
+  Stop the tunnel worker process by tunnel id.
+  """
+  @spec stop(tunnel_id :: String.t()) :: :ok
   def stop(tunnel_id) do
     case Registry.worker(tunnel_id) do
       [_tunnel_id, _client_id, worker_pid, _meta, _subscriber] ->
@@ -44,6 +128,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         Logger.info(
           "Stop worker but tunnel_id: #{inspect(tunnel_id)} is not existed from Registry"
         )
+        :ok
     end
   end
 
@@ -83,7 +168,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     {:noreply, state}
   end
 
-  def handle_cast({:start, opts, subscriber_pid}, state) do
+  def handle_cast({:start_connect, opts, subscriber_pid}, state) do
     worker_pid = self()
 
     tunnel_id = opts[:tunnel_id]
@@ -133,11 +218,10 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     result =
       Client.connect_tunnel(
-        state.instance_key,
+        state.instance,
         tunnel_id: tunnel_id,
         timeout: connect_timeout,
-        client_tag: opts[:client_tag],
-        request_timeout: connect_timeout * 1_000
+        client_tag: opts[:client_tag]
       )
 
     case result do
@@ -209,7 +293,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   defp heartbeat(state, opts) do
     now = DateTime.utc_now()
 
-    instance_key = state.instance_key
+    instance = state.instance
 
     tunnel_id = opts[:tunnel_id]
 
@@ -240,7 +324,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     result =
       Client.heartbeat(
-        instance_key,
+        instance,
         request_timeout: meta.heartbeat_timeout,
         channels: channels_to_heartbeat,
         tunnel_id: tunnel_id,
@@ -266,7 +350,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         end)
 
         update_channels(
-          instance_key,
+          instance,
           tunnel_id,
           client_id,
           channels_from_response,
@@ -317,7 +401,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         Registry.remove_worker(tunnel_id)
 
         if tunnel_id != nil do
-          remote_shutdown_tunnel(state.instance_key, tunnel_id, client_id)
+          remote_shutdown_tunnel(state.instance, tunnel_id, client_id)
         end
 
       nil ->
@@ -325,9 +409,9 @@ defmodule ExAliyunOts.Tunnel.Worker do
     end
   end
 
-  defp remote_shutdown_tunnel(instance_key, tunnel_id, client_id) do
+  defp remote_shutdown_tunnel(instance, tunnel_id, client_id) do
     shutdown_result =
-      Client.shutdown_tunnel(instance_key, tunnel_id: tunnel_id, client_id: client_id)
+      Client.shutdown_tunnel(instance, tunnel_id: tunnel_id, client_id: client_id)
 
     Logger.info(fn ->
       [
@@ -358,7 +442,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   end
 
   defp update_channels(
-         instance_key,
+         instance,
          tunnel_id,
          client_id,
          channels_from_response,
@@ -371,7 +455,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         nil ->
           # not existed yet in local
           {:ok, channel_pid} =
-            init_channel(instance_key, tunnel_id, client_id, channel_from_heartbeat)
+            init_channel(instance, tunnel_id, client_id, channel_from_heartbeat)
 
           Channel.update(channel_pid, channel_from_heartbeat)
 
@@ -400,12 +484,12 @@ defmodule ExAliyunOts.Tunnel.Worker do
     end)
   end
 
-  defp init_channel(instance_key, tunnel_id, client_id, channel_from_heartbeat) do
+  defp init_channel(instance, tunnel_id, client_id, channel_from_heartbeat) do
     channel_id = channel_from_heartbeat.channel_id
 
     result =
       Client.get_checkpoint(
-        instance_key,
+        instance,
         tunnel_id: tunnel_id,
         client_id: client_id,
         channel_id: channel_id
@@ -414,7 +498,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
     case result do
       {:ok, response} ->
         start_channel(
-          instance_key,
+          instance,
           channel_id,
           tunnel_id,
           client_id,
@@ -443,7 +527,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   end
 
   defp start_channel(
-         instance_key,
+         instance,
          channel_id,
          tunnel_id,
          client_id,
@@ -458,7 +542,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
         channel_id: channel_id,
         client_id: client_id,
         token: token,
-        instance_key: instance_key,
+        instance: instance,
         sequence_number: sequence_number
       )
 

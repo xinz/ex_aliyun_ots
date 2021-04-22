@@ -172,7 +172,7 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
     tunnels = context[:tunnels]
     tunnel_id2 = tunnels[@tunnel_name2][:tunnel_id]
 
-    worker_pid2 = Worker.start(@instance_key, tunnel_id: tunnel_id2)
+    worker_pid2 = Worker.start_connect(@instance_key, tunnel_id: tunnel_id2)
 
     Logger.info("worker_pid2: #{inspect(worker_pid2)}")
 
@@ -199,7 +199,7 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
     tunnels = context[:tunnels]
     tunnel_id1 = tunnels[@tunnel_name1][:tunnel_id]
 
-    _worker_pid1 = Worker.start(@instance_key, tunnel_id: tunnel_id1)
+    _worker_pid1 = Worker.start_connect(@instance_key, tunnel_id: tunnel_id1)
 
     Process.sleep(5_000)
 
@@ -222,7 +222,7 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
     tunnels = context[:tunnels]
     tunnel_id3 = tunnels[@tunnel_name3][:tunnel_id]
 
-    worker_pid3 = Worker.start(@instance_key, tunnel_id: tunnel_id3)
+    worker_pid3 = Worker.start_connect(@instance_key, tunnel_id: tunnel_id3)
 
     Logger.info("worker_pid3: #{inspect(worker_pid3)}")
 

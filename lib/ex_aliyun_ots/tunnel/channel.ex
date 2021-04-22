@@ -1,4 +1,5 @@
 defmodule ExAliyunOts.Tunnel.Channel do
+  @moduledoc false
   use GenStateMachine
 
   alias ExAliyunOts.Logger

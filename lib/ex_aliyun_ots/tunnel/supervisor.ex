@@ -14,8 +14,8 @@ defmodule ExAliyunOts.Tunnel.DynamicSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  def start_tunnel_worker(instance_key) do
-    spec = {Worker, instance_key}
+  def start_tunnel_worker(instance) do
+    spec = {Worker, instance}
     DynamicSupervisor.start_child(__MODULE__, spec)
   end
 end
