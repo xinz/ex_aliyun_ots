@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.14.0 (2021-04-22)
+
+* Make tunnel service usage sample and document more clear, see `ExAliyunOts.Tunnel.Worker`.
+* Rename `ExAliyunOts.Tunnel.Worker`'s `start/2` function as `start_connect/2`,
+  this could resolve potential obscurity with GenServer function naming.
+
 ## v0.13.1 (2021-04-20)
 
 * Imporve further plainbuffer encoding(cover `crc_int32` and `crc_int64`) performance
