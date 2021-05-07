@@ -1,39 +1,33 @@
 defmodule ExAliyunOts.MixinTest.Search do
   use ExUnit.Case
-
   @instance_key EDCEXTestInstance
-
-  use ExAliyunOts,
-    instance: @instance_key
-
+  use ExAliyunOts, instance: @instance_key
   require Logger
   alias ExAliyunOts.Client
   alias ExAliyunOts.Var.Search
-
   alias ExAliyunOtsTest.Support.Search, as: TestSupportSearch
 
   @table "test_search"
-
   @indexes ["test_search_index", "test_search_index2"]
-
   @table_group_by "test_search_group_by"
-
   @index_group_by "test_search_index_group_by"
 
   setup_all do
     Application.ensure_all_started(:ex_aliyun_ots)
+    clean_all()
 
     TestSupportSearch.init(@instance_key, @table, @indexes,
       table_group_by: @table_group_by,
       index_group_by: @index_group_by
     )
 
-    on_exit(fn ->
-      TestSupportSearch.clean(@instance_key, @table, @indexes)
-      TestSupportSearch.clean_group_by(@instance_key, @table_group_by, @index_group_by)
-    end)
+    on_exit(&clean_all/0)
+    [index_name: "test_search_index"]
+  end
 
-    :ok
+  defp clean_all do
+    TestSupportSearch.clean(@instance_key, @table, @indexes)
+    TestSupportSearch.clean_group_by(@instance_key, @table_group_by, @index_group_by)
   end
 
   test "list search index" do
@@ -65,9 +59,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     end)
   end
 
-  test "match query" do
-    index_name = "test_search_index"
-
+  test "match query", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         columns_to_get: {ColumnReturnType.specified(), ["class", "name"]},
@@ -90,9 +82,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(attrs) == 2
   end
 
-  test "columns_to_get" do
-    index_name = "test_search_index"
-
+  test "columns_to_get", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         columns_to_get: {:specified, ["class", "name"]},
@@ -155,9 +145,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert column_name == "class"
   end
 
-  test "match query with match_query/3 function" do
-    index_name = "test_search_index"
-
+  test "match query with match_query/3 function", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         columns_to_get: ["class", "name"],
@@ -173,9 +161,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(attrs) == 2
   end
 
-  test "term query" do
-    index_name = "test_search_index"
-
+  test "term query", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -191,9 +177,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 2
   end
 
-  test "term query with term_query/2 function" do
-    index_name = "test_search_index"
-
+  test "term query with term_query/2 function", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -205,9 +189,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 2
   end
 
-  test "terms query with sort" do
-    index_name = "test_search_index"
-
+  test "terms query with sort", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -227,9 +209,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 3
   end
 
-  test "terms query with terms_query/2" do
-    index_name = "test_search_index"
-
+  test "terms query with terms_query/2", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -245,9 +225,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 3
   end
 
-  test "prefix query" do
-    index_name = "test_search_index"
-
+  test "prefix query", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -268,9 +246,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 9
   end
 
-  test "prefix query with prefix_query/2" do
-    index_name = "test_search_index"
-
+  test "prefix query with prefix_query/2", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -287,9 +263,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 9
   end
 
-  test "wildcard query" do
-    index_name = "test_search_index"
-
+  test "wildcard query", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -310,9 +284,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 9
   end
 
-  test "wildcard query with wildcard_query/2 function" do
-    index_name = "test_search_index"
-
+  test "wildcard query with wildcard_query/2 function", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -329,9 +301,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 9
   end
 
-  test "range query" do
-    index_name = "test_search_index"
-
+  test "range query", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -396,9 +366,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert response.total_hits == 9
   end
 
-  test "range query with range_query/2" do
-    index_name = "test_search_index"
-
+  test "range query with range_query/2", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -419,9 +387,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert response.total_hits == 2
   end
 
-  test "bool query with must/must_not" do
-    index_name = "test_search_index"
-
+  test "bool query with must/must_not", %{index_name: index_name} do
     # using keyword expression for `query`
     {:ok, response} =
       search(@table, index_name,
@@ -455,9 +421,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert 28 not in attr_ages
   end
 
-  test "bool query with bool_query/1" do
-    index_name = "test_search_index"
-
+  test "bool query with bool_query/1", %{index_name: index_name} do
     # using `bool_query` function for `query`
     {:ok, response} =
       search(@table, index_name,
@@ -489,9 +453,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert 28 not in attr_ages
   end
 
-  test "bool query with should" do
-    index_name = "test_search_index"
-
+  test "bool query with should", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -516,9 +478,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert pk_value == "a3"
   end
 
-  test "bool query - should case with bool_query/1" do
-    index_name = "test_search_index"
-
+  test "bool query - should case with bool_query/1", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -644,9 +604,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert c2 == "[{\"body\":\"body1\",\"header\":\"header1\"}]"
   end
 
-  test "field_sort with min/max/avg mode for array" do
-    index_name = "test_search_index"
-
+  test "field_sort with min/max/avg mode for array", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
@@ -707,9 +665,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert id1 == "a1" and id2 == "a3" and id3 == "a2" and id4 == "a4"
   end
 
-  test "exists query" do
-    index_name = "test_search_index"
-
+  test "exists query", %{index_name: index_name} do
     # search exists_query for `comment` field
     {:ok, response} =
       search(@table, index_name,
@@ -741,9 +697,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 10
   end
 
-  test "exists query with exists_query/1" do
-    index_name = "test_search_index"
-
+  test "exists query with exists_query/1", %{index_name: index_name} do
     # search exists_query for `comment` field
     {:ok, response} =
       search(@table, index_name,
@@ -767,9 +721,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 10
   end
 
-  test "array keyword query" do
-    index_name = "test_search_index"
-
+  test "array keyword query", %{index_name: index_name} do
     # Data Source
     #
     # "a1" => ["1", "2", "3"]
@@ -862,8 +814,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert length(response.rows) == 3
   end
 
-  test "avg aggregation" do
-    index_name = "test_search_index"
+  test "avg aggregation", %{index_name: index_name} do
     agg_name = "test_avg_agg"
 
     {:ok, response} =
@@ -903,8 +854,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert Map.get(response.aggs.avg, agg_name) == total_score / length(response.rows)
   end
 
-  test "distinct_count aggregation" do
-    index_name = "test_search_index"
+  test "distinct_count aggregation", %{index_name: index_name} do
     agg_name = "test_distinct_count_agg"
 
     {:ok, response} =
@@ -971,8 +921,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert Map.get(distinct_count_aggs_map, agg_name) == total_hits
   end
 
-  test "min aggregation" do
-    index_name = "test_search_index"
+  test "min aggregation", %{index_name: index_name} do
     agg_name = "test_min_agg"
 
     {:ok, response} =
@@ -1018,8 +967,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert Map.get(response.aggs.min, agg_name) == min_value_when_miss
   end
 
-  test "max aggregation" do
-    index_name = "test_search_index"
+  test "max aggregation", %{index_name: index_name} do
     agg_name = "test_max_agg"
 
     {:ok, response} =
@@ -1065,8 +1013,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert Map.get(response.aggs.max, agg_name) == max_value_when_miss
   end
 
-  test "sum aggregation" do
-    index_name = "test_search_index"
+  test "sum aggregation", %{index_name: index_name} do
     agg_name = "test_sum_agg"
 
     {:ok, response} =
@@ -1108,11 +1055,10 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert Map.get(response.aggs.sum, agg_name) == calculated_score
   end
 
-  test "count aggregation" do
+  test "count aggregation", %{index_name: index_name} do
     # the `score` field of test_search_index index is double type,
     # so aggregation on `score` field will only process double type of this field,
     # the long (integer) type of the `score` field will be ignored when aggregate.
-    index_name = "test_search_index"
     agg_name = "test_count_agg"
 
     {:ok, response} =
@@ -1128,9 +1074,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert Map.get(response.aggs.count, agg_name) == 4
   end
 
-  test "multi aggregations" do
-    index_name = "test_search_index"
-
+  test "multi aggregations", %{index_name: index_name} do
     {:ok, response} =
       search(@table, index_name,
         search_query: [
