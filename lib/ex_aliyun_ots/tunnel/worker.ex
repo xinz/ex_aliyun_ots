@@ -42,7 +42,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
         @impl true
         def handle_continue([record | reset] = records, state) do
-          # process `records` in he
+          # process `records` in here
           {:noreply, state, {:continue, reset}}
         end
         def handle_continue([], state) do
