@@ -74,6 +74,12 @@ defmodule ExAliyunOts.Search do
   require SortMode
   require GeoDistanceType
 
+  @type field_name :: String.t()
+  @type options :: Keyword.t()
+  @type group_name :: String.t()
+  @type aggregation_name :: String.t()
+  @type order :: :asc | :desc
+
   @doc """
   Use MatchQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
@@ -95,7 +101,7 @@ defmodule ExAliyunOts.Search do
     terms after the participle are partially hit, they are considered hit this query.
   """
   @doc query: :query
-  @spec match_query(field_name :: String.t(), text :: String.t(), options :: Keyword.t()) :: map()
+  @spec match_query(field_name, text :: String.t(), options) :: map()
   def match_query(field_name, text, options \\ []) do
     %Search.MatchQuery{
       field_name: field_name,
@@ -120,9 +126,7 @@ defmodule ExAliyunOts.Search do
   """
   @doc query: :query
   @spec match_all_query() :: map()
-  def match_all_query() do
-    %Search.MatchAllQuery{}
-  end
+  def match_all_query, do: %Search.MatchAllQuery{}
 
   @doc """
   Use MatchPhraseQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
@@ -142,7 +146,7 @@ defmodule ExAliyunOts.Search do
         ]
   """
   @doc query: :query
-  @spec match_phrase_query(field_name :: String.t(), text :: String.t()) :: map()
+  @spec match_phrase_query(field_name, text :: String.t()) :: map()
   def match_phrase_query(field_name, text) do
     %Search.MatchPhraseQuery{field_name: field_name, text: text}
   end
@@ -162,7 +166,7 @@ defmodule ExAliyunOts.Search do
         ]
   """
   @doc query: :query
-  @spec term_query(field_name :: String.t(), term :: String.t()) :: map()
+  @spec term_query(field_name, term :: String.t()) :: map()
   def term_query(field_name, term) do
     %Search.TermQuery{field_name: field_name, term: term}
   end
@@ -181,7 +185,7 @@ defmodule ExAliyunOts.Search do
         ]
   """
   @doc query: :query
-  @spec terms_query(field_name :: String.t(), terms :: list()) :: map()
+  @spec terms_query(field_name, terms :: list()) :: map()
   def terms_query(field_name, terms) when is_list(terms) do
     %Search.TermsQuery{field_name: field_name, terms: terms}
   end
@@ -201,7 +205,7 @@ defmodule ExAliyunOts.Search do
         ]
   """
   @doc query: :query
-  @spec prefix_query(field_name :: String.t(), prefix :: String.t()) :: map()
+  @spec prefix_query(field_name, prefix :: String.t()) :: map()
   def prefix_query(field_name, prefix) do
     %Search.PrefixQuery{field_name: field_name, prefix: prefix}
   end
@@ -226,6 +230,20 @@ defmodule ExAliyunOts.Search do
           )
         ]
 
+    # or support Range
+
+    search "table", "index_name",
+      search_query: [
+        query: range_query("score", 60..80)
+      ]
+
+    # equal to
+
+    search "table", "index_name",
+      search_query: [
+        query: range_query("score", from: 60, to: 80)
+      ]
+
   ## Options
 
     * `:from`, the value of the start position.
@@ -237,8 +255,18 @@ defmodule ExAliyunOts.Search do
 
   """
   @doc query: :query
-  @spec range_query(field_name :: String.t(), options :: Keyword.t()) :: map()
-  def range_query(field_name, options \\ []) do
+  @spec range_query(field_name, Range.t() | options) :: map()
+  def range_query(field_name, %Range{first: from, last: to}) do
+    %Search.RangeQuery{
+      field_name: field_name,
+      from: from,
+      to: to,
+      include_lower: true,
+      include_upper: true
+    }
+  end
+
+  def range_query(field_name, options) do
     %Search.RangeQuery{
       field_name: field_name,
       from: Keyword.get(options, :from),
@@ -246,6 +274,64 @@ defmodule ExAliyunOts.Search do
       include_lower: Keyword.get(options, :include_lower, true),
       include_upper: Keyword.get(options, :include_upper, true)
     }
+  end
+
+  @doc """
+  Use RangeQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117496.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117496.html){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: range_query(1 <= "score" and "score" <= 10)
+        ]
+
+  ## Supports
+      range_query("score" > 1)
+      range_query("score" >= 1)
+      range_query("score" < 10)
+      range_query("score" <= 10)
+      range_query(1 < "score" and "score" < 10)
+      range_query(1 <= "score" and "score" <= 10)
+  """
+  @doc query: :query
+  defmacro range_query({:and, _, [{op1, _, [from, field_name]}, {op2, _, [field_name, to]}]})
+           when op1 in [:<, :<=] and op2 in [:<, :<=] do
+    quote location: :keep do
+      %Search.RangeQuery{
+        field_name: unquote(field_name),
+        from: unquote(from),
+        to: unquote(to),
+        include_lower: unquote(op1 == :<=),
+        include_upper: unquote(op2 == :<=)
+      }
+    end
+  end
+
+  defmacro range_query({op, _, [field_name, from]}) when op in [:>, :>=] do
+    quote location: :keep do
+      %Search.RangeQuery{
+        field_name: unquote(field_name),
+        from: unquote(from),
+        include_lower: unquote(op == :>=),
+        include_upper: true
+      }
+    end
+  end
+
+  defmacro range_query({op, _, [field_name, to]}) when op in [:<, :<=] do
+    quote location: :keep do
+      %Search.RangeQuery{
+        field_name: unquote(field_name),
+        to: unquote(to),
+        include_lower: true,
+        include_upper: unquote(op == :<=)
+      }
+    end
   end
 
   @doc """
@@ -263,7 +349,7 @@ defmodule ExAliyunOts.Search do
         ]
   """
   @doc query: :query
-  @spec wildcard_query(field_name :: String.t(), value :: String.t()) :: map()
+  @spec wildcard_query(field_name, value :: String.t()) :: map()
   def wildcard_query(field_name, value) do
     %Search.WildcardQuery{field_name: field_name, value: value}
   end
@@ -297,7 +383,7 @@ defmodule ExAliyunOts.Search do
 
   """
   @doc query: :query
-  @spec bool_query(options :: Keyword.t()) :: map()
+  @spec bool_query(options) :: map()
   def bool_query(options) do
     map_search_options(%Search.BoolQuery{}, options)
   end
@@ -326,8 +412,7 @@ defmodule ExAliyunOts.Search do
     it's `:none`.
   """
   @doc query: :query
-  @spec nested_query(path :: String.t(), query :: map() | Keyword.t(), options :: Keyword.t()) ::
-          map()
+  @spec nested_query(path :: String.t(), query :: map() | Keyword.t(), options) :: map()
   def nested_query(path, query, options \\ []) do
     options = Keyword.merge(options, path: path, query: query)
     map_search_options(%Search.NestedQuery{}, options)
@@ -350,11 +435,10 @@ defmodule ExAliyunOts.Search do
   """
   @doc query: :query
   @spec geo_distance_query(
-          field_name :: String.t(),
+          field_name,
           distance :: float() | integer(),
           center_point :: String.t()
-        ) ::
-          map()
+        ) :: map()
   def geo_distance_query(field_name, distance, center_point) do
     %Search.GeoDistanceQuery{
       field_name: field_name,
@@ -379,11 +463,7 @@ defmodule ExAliyunOts.Search do
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
   @doc query: :query
-  @spec geo_bounding_box_query(
-          field_name :: String.t(),
-          top_left :: String.t(),
-          bottom_right :: String.t()
-        ) ::
+  @spec geo_bounding_box_query(field_name, top_left :: String.t(), bottom_right :: String.t()) ::
           map()
   def geo_bounding_box_query(field_name, top_left, bottom_right) do
     %Search.GeoBoundingBoxQuery{
@@ -410,12 +490,9 @@ defmodule ExAliyunOts.Search do
   Please notice that all geographic coordinates are in "$latitude,$longitude" format.
   """
   @doc query: :query
-  @spec geo_polygon_query(field_name :: String.t(), geo_points :: list()) :: map()
+  @spec geo_polygon_query(field_name, geo_points :: list()) :: map()
   def geo_polygon_query(field_name, geo_points) do
-    %Search.GeoPolygonQuery{
-      field_name: field_name,
-      points: geo_points
-    }
+    %Search.GeoPolygonQuery{field_name: field_name, points: geo_points}
   end
 
   @doc """
@@ -433,7 +510,7 @@ defmodule ExAliyunOts.Search do
         ]
   """
   @doc query: :query
-  @spec exists_query(field_name :: String.t()) :: map()
+  @spec exists_query(field_name) :: map()
   def exists_query(field_name) do
     %Search.ExistsQuery{field_name: field_name}
   end
@@ -466,8 +543,7 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_min(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
-          map()
+  @spec agg_min(aggregation_name, field_name, options) :: map()
   def agg_min(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.min(),
@@ -505,8 +581,7 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_max(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
-          map()
+  @spec agg_max(aggregation_name, field_name, options) :: map()
   def agg_max(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.max(),
@@ -544,8 +619,7 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_avg(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
-          map()
+  @spec agg_avg(aggregation_name, field_name, options) :: map()
   def agg_avg(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.avg(),
@@ -583,11 +657,7 @@ defmodule ExAliyunOts.Search do
     count, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_distinct_count(
-          aggregation_name :: String.t(),
-          field_name :: String.t(),
-          options :: Keyword.t()
-        ) :: map()
+  @spec agg_distinct_count(aggregation_name, field_name, options) :: map()
   def agg_distinct_count(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.distinct_count(),
@@ -625,8 +695,7 @@ defmodule ExAliyunOts.Search do
     value, by default it's `nil` (not-set).
   """
   @doc aggs: :aggs
-  @spec agg_sum(aggregation_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
-          map()
+  @spec agg_sum(aggregation_name, field_name, options) :: map()
   def agg_sum(aggregation_name, field_name, options \\ []) do
     %Search.Aggregation{
       type: AggregationType.sum(),
@@ -660,7 +729,7 @@ defmodule ExAliyunOts.Search do
   If the field is not existed in a row of data, then this row does not participate in the statistics of count.
   """
   @doc aggs: :aggs
-  @spec agg_count(aggregation_name :: String.t(), field_name :: String.t()) :: map()
+  @spec agg_count(aggregation_name, field_name) :: map()
   def agg_count(aggregation_name, field_name) do
     %Search.Aggregation{
       type: AggregationType.count(),
@@ -711,8 +780,7 @@ defmodule ExAliyunOts.Search do
     * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_field(group_name :: String.t(), field_name :: String.t(), options :: Keyword.t()) ::
-          map()
+  @spec group_by_field(group_name, field_name, options) :: map()
   def group_by_field(group_name, field_name, options \\ []) do
     %Search.GroupByField{
       name: group_name,
@@ -771,12 +839,7 @@ defmodule ExAliyunOts.Search do
     * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_range(
-          group_name :: String.t(),
-          field_name :: String.t(),
-          ranges :: list(),
-          options :: Keyword.t()
-        ) :: map()
+  @spec group_by_range(group_name, field_name, ranges :: list(), options) :: map()
   def group_by_range(group_name, field_name, ranges, options \\ []) do
     %Search.GroupByRange{
       name: group_name,
@@ -819,8 +882,7 @@ defmodule ExAliyunOts.Search do
     * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_filter(group_name :: String.t(), filters :: list(), options :: Keyword.t()) ::
-          map()
+  @spec group_by_filter(group_name, filters :: list(), options) :: map()
   def group_by_filter(group_name, filters, options \\ []) when is_list(filters) do
     %Search.GroupByFilter{
       name: group_name,
@@ -870,12 +932,7 @@ defmodule ExAliyunOts.Search do
     * `:sub_aggs`, optional, add sub statistics.
   """
   @doc group_bys: :group_bys
-  @spec group_by_geo_distance(
-          group_name :: String.t(),
-          field_name :: String.t(),
-          ranges :: list(),
-          options :: Keyword.t()
-        ) :: map()
+  @spec group_by_geo_distance(group_name, field_name, ranges :: list(), options) :: map()
   def group_by_geo_distance(group_name, field_name, ranges, options \\ []) do
     %Search.GroupByGeoDistance{
       name: group_name,
@@ -917,7 +974,7 @@ defmodule ExAliyunOts.Search do
         ]
   """
   @doc sort_in_group_bys: :sort_in_group_bys
-  @spec group_key_sort(order :: :asc | :desc) :: map()
+  @spec group_key_sort(order) :: map()
   def group_key_sort(order)
       when order == SortOrder.desc()
       when order == :desc do
@@ -964,7 +1021,7 @@ defmodule ExAliyunOts.Search do
         ]
   """
   @doc sort_in_group_bys: :sort_in_group_bys
-  @spec row_count_sort(order :: :asc | :desc) :: %Search.RowCountSort{}
+  @spec row_count_sort(order) :: %Search.RowCountSort{}
   def row_count_sort(order)
       when order == SortOrder.desc()
       when order == :desc do
@@ -988,7 +1045,7 @@ defmodule ExAliyunOts.Search do
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
   """
   @doc sort_in_group_bys: :sort_in_group_bys
-  @spec sub_agg_sort(sub_agg_name :: String.t(), order :: :asc | :desc) :: map()
+  @spec sub_agg_sort(sub_agg_name :: String.t(), order) :: map()
   def sub_agg_sort(sub_agg_name, _)
       when is_bitstring(sub_agg_name) == false
       when sub_agg_name == "" do
@@ -1019,7 +1076,7 @@ defmodule ExAliyunOts.Search do
   Each search request use this sort by default.
   """
   @doc sort: :sort
-  @spec pk_sort(order :: :asc | :desc) :: map()
+  @spec pk_sort(order) :: map()
   def pk_sort(order) do
     %Search.PrimaryKeySort{order: map_query_sort_order(order)}
   end
@@ -1029,7 +1086,7 @@ defmodule ExAliyunOts.Search do
   `:search_query` option in `ExAliyunOts/search/4`.
   """
   @doc sort: :sort
-  @spec score_sort(order :: :asc | :desc) :: map()
+  @spec score_sort(order) :: map()
   def score_sort(order) do
     %Search.ScoreSort{order: map_query_sort_order(order)}
   end
@@ -1103,7 +1160,7 @@ defmodule ExAliyunOts.Search do
     * `:nested_filter`, optional, see `nested_filter/2` for details.
   """
   @doc sort: :sort
-  @spec field_sort(field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec field_sort(field_name, options) :: map()
   def field_sort(field_name, options \\ []) do
     %Search.FieldSort{
       field_name: field_name,
@@ -1140,8 +1197,7 @@ defmodule ExAliyunOts.Search do
     * `:distance_type`, optional, available options are `:arc` | `:plane`, as `:arc` means distance calculated by arc surface, as `:plane` means distance calculated by plane.
   """
   @doc sort: :sort
-  @spec geo_distance_sort(field_name :: String.t(), options :: list(), options :: Keyword.t()) ::
-          map()
+  @spec geo_distance_sort(field_name, points :: list(), options) :: map()
   def geo_distance_sort(field_name, points, options) when is_list(points) do
     %Search.GeoDistanceSort{
       field_name: field_name,
@@ -1185,10 +1241,7 @@ defmodule ExAliyunOts.Search do
   @doc sort: :sort
   @spec nested_filter(path :: String.t(), filter :: map()) :: map()
   def nested_filter(path, filter) when is_map(filter) do
-    %Search.NestedFilter{
-      path: path,
-      filter: filter
-    }
+    %Search.NestedFilter{path: path, filter: filter}
   end
 
   @doc """
@@ -1206,7 +1259,7 @@ defmodule ExAliyunOts.Search do
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[1,2]"`.
   """
   @doc field_schema: :field_schema
-  @spec field_schema_integer(field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec field_schema_integer(field_name, options) :: map()
   def field_schema_integer(field_name, options \\ []) do
     map_field_schema(
       %Search.FieldSchema{field_type: FieldType.long(), field_name: field_name},
@@ -1229,7 +1282,7 @@ defmodule ExAliyunOts.Search do
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[1.0,2.0]"`.
   """
   @doc field_schema: :field_schema
-  @spec field_schema_float(field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec field_schema_float(field_name, options) :: map()
   def field_schema_float(field_name, options \\ []) do
     map_field_schema(
       %Search.FieldSchema{field_type: FieldType.double(), field_name: field_name},
@@ -1252,7 +1305,7 @@ defmodule ExAliyunOts.Search do
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[false,true,false]"`.
   """
   @doc field_schema: :field_schema
-  @spec field_schema_boolean(field_name :: String.t(), options :: Keyword.t()) :: map()
+  @spec field_schema_boolean(field_name, options) :: map()
   def field_schema_boolean(field_name, options \\ []) do
     map_field_schema(
       %Search.FieldSchema{field_type: FieldType.boolean(), field_name: field_name},
@@ -1415,7 +1468,11 @@ defmodule ExAliyunOts.Search do
     }
   end
 
-  defp multi_tasks_to_stream_parallel_scan({{:ok, %{session_id: session_id, splits_size: splits_size}}, instance, table, index_name}, options) do
+  defp multi_tasks_to_stream_parallel_scan(
+         {{:ok, %{session_id: session_id, splits_size: splits_size}}, instance, table,
+          index_name},
+         options
+       ) do
     options =
       options
       |> put_in([:session_id], session_id)
@@ -1425,16 +1482,24 @@ defmodule ExAliyunOts.Search do
 
     0
     |> Range.new(splits_size - 1)
-    |> Task.async_stream(fn(current_parallel_id) ->
-      options = put_in(options[:scan_query][:current_parallel_id], current_parallel_id)
-      stream_parallel_scan_per_task(instance, table, index_name, options)
-    end, timeout: timeout, ordered: false)
-    |> Stream.map(fn({:ok, stream}) ->
+    |> Task.async_stream(
+      fn current_parallel_id ->
+        options = put_in(options[:scan_query][:current_parallel_id], current_parallel_id)
+        stream_parallel_scan_per_task(instance, table, index_name, options)
+      end,
+      timeout: timeout,
+      ordered: false
+    )
+    |> Stream.map(fn {:ok, stream} ->
       stream
     end)
     |> Stream.concat()
   end
-  defp multi_tasks_to_stream_parallel_scan({{:error, _} = error, _instance, _table, _index_name}, _options) do
+
+  defp multi_tasks_to_stream_parallel_scan(
+         {{:error, _} = error, _instance, _table, _index_name},
+         _options
+       ) do
     # Return the error still in the stream format.
     Stream.map([error], & &1)
   end
@@ -1447,61 +1512,57 @@ defmodule ExAliyunOts.Search do
       ^starter ->
         request = map_scan_options(table, index_name, options)
         Client.parallel_scan(instance, request) |> map_unfold_parallel_scan_response()
+
       nil ->
         nil
+
       next_token ->
         options = put_in(options[:scan_query][:token], next_token)
         request = map_scan_options(table, index_name, options)
         Client.parallel_scan(instance, request) |> map_unfold_parallel_scan_response()
     end)
-    |> Stream.reject(& &1 == nil)
+    |> Stream.reject(&(&1 == nil))
   end
 
   defp map_unfold_parallel_scan_response({:ok, %{next_token: nil, rows: []}}) do
     {nil, nil}
   end
+
   defp map_unfold_parallel_scan_response({:ok, response} = data) do
     {data, response.next_token}
   end
+
   defp map_unfold_parallel_scan_response({:error, _error} = data) do
     {data, nil}
   end
 
   @doc false
   def map_scan_options(table_name, index_name, nil) do
-    %Search.ParallelScanRequest{
-      table_name: table_name,
-      index_name: index_name
-    }
+    %Search.ParallelScanRequest{table_name: table_name, index_name: index_name}
   end
 
   def map_scan_options(table_name, index_name, options) do
-    var =
-      %Search.ParallelScanRequest{
-        table_name: table_name, index_name: index_name
-      }
-    Enum.reduce(options, var,
-      fn {key, value}, acc ->
-        if value != nil and Map.has_key?(var, key) do
-          do_map_scan_options(key, value, acc)
-        else
-          acc
-        end
+    var = %Search.ParallelScanRequest{table_name: table_name, index_name: index_name}
+
+    Enum.reduce(options, var, fn {key, value}, acc ->
+      if value != nil and Map.has_key?(var, key) do
+        do_map_scan_options(key, value, acc)
+      else
+        acc
       end
-    )
+    end)
   end
 
   def map_scan_options(var, nil), do: var
+
   def map_scan_options(var, options) do
-    Enum.reduce(options, var,
-      fn {key, value}, acc ->
-        if value != nil and Map.has_key?(var, key) do
-          do_map_scan_options(key, value, acc)
-        else
-          acc
-        end
+    Enum.reduce(options, var, fn {key, value}, acc ->
+      if value != nil and Map.has_key?(var, key) do
+        do_map_scan_options(key, value, acc)
+      else
+        acc
       end
-    )
+    end)
   end
 
   defp do_map_scan_options(:scan_query = key, value, var) do

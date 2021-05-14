@@ -1,34 +1,25 @@
 defmodule ExAliyunOtsTest.Search do
   use ExUnit.Case
-
   require Logger
-
-  alias ExAliyunOts.Client
-  alias ExAliyunOts.Var.Search
-
+  import ExAliyunOts.Search
+  alias ExAliyunOts.{Client, Var.Search}
   alias ExAliyunOtsTest.Support.Search, as: TestSupportSearch
-
   alias ExAliyunOts.Const.Search.{FieldType, ColumnReturnType, SortOrder}
   require FieldType
   require ColumnReturnType
   require SortOrder
 
   @instance_key EDCEXTestInstance
-
   @table "test_search"
-
   @indexes ["test_search_index", "test_search_index2"]
 
   setup_all do
     Application.ensure_all_started(:ex_aliyun_ots)
-
     TestSupportSearch.init(@instance_key, @table, @indexes)
 
     on_exit(fn ->
       TestSupportSearch.clean(@instance_key, @table, @indexes)
     end)
-
-    :ok
   end
 
   test "list search index" do
@@ -219,8 +210,8 @@ defmodule ExAliyunOtsTest.Search do
         assert length(rows) == 2
 
         Enum.map(rows, fn {[{"partition_key", id}], attrs} ->
-          cond do
-            id == "a2" ->
+          case id do
+            "a2" ->
               [
                 {"age", age, _},
                 {"class", class, _},
@@ -230,7 +221,7 @@ defmodule ExAliyunOtsTest.Search do
 
               assert age == 28 and class == "class1" and is_actived == false and name == "name_a2"
 
-            id == "a7" ->
+            "a7" ->
               [
                 {"age", age, _},
                 {"class", class, _},
@@ -240,7 +231,7 @@ defmodule ExAliyunOtsTest.Search do
 
               assert age == 28 and class == "class1" and is_actived == true and name == "name_a7"
 
-            true ->
+            _ ->
               :ignore
           end
         end)
@@ -340,6 +331,16 @@ defmodule ExAliyunOtsTest.Search do
       error ->
         Logger.error("range query occur error: #{inspect(error)}")
     end
+  end
+
+  test "search - range_query/1 & range_query/2" do
+    range_query = range_query("score", from: 1, to: 10)
+    assert ^range_query = range_query("score", 1..10)
+    assert ^range_query = range_query(1 <= "score" and "score" <= 10)
+    assert range_query("score", from: 1) == range_query("score" >= 1)
+    assert range_query("score", from: 1, include_lower: false) == range_query("score" > 1)
+    assert range_query("score", to: 10) == range_query("score" <= 10)
+    assert range_query("score", to: 10, include_upper: false) == range_query("score" < 10)
   end
 
   test "search - bool query with must/must_not" do
