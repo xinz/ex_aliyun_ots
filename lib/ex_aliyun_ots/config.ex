@@ -8,28 +8,21 @@ defmodule ExAliyunOts.Config do
   end
 
   def get(instance_key) do
-    GenServer.call(__MODULE__, {:get, instance_key}, 30_000)
+    case :ets.lookup(__MODULE__, instance_key) do
+      [] -> nil
+      [{^instance_key, info}] -> info
+    end
   end
 
   ## Callback
 
   def init(instances) do
-    ets = :ets.new(__MODULE__, [:set, :named_table, read_concurrency: true])
+    ets = :ets.new(__MODULE__, [:set, :public, :named_table, read_concurrency: true])
 
     for {instance_key, instance_info} <- instances do
       :ets.insert(__MODULE__, {instance_key, instance_info})
     end
 
     {:ok, ets}
-  end
-
-  def handle_call({:get, instance_key}, _from, ets) do
-    case :ets.lookup(__MODULE__, instance_key) do
-      [] ->
-        {:reply, nil, ets}
-
-      [{^instance_key, info}] ->
-        {:reply, info, ets}
-    end
   end
 end
