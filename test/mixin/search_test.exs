@@ -22,6 +22,7 @@ defmodule ExAliyunOts.MixinTest.Search do
     )
 
     on_exit(&clean_all/0)
+
     [index_name: "test_search_index"]
   end
 

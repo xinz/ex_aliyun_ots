@@ -52,7 +52,7 @@ defmodule ExAliyunOtsTest.Support.Search do
         index_name: index_name
       }
 
-      {:ok, _response} = Client.delete_search_index(instance_key, var_request)
+      Client.delete_search_index(instance_key, var_request)
     end)
 
     ExAliyunOts.Client.delete_table(instance_key, table)
@@ -65,7 +65,7 @@ defmodule ExAliyunOtsTest.Support.Search do
       index_name: index_name
     }
 
-    {:ok, _response} = Client.delete_search_index(instance_key, var_request)
+    Client.delete_search_index(instance_key, var_request)
     ExAliyunOts.Client.delete_table(instance_key, table)
     Logger.info("clean search_indexes and delete `#{table}` table")
   end
