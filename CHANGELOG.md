@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.14.1 (2021-05-20)
+
+* Add `ExAliyunOts.Search.range_query/1` to provide an intuitive experssion for use.
+* Update `ExAliyunOts.Search.range_query/2` to support use a range (in first..last format).
+* Simplify the internal config module.
+* Fix compile deprecation warning about Bitwse ^^^ in Elixir 1.12.0 version.
+
 ## v0.14.0 (2021-04-22)
 
 * Make tunnel service usage sample and document more clear, see `ExAliyunOts.Tunnel.Worker`.
