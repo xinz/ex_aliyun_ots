@@ -42,7 +42,7 @@ defmodule ExAliyunOts.CRC do
   @int64_bytes <<0, 1, 2, 3, 4, 5, 6, 7>>
 
   def crc_int8(crc, byte) do
-    :binary.at(@crc8_table, ((crc &&& 0xFF) ^^^ byte))
+    :binary.at(@crc8_table, (bxor((crc &&& 0xFF), byte)))
   end
 
   def crc_int32(crc, byte) do
@@ -71,7 +71,7 @@ defmodule ExAliyunOts.CRC do
   end
 
   defp do_crc_string(crc, <<byte::size(8), rest::bitstring>>) do
-    new_crc = :binary.at(@crc8_table, ((crc &&& 0xFF) ^^^ byte))
+    new_crc = :binary.at(@crc8_table, (bxor((crc &&& 0xFF), byte)))
     do_crc_string(new_crc, rest)
   end
 end
