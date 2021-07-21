@@ -282,7 +282,9 @@ defmodule ExAliyunOtsTest.Support.Search do
         text_single_word_2: "Pulvinar Proin Gravida999 Hendrerit lectus",
         text_split_1: "consequat id po88:rta nibh venenatis",
         text_split_2: "velit:digniss11im:sodales:ut:eu",
-        text_fuzzy: "mattIs ullamcor22per velit sed ullamcorper"
+        text_fuzzy: "mattIs ullamcor22per velit sed ullamcorper",
+        text_min_word: "梨花茶",
+        text_max_word: "梨花茶"
       }
     ]
 
@@ -418,10 +420,21 @@ defmodule ExAliyunOtsTest.Support.Search do
             analyzer: "fuzzy",
             # type could be keyword either
             analyzer_parameter: [min_chars: 2, max_chars: 7]
+          },
+          %Search.FieldSchema{
+            field_name: "text_min_word",
+            field_type: FieldType.text(),
+            analyzer: "min_word"
+          },
+          %Search.FieldSchema{
+            field_name: "text_max_word",
+            field_type: FieldType.text(),
+            analyzer: "max_word"
           }
         ]
       }
     }
+
     result = Client.create_search_index(instance_key, var_request)
     Logger.info("create_search_index for text analyzer test: #{inspect(result)}")
   end

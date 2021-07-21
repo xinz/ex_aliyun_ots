@@ -1396,6 +1396,16 @@ defmodule ExAliyunOts.MixinTest.Search do
           assert field_schema.analyzer == "fuzzy"
           assert field_schema.analyzer_parameter.min_chars == 2
           assert field_schema.analyzer_parameter.max_chars == 7
+
+        index == 5 ->
+          assert field_schema.field_name == "text_min_word"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "min_word"
+
+        index == 6 ->
+          assert field_schema.field_name == "text_max_word"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "max_word"
       end
     end)
   end
@@ -1539,5 +1549,99 @@ defmodule ExAliyunOts.MixinTest.Search do
 
     assert response.total_hits == 1
     assert length(response.rows) == 1
+  end
+
+  test "search - match query min_word" do
+    # 适用于中文分词
+    # 切分出最少的词, 切分后的词不会有重合
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_min_word",
+            text: "梨"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_min_word",
+            text: "花茶"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    # 切分出了 "花茶", 就不会再有 "梨花"
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_min_word",
+            text: "梨花"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 0
+    assert length(response.rows) == 0
+  end
+
+  test "search - match query max_word" do
+    # 适用于中文分词
+    # 切分出最多的词, 切分后的词有可能会有重合
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_max_word",
+            text: "花茶"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    # 切分出了 "花茶", 但也还有 "梨花"
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_max_word",
+            text: "梨花"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_max_word",
+            text: "梨"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 0
+    assert length(response.rows) == 0
   end
 end
