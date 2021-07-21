@@ -213,6 +213,7 @@ defmodule ExAliyunOts.Var.Search do
               field_type: FieldType.keyword(),
               index_options: nil,
               analyzer: nil,
+              analyzer_parameter: nil,
               index: true,
               enable_sort_and_agg: true,
               store: true,

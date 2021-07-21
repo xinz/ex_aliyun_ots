@@ -1349,6 +1349,8 @@ defmodule ExAliyunOts.Search do
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"a\",\"b\"]"`.
     * `:analyzer`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html) |
     [English](https://www.alibabacloud.com/help/doc-detail/120227.html).
+    * `:analyzer_parameter`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html) |
+    [English](https://www.alibabacloud.com/help/doc-detail/120227.html).
   """
   @doc field_schema: :field_schema
   def field_schema_text(field_name, options \\ []) do
@@ -1418,6 +1420,7 @@ defmodule ExAliyunOts.Search do
     schema
     |> do_map_field_schema(options)
     |> Map.put(:analyzer, Keyword.get(options, :analyzer, nil))
+    |> Map.put(:analyzer_parameter, Keyword.get(options, :analyzer_parameter, nil))
   end
 
   defp map_field_schema(schema, options) when is_map(schema) do

@@ -5,6 +5,9 @@ defmodule ExAliyunOts.Client.Search do
     CreateSearchIndexRequest,
     IndexSchema,
     FieldSchema,
+    SingleWordAnalyzerParameter,
+    SplitAnalyzerParameter,
+    FuzzyAnalyzerParameter,
     PrimaryKeySort,
     FieldSort,
     GeoDistanceSort,
@@ -250,7 +253,7 @@ defmodule ExAliyunOts.Client.Search do
     request_body = request_to_describe_search_index(var_describe_search_index)
 
     instance
-    |> Http.client("/DescribeSearchIndex", request_body, &DescribeSearchIndexResponse.decode!/1)
+    |> Http.client("/DescribeSearchIndex", request_body, &decode_describe_search_index_response/1)
     |> Http.post()
   end
 
@@ -403,10 +406,32 @@ defmodule ExAliyunOts.Client.Search do
         proto_field_schema
         |> Map.put(:sort_and_agg, nil)
         |> Map.put(:analyzer, var_field_schema.analyzer)
+        |> Map.put(:analyzer_parameter, prepare_analyzer_parameter(var_field_schema.analyzer, var_field_schema.analyzer_parameter))
 
       true ->
         Map.put(proto_field_schema, :is_array, var_field_schema.is_array)
     end
+  end
+
+  def prepare_analyzer_parameter("single_word", parameter) when is_map(parameter), do:
+    do_prepare_analyzer_parameter(SingleWordAnalyzerParameter, parameter)
+
+  def prepare_analyzer_parameter("split", parameter) when is_map(parameter), do:
+    do_prepare_analyzer_parameter(SplitAnalyzerParameter, parameter)
+
+  def prepare_analyzer_parameter("fuzzy", parameter) when is_map(parameter), do:
+    do_prepare_analyzer_parameter(FuzzyAnalyzerParameter, parameter)
+
+  def prepare_analyzer_parameter(analyzer, parameter) when is_atom(analyzer) and is_map(parameter), do:
+    prepare_analyzer_parameter(to_string(analyzer), parameter)
+
+  def prepare_analyzer_parameter(_analyzer, _parameter), do: nil
+
+  defp do_prepare_analyzer_parameter(struct_module, parameter)  do
+    analyzer_parameter = struct(struct_module, parameter)
+    struct_module
+    |> apply(:encode!, [analyzer_parameter])
+    |> IO.iodata_to_binary()
   end
 
   defp prepare_sort([]), do: nil
@@ -1091,6 +1116,28 @@ defmodule ExAliyunOts.Client.Search do
   defp prepare_query(query) do
     raise ExAliyunOts.RuntimeError, "Not supported query: #{inspect(query)}"
   end
+
+  defp decode_describe_search_index_response(response_body) do
+    response_body
+    |> DescribeSearchIndexResponse.decode!()
+    |> Map.update(:schema, %{}, fn schema ->
+        Map.update(schema, :field_schemas, [], fn field_schemas ->
+          Enum.map(field_schemas, fn field_schema ->
+            Map.update(field_schema, :analyzer_parameter, nil, fn analyzer_parameter ->
+              decode_analyzer_parameter(field_schema.analyzer, analyzer_parameter)
+            end)
+          end)
+        end)
+    end)
+  end
+
+  defp decode_analyzer_parameter("single_word", analyzer_parameter) when is_binary(analyzer_parameter), do: SingleWordAnalyzerParameter.decode!(analyzer_parameter)
+
+  defp decode_analyzer_parameter("split", analyzer_parameter) when is_binary(analyzer_parameter), do: SplitAnalyzerParameter.decode!(analyzer_parameter)
+
+  defp decode_analyzer_parameter("fuzzy", analyzer_parameter) when is_binary(analyzer_parameter), do: FuzzyAnalyzerParameter.decode!(analyzer_parameter)
+
+  defp decode_analyzer_parameter(_analyzer, analyzer_parameter), do: analyzer_parameter
 
   defp decode_search_response(response_body) do
     response_body

@@ -20,6 +20,13 @@ defmodule ExAliyunOtsTest.Support.Search do
       initialize_group_by(instance_key, table_group_by, index_group_by)
     end
 
+    table_text_analyzer = Keyword.get(opts, :table_text_analyzer)
+    index_text_analyzer = Keyword.get(opts, :index_text_analyzer)
+
+    if table_text_analyzer != nil and index_text_analyzer != nil do
+      initialize_text_analyzer(instance_key, table_text_analyzer, index_text_analyzer)
+    end
+
     sleep()
   end
 
@@ -37,6 +44,14 @@ defmodule ExAliyunOtsTest.Support.Search do
     create_search_index_for_gourp_by(instance_key, table, index_name)
 
     insert_group_by_test_data(instance_key, table)
+  end
+
+  defp initialize_text_analyzer(instance_key, table, index_name) do
+    create_table_for_text_analyzer(instance_key, table)
+    Process.sleep(5000)
+    create_search_index_for_text_analyzer(instance_key, table, index_name)
+
+    insert_text_analyzer_test_data(instance_key, table)
   end
 
   defp sleep() do
@@ -70,6 +85,17 @@ defmodule ExAliyunOtsTest.Support.Search do
     Logger.info("clean search_indexes and delete `#{table}` table")
   end
 
+  def clean_text_analyzer(instance_key, table, index_name) do
+    var_request = %Search.DeleteSearchIndexRequest{
+      table_name: table,
+      index_name: index_name
+    }
+
+    Client.delete_search_index(instance_key, var_request)
+    ExAliyunOts.Client.delete_table(instance_key, table)
+    Logger.info("clean search_indexes and delete `#{table}` table")
+  end
+
   defp create_table(instance_key, table) do
     var_create_table = %Var.CreateTable{
       table_name: table,
@@ -93,6 +119,19 @@ defmodule ExAliyunOtsTest.Support.Search do
 
     sleep = 5_000
     Logger.info("initialized group_by table, waiting for #{sleep} ms")
+    Process.sleep(sleep)
+  end
+
+  defp create_table_for_text_analyzer(instance_key, table) do
+    var_create_table = %Var.CreateTable{
+      table_name: table,
+      primary_keys: [{"partition_key", PKType.string()}]
+    }
+
+    Client.create_table(instance_key, var_create_table)
+
+    sleep = 5_000
+    Logger.info("initialized text analyzer table, waiting for #{sleep} ms")
     Process.sleep(sleep)
   end
 
@@ -235,6 +274,32 @@ defmodule ExAliyunOtsTest.Support.Search do
     end)
   end
 
+  defp insert_text_analyzer_test_data(instance_key, table) do
+    data = [
+      %{
+        id: "a1",
+        text_single_word_1: "cras tincDdunt loBortis111 feugiat vivamus",
+        text_single_word_2: "Pulvinar Proin Gravida999 Hendrerit lectus",
+        text_split_1: "consequat id po88:rta nibh venenatis",
+        text_split_2: "velit:digniss11im:sodales:ut:eu",
+        text_fuzzy: "mattIs ullamcor22per velit sed ullamcorper"
+      }
+    ]
+
+    Enum.map(data, fn item ->
+      attribute_columns = ExAliyunOts.Utils.attrs_to_row(item)
+
+      var_put_row = %Var.PutRow{
+        table_name: table,
+        primary_keys: [{"partition_key", item.id}],
+        attribute_columns: attribute_columns,
+        condition: condition(:expect_not_exist)
+      }
+
+      {:ok, _result} = Client.put_row(instance_key, var_put_row)
+    end)
+  end
+
   defp create_search_index(instance_key, table, index_name) do
     var_request = %Search.CreateSearchIndexRequest{
       table_name: table,
@@ -314,6 +379,49 @@ defmodule ExAliyunOtsTest.Support.Search do
 
     result = Client.create_search_index(instance_key, var_request)
     Logger.info("create_search_index for group_by test: #{inspect(result)}")
+  end
+
+  defp create_search_index_for_text_analyzer(instance_key, table, index_name) do
+    var_request = %Search.CreateSearchIndexRequest{
+      table_name: table,
+      index_name: index_name,
+      index_schema: %Search.IndexSchema{
+        field_schemas: [
+          %Search.FieldSchema{
+            field_name: "text_single_word_1",
+            field_type: FieldType.text()
+          },
+          %Search.FieldSchema{
+            field_name: "text_single_word_2",
+            field_type: FieldType.text(),
+            analyzer: "single_word",
+            analyzer_parameter: %{
+              case_sensitive: true,
+              delimit_word: true
+            }
+          },
+          %Search.FieldSchema{
+            field_name: "text_split_1",
+            field_type: FieldType.text(),
+            analyzer: "split"
+          },
+          %Search.FieldSchema{
+            field_name: "text_split_2",
+            field_type: FieldType.text(),
+            analyzer: "split",
+            analyzer_parameter: %{delimiter: ":"}
+          },
+          %Search.FieldSchema{
+            field_name: "text_fuzzy",
+            field_type: FieldType.text(),
+            analyzer: "fuzzy",
+            analyzer_parameter: %{min_chars: 2, max_chars: 7}
+          }
+        ]
+      }
+    }
+    result = Client.create_search_index(instance_key, var_request)
+    Logger.info("create_search_index for text analyzer test: #{inspect(result)}")
   end
 
   defp create_search_index2(instance_key, table, index_name) do
