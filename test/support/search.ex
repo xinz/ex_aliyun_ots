@@ -409,13 +409,15 @@ defmodule ExAliyunOtsTest.Support.Search do
             field_name: "text_split_2",
             field_type: FieldType.text(),
             analyzer: "split",
+            # type could be map
             analyzer_parameter: %{delimiter: ":"}
           },
           %Search.FieldSchema{
             field_name: "text_fuzzy",
             field_type: FieldType.text(),
             analyzer: "fuzzy",
-            analyzer_parameter: %{min_chars: 2, max_chars: 7}
+            # type could be keyword either
+            analyzer_parameter: [min_chars: 2, max_chars: 7]
           }
         ]
       }

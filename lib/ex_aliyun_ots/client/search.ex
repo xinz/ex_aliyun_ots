@@ -413,16 +413,16 @@ defmodule ExAliyunOts.Client.Search do
     end
   end
 
-  def prepare_analyzer_parameter("single_word", parameter) when is_map(parameter), do:
+  def prepare_analyzer_parameter("single_word", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(SingleWordAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter("split", parameter) when is_map(parameter), do:
+  def prepare_analyzer_parameter("split", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(SplitAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter("fuzzy", parameter) when is_map(parameter), do:
+  def prepare_analyzer_parameter("fuzzy", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(FuzzyAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter(analyzer, parameter) when is_atom(analyzer) and is_map(parameter), do:
+  def prepare_analyzer_parameter(analyzer, parameter) when is_atom(analyzer), do:
     prepare_analyzer_parameter(to_string(analyzer), parameter)
 
   def prepare_analyzer_parameter(_analyzer, _parameter), do: nil
