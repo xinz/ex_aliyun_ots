@@ -1,5 +1,5 @@
 defmodule ExAliyunOts.Sequence do
-  import ExAliyunOts.Logger, only: [info: 1, error: 1]
+  import ExAliyunOts.Logger, only: [error: 1]
 
   import ExAliyunOts,
     only: [create_table: 4, delete_table: 2, delete_row: 4, update_row: 4]
@@ -21,16 +21,7 @@ defmodule ExAliyunOts.Sequence do
   end
 
   def next_value(instance_name, var_get_seq_next) do
-    value = generate_next_value(instance_name, var_get_seq_next)
-
-    info(fn ->
-      [
-        "** ExAliyunOts.Sequence return next_value: ",
-        inspect(value)
-      ]
-    end)
-
-    value
+    generate_next_value(instance_name, var_get_seq_next)
   end
 
   def delete(instance_name, sequence_name) do
