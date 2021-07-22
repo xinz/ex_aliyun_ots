@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.14.2 (2021-07-22)
+
+* Implement `analyzer_parameter` when use search index.
+* Remove uesless logger when generate next proper value in sequence.
+
 ## v0.14.1 (2021-05-20)
 
 * Add `ExAliyunOts.Search.range_query/1` to provide an intuitive experssion for use.
