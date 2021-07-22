@@ -80,7 +80,7 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
         table_name: table,
         primary_keys: [{"id", item.name}],
         attribute_columns: attribute_columns,
-        condition: condition(:expect_not_exist)
+        condition: condition(:ignore)
       }
 
       {:ok, _result} = Client.put_row(instance_key, var_put_row)
