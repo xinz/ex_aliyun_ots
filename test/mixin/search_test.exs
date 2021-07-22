@@ -11,6 +11,8 @@ defmodule ExAliyunOts.MixinTest.Search do
   @indexes ["test_search_index", "test_search_index2"]
   @table_group_by "test_search_group_by"
   @index_group_by "test_search_index_group_by"
+  @table_text_analyzer "test_search_text_analyzer"
+  @index_text_analyzer "test_search_index_text_analyzer"
 
   setup_all do
     Application.ensure_all_started(:ex_aliyun_ots)
@@ -18,7 +20,9 @@ defmodule ExAliyunOts.MixinTest.Search do
 
     TestSupportSearch.init(@instance_key, @table, @indexes,
       table_group_by: @table_group_by,
-      index_group_by: @index_group_by
+      index_group_by: @index_group_by,
+      table_text_analyzer: @table_text_analyzer,
+      index_text_analyzer: @index_text_analyzer
     )
 
     on_exit(&clean_all/0)
@@ -29,6 +33,12 @@ defmodule ExAliyunOts.MixinTest.Search do
   defp clean_all do
     TestSupportSearch.clean(@instance_key, @table, @indexes)
     TestSupportSearch.clean_group_by(@instance_key, @table_group_by, @index_group_by)
+
+    TestSupportSearch.clean_text_analyzer(
+      @instance_key,
+      @table_text_analyzer,
+      @index_text_analyzer
+    )
   end
 
   test "list search index" do
@@ -1348,5 +1358,290 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert result == :ok
 
     delete_search_index(@table, index_name)
+  end
+
+  test "describe search index with text analyzer" do
+    {:ok, response} = describe_search_index(@table_text_analyzer, @index_text_analyzer)
+    schema = response.schema
+
+    schema.field_schemas
+    |> Enum.with_index()
+    |> Enum.map(fn {field_schema, index} ->
+      cond do
+        index == 0 ->
+          assert field_schema.field_name == "text_single_word_1"
+          assert field_schema.field_type == FieldType.text()
+
+        index == 1 ->
+          assert field_schema.field_name == "text_single_word_2"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "single_word"
+          assert field_schema.analyzer_parameter.case_sensitive == true
+          assert field_schema.analyzer_parameter.delimit_word == true
+
+        index == 2 ->
+          assert field_schema.field_name == "text_split_1"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "split"
+
+        index == 3 ->
+          assert field_schema.field_name == "text_split_2"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "split"
+          assert field_schema.analyzer_parameter.delimiter == ":"
+
+        index == 4 ->
+          assert field_schema.field_name == "text_fuzzy"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "fuzzy"
+          assert field_schema.analyzer_parameter.min_chars == 2
+          assert field_schema.analyzer_parameter.max_chars == 7
+
+        index == 5 ->
+          assert field_schema.field_name == "text_min_word"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "min_word"
+
+        index == 6 ->
+          assert field_schema.field_name == "text_max_word"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "max_word"
+      end
+    end)
+  end
+
+  test "search - match query single word default (not case_sensitive)" do
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_single_word_1",
+            text: "tincDdunt" |> String.downcase()
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+  end
+
+  test "search - match query single word default (not delimit_word)" do
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_single_word_1",
+            text: "loBortis111" |> String.downcase()
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+  end
+
+  test "search - match query single word case_sensitive" do
+    # downcase
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_single_word_2",
+            text: "Pulvinar" |> String.downcase()
+          ]
+        ]
+      )
+
+    assert response.total_hits == 0
+    assert length(response.rows) == 0
+
+    # origin
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_single_word_2",
+            text: "Pulvinar"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+  end
+
+  test "search - match query single word delimit_word" do
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_single_word_2",
+            text: "Gravida"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_single_word_2",
+            text: "999"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+  end
+
+  test "search - match query fuzzy" do
+    # cannot get result when text length < 2 since min_chars = 2
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_fuzzy",
+            text: "m"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 0
+    assert length(response.rows) == 0
+
+    # can get result when text length = 2
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_fuzzy",
+            text: "mc"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    # case insensitive
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_fuzzy",
+            text: "mattIs" |> String.downcase()
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+  end
+
+  test "search - match query min_word" do
+    # 适用于中文分词
+    # 切分出最少的词, 切分后的词不会有重合
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_min_word",
+            text: "梨"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_min_word",
+            text: "花茶"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    # 切分出了 "花茶", 就不会再有 "梨花"
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_min_word",
+            text: "梨花"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 0
+    assert length(response.rows) == 0
+  end
+
+  test "search - match query max_word" do
+    # 适用于中文分词
+    # 切分出最多的词, 切分后的词有可能会有重合
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_max_word",
+            text: "花茶"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    # 切分出了 "花茶", 但也还有 "梨花"
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_max_word",
+            text: "梨花"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 1
+    assert length(response.rows) == 1
+
+    {:ok, response} =
+      search(@table_text_analyzer, @index_text_analyzer,
+        search_query: [
+          query: [
+            type: QueryType.match(),
+            field_name: "text_max_word",
+            text: "梨"
+          ]
+        ]
+      )
+
+    assert response.total_hits == 0
+    assert length(response.rows) == 0
   end
 end
