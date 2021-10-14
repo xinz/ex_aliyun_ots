@@ -9,7 +9,7 @@ defmodule ExAliyunOtsTest.WideColumnRead do
   require PKType
 
   test "wide column read" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_wcr_#{cur_timestamp}"
 
     create_table_result = create_table(table_name, [{"key", PKType.string()}])

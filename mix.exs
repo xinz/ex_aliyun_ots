@@ -28,11 +28,11 @@ defmodule ExAliyunOts.Mixfile do
 
   defp deps do
     [
-      {:tablestore_protos, "~> 0.1"},
+      #{:tablestore_protos, "~> 0.1"},
+      {:tablestore_protos, path: "/Users/xinz/workspace/github/tablestore_protos"},
       {:finch, "~> 0.5"},
       {:gen_state_machine, "~> 2.0"},
       {:tesla, "~> 1.4"},
-      {:timex, "~> 3.3"},
       {:jason, "~> 1.0"},
       {:benchee, "~> 1.0", only: :dev, runtime: false},
       {:credo, "~> 1.2", only: :dev, runtime: false},

@@ -167,7 +167,7 @@ defmodule ExAliyunOts.Timeline do
   For manual generation sequence_id.
   """
   def generate_sequence_id() do
-    Timex.Duration.now(:microseconds)
+    System.os_time(:microsecond)
   end
 
   def create(%__MODULE__{

@@ -57,11 +57,10 @@ defmodule ExAliyunOts.Protocol do
   end
 
   defp prepare_x_ots_headers(request, md5, api_version) do
-    date = Timex.format!(Timex.now(), "%Y-%m-%dT%H:%M:%S.000Z", :strftime)
     instance = request.instance
 
     headers = [
-      {"x-ots-date", date},
+      {"x-ots-date", strftime_utc_now()},
       {"x-ots-apiversion", api_version},
       {"x-ots-instancename", instance.name},
       {"x-ots-accesskeyid", instance.access_key_id},
@@ -82,6 +81,10 @@ defmodule ExAliyunOts.Protocol do
     end)
 
     prepared_headers
+  end
+
+  defp strftime_utc_now() do
+    DateTime.utc_now() |> Map.put(:microsecond, {0, 3}) |> DateTime.to_iso8601()
   end
 
   defp to_signature(request, headers) do

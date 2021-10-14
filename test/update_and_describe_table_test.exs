@@ -10,7 +10,7 @@ defmodule ExAliyunOtsTest.UpdateAndDescribeTable do
   @instance_key EDCEXTestInstance
 
   test "create table and then update it, meanwhile describe this table" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_update_table_#{cur_timestamp}"
 
     var_create_table = %Var.CreateTable{

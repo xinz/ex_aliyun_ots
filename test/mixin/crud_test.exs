@@ -7,7 +7,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
   require Logger
 
   setup_all do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name1 = "test_mixin_table_tmp1_#{cur_timestamp}"
     table_name2 = "test_mixin_table_tmp2_#{cur_timestamp}"
 
@@ -32,7 +32,7 @@ defmodule ExAliyunOts.MixinTest.CRUD do
   end
 
   test "CRUD", %{table1: table_name1, table2: table_name2} do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     var_name = "1"
 
     {:ok, response} =

@@ -7,7 +7,7 @@ defmodule ExAliyunOts.MixinTest.AtomicIncrement do
   require Logger
 
   test "atomic increment in mixin" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_mixin_atomic_inc_#{cur_timestamp}"
 
     create_table_result = create_table(table_name, [{"key1", PKType.integer()}])

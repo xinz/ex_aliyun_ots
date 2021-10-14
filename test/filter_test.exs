@@ -9,7 +9,7 @@ defmodule ExAliyunOtsTest.Filter do
   @instance_key EDCEXTestInstance
 
   test "filter" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_filter#{cur_timestamp}"
     # table_name = "test_filter"
     var_create_table = %Var.CreateTable{

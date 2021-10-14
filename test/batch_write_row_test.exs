@@ -10,7 +10,7 @@ defmodule ExAliyunOtsTest.BatchWriteRow do
   @instance_key EDCEXTestInstance
 
   test "batch get row" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_table_batch_write_row_1_#{cur_timestamp}"
     # table_name = "test_table_batch_write_row"
     var_create_table = %Var.CreateTable{

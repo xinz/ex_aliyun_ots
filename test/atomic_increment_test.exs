@@ -11,7 +11,7 @@ defmodule ExAliyunOtsTest.AtomicIncrement do
   @instance_key EDCEXTestInstance
 
   test "atomic increment" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_atomic_inc_#{cur_timestamp}"
 
     var_create_table = %Var.CreateTable{

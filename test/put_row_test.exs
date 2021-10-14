@@ -10,7 +10,7 @@ defmodule ExAliyunOtsTest.PutRow do
   @instance_key EDCEXTestInstance
 
   test "put row" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_put_row_#{cur_timestamp}"
 
     var_create_table = %Var.CreateTable{

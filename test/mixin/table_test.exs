@@ -4,7 +4,7 @@ defmodule ExAliyunOts.MixinTest.Table do
   require Logger
 
   test "table" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_mixin_table_#{cur_timestamp}"
 
     create_table_result =

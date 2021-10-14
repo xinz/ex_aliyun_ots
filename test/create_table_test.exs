@@ -11,7 +11,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   @instance_key EDCEXTestInstance
 
   test "create table and then delete it" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_table_tmp_#{cur_timestamp}"
 
     var_create_table = %Var.CreateTable{
@@ -35,7 +35,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   end
 
   test "create table use :atom and then delete it" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_table2_tmp_#{cur_timestamp}"
 
     var_create_table = %Var.CreateTable{
@@ -59,7 +59,7 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
   end
 
   test "create table, put and get row" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_table_#{cur_timestamp}"
 
     var_create_table = %Var.CreateTable{

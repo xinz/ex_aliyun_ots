@@ -4,7 +4,7 @@ defmodule ExAliyunOtsTest.TableIndexTest do
   require Logger
 
   test "create table index" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_table_#{cur_timestamp}"
 
     defined_columns = [
@@ -78,7 +78,7 @@ defmodule ExAliyunOtsTest.TableIndexTest do
   end
 
   test "create table and then create index api" do
-    cur_timestamp = Timex.to_unix(Timex.now())
+    cur_timestamp = System.os_time(:second)
     table_name = "test_table_index_#{cur_timestamp}"
 
     defined_columns = [
