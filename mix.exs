@@ -28,8 +28,7 @@ defmodule ExAliyunOts.Mixfile do
 
   defp deps do
     [
-      #{:tablestore_protos, "~> 0.1"},
-      {:tablestore_protos, path: "/Users/xinz/workspace/github/tablestore_protos"},
+      {:tablestore_protos, "~> 0.1"},
       {:finch, "~> 0.5"},
       {:gen_state_machine, "~> 2.0"},
       {:tesla, "~> 1.4"},
