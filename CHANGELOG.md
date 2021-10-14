@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.14.3 (2021-10-14)
+
+* Simplify dependency by removing `:timex`.
+
 ## v0.14.2 (2021-07-22)
 
 * Implement `analyzer_parameter` when use search index.
