@@ -67,18 +67,7 @@ defmodule ExAliyunOtsTest.Tunnel do
   end
 
   test "describe tunnel", context do
-    tunnel = context[:tunnel]
-
-    {:ok, response} =
-      Client.describe_tunnel(@instance_key,
-        table_name: @table_name,
-        tunnel_name: tunnel.tunnel_name,
-        tunnel_id: tunnel.tunnel_id
-      )
-
-    Logger.info("describe tunnel response: #{inspect(response)}")
-    [channel] = response.channels
-    assert channel.channel_rpo == 0
+    verify_describe_tunnel(context[:tunnel])
   end
 
   test "connect and heartbeat tunnel", context do
@@ -98,15 +87,7 @@ defmodule ExAliyunOtsTest.Tunnel do
 
     assert length(heartbeat_response.channels) >= 0
 
-    {:ok, response} =
-      Client.describe_tunnel(@instance_key,
-        table_name: @table_name,
-        tunnel_name: tunnel.tunnel_name,
-        tunnel_id: tunnel_id
-      )
-
-    Logger.info("describe tunnel response: #{inspect(response)}")
-    [channel] = response.channels
+    channel = verify_describe_tunnel(tunnel)
 
     channel_id = channel.channel_id
 
@@ -170,5 +151,28 @@ defmodule ExAliyunOtsTest.Tunnel do
 
     updated_records = response.records ++ records
     read_all_records(response.next_token, updated_records, tunnel_id, client_id, channel_id)
+  end
+
+  defp verify_describe_tunnel(tunnel) do
+    {:ok, response} =
+      Client.describe_tunnel(@instance_key,
+        table_name: @table_name,
+        tunnel_name: tunnel.tunnel_name,
+        tunnel_id: tunnel.tunnel_id
+      )
+
+    Logger.info("describe tunnel response: #{inspect(response)}")
+
+    case response.channels do
+      [] ->
+        assert response.tunnel.stage == "InitBaseDataAndStreamShard"
+        Process.sleep(1_000)
+        verify_describe_tunnel(tunnel)
+      [channel] ->
+        assert channel.channel_status in ["WAIT", "OPEN"]
+        assert response.tunnel.stage == "ProcessBaseData"
+        assert channel.channel_rpo == 0
+        channel
+    end
   end
 end
