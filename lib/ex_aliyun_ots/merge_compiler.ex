@@ -2,9 +2,14 @@ defmodule ExAliyunOts.MergeCompiler do
   @moduledoc false
 
   @merge_modules [ExAliyunOts.DSL]
+  @compile {:no_warn_undefined, {Mix.Project, :project_file, 0}}
 
   defp base_path do
-    Enum.find(Mix.Project.config_files, &(&1 =~ ~r/mix.exs/)) |> Path.dirname
+    if function_exported?(Mix.Project, :project_file, 0) do
+      Mix.Project.project_file() |> Path.dirname()
+    else
+      Enum.find(Mix.Project.config_files(), &(&1 =~ ~r/mix.exs/)) |> Path.dirname()
+    end
   end
 
   defmacro __before_compile__(_env) do
@@ -25,6 +30,5 @@ defmodule ExAliyunOts.MergeCompiler do
       {:defmodule, _c_m, [_alias, [do: {:__block__, _, defs}]]} = ast
       [quote(do: @external_resource(unquote(file))), defs]
     end)
-
   end
 end
