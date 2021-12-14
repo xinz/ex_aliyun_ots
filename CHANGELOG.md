@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.14.4 (2021-12-14)
+
+* Fix compile error with Elixir 1.13.0
+
 ## v0.14.3 (2021-10-14)
 
 * Simplify dependency by removing `:timex`.
