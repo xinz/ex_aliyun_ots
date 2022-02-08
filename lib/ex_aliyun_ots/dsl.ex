@@ -6,7 +6,7 @@ defmodule ExAliyunOts.DSL do
 
   @type row_existence :: :ignore | :expect_exist | :expect_not_exist
 
-  @doc """
+  @doc ~S"""
   Official document in [Chinese](https://help.aliyun.com/document_detail/35193.html) | [English](https://www.alibabacloud.com/help/doc-detail/35193.html)
 
   ## Example
@@ -28,6 +28,16 @@ defmodule ExAliyunOts.DSL do
         )
       ]
 
+      put_row(table_name1, [{"key", "key1"}], [{"type", "t:5"}])
+
+      # Use `~r/\d+/` regex expression to fetch the matched part (in this case it is "5") from
+      # the attribute column field, and then cast it into an integer for the "==" comparator.
+      #
+      get_row table_name1, [{"key", "key1"}],
+        filter: filter(
+          {"type", value_trans_rule: {~r/\d+/, :integer}} == 5
+        )
+
   ## Options
 
     * `ignore_if_missing`, used when attribute column not existed.
@@ -36,7 +46,8 @@ defmodule ExAliyunOts.DSL do
     * `latest_version_only`, used when attribute column has multiple versions.
       * if set `latest_version_only: true`, there will only check the value of the latest version is matched or not, by default it's set as `latest_version_only: true`;
       * if set `latest_version_only: false`, there will check the value of all versions are matched or not.
-
+    * `value_trans_rule`, optional, a two-elements tuple contains a `Regex` expression and one of [:integer, :double, :string] atom as a cast type, the regex expression
+      matched part will be cast into the corresponding type and then use it into the current condition comparator.
   """
   @doc row: :row
   defmacro filter(filter_expr) do

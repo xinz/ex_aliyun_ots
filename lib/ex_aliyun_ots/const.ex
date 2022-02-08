@@ -10,6 +10,7 @@ defmodule ExAliyunOts.Constants do
         Direction,
         RowExistence,
         FilterType,
+        VariantType,
         LogicOperator,
         ComparatorType,
         Search.FieldType,
@@ -31,6 +32,7 @@ defmodule ExAliyunOts.Constants do
       require Direction
       require RowExistence
       require FilterType
+      require VariantType
       require LogicOperator
       require ComparatorType
 
@@ -174,6 +176,15 @@ defmodule ExAliyunOts.Const.ComparatorType do
   const(:greater_equal, :CT_GREATER_EQUAL)
   const(:less_than, :CT_LESS_THAN)
   const(:less_equal, :CT_LESS_EQUAL)
+end
+
+defmodule ExAliyunOts.Const.VariantType do
+  @moduledoc false
+  import ExAliyunOts.Constants
+
+  const(:string, :VT_STRING)
+  const(:double, :VT_DOUBLE)
+  const(:integer, :VT_INTEGER)
 end
 
 defmodule ExAliyunOts.Const.Search.FieldType do

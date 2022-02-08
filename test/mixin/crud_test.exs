@@ -401,4 +401,69 @@ defmodule ExAliyunOts.MixinTest.CRUD do
       assert row.is_ok == true
     end)
   end
+
+  test "filter with value_trans_rule", %{table2: table_name2} do
+    key = "value_trans_rule_key1"
+    {:ok, _} =
+      put_row(table_name2,
+        [{"key1", key}],
+        [{"type", "t:5"}, {"score", "rank_34.2"}, {"level", 22}, {"alph", "bcdef"}],
+        condition: condition(:ignore)
+      )
+
+    {:ok, resp} =
+      get_row(table_name2, [{"key1", key}],
+        filter:
+          filter(
+            {"type", value_trans_rule: {~r/\d+/, :integer}} <= 4
+          )
+      )
+
+    assert resp.row == nil
+
+    {:ok, resp} =
+      get_row(table_name2, [{"key1", key}],
+        filter:
+          filter(
+            {"type", value_trans_rule: {~r/\d+/, :integer}} <= 5
+          )
+      )
+
+    {_, attr_columns} = resp.row
+    [{"alph", alph, _}, {"level", level, _}, {"score", socre, _}, {"type", type, _}] = attr_columns
+    assert alph == "bcdef" and level == 22 and socre == "rank_34.2" and type == "t:5"
+
+    {:ok, resp} =
+      get_row(table_name2, [{"key1", key}],
+        filter:
+          filter(
+            ({"score", value_trans_rule: {~r/[0-9]*\.?[0-9]+/, :double}} > 34.1) and
+            "level" == 22
+          )
+      )
+
+    assert resp.row != nil
+
+    {:ok, resp} =
+      get_row(table_name2, [{"key1", key}],
+        filter:
+          filter(
+            ({"score", value_trans_rule: {~r/[0-9]*\.?[0-9]+/, :double}} > 34.3) and
+            "level" == 22
+          )
+      )
+
+    assert resp.row == nil
+
+    {:ok, resp} =
+      get_row(table_name2, [{"key1", key}],
+        filter:
+          filter(
+            ({"alph", value_trans_rule: {~r/\w{1}/, :string}} == "b") and
+            "type" == "t:5"
+          )
+      )
+
+    assert resp.row != nil
+  end
 end

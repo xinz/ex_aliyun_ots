@@ -3,13 +3,15 @@ defmodule ExAliyunOts.Filter do
   require ExAliyunOts.Const.FilterType, as: FilterType
   require ExAliyunOts.Const.LogicOperator, as: LogicOperator
   require ExAliyunOts.Const.ComparatorType, as: ComparatorType
+  require ExAliyunOts.Const.VariantType, as: VariantType
   alias ExAliyunOts.PlainBuffer
 
   alias ExAliyunOts.TableStoreFilter.{
     Filter,
     SingleColumnValueFilter,
     CompositeColumnValueFilter,
-    ColumnPaginationFilter
+    ColumnPaginationFilter,
+    ValueTransferRule
   }
 
   @comparator_mapping %{
@@ -21,7 +23,7 @@ defmodule ExAliyunOts.Filter do
     <=: ComparatorType.less_equal()
   }
 
-  @doc """
+  @doc ~S"""
   Official document in [Chinese](https://help.aliyun.com/document_detail/35193.html) | [English](https://www.alibabacloud.com/help/doc-detail/35193.html)
 
   ## Example
@@ -43,6 +45,16 @@ defmodule ExAliyunOts.Filter do
         )
       ]
 
+      put_row(table_name1, [{"key", "key1"}], [{"type", "t:5"}])
+
+      # Use `~r/\d+/` regex expression to fetch the matched part (in this case it is "5") from
+      # the attribute column field, and then cast it into an integer for the "==" comparator.
+      #
+      get_row table_name1, [{"key", "key1"}],
+        filter: filter(
+          {"type", value_trans_rule: {~r/\d+/, :integer}} == 5
+        )
+
   ## Options
 
     * `ignore_if_missing`, used when attribute column not existed.
@@ -51,7 +63,8 @@ defmodule ExAliyunOts.Filter do
     * `latest_version_only`, used when attribute column has multiple versions.
       * if set `latest_version_only: true`, there will only check the value of the latest version is matched or not, by default it's set as `latest_version_only: true`;
       * if set `latest_version_only: false`, there will check the value of all versions are matched or not.
-
+    * `value_trans_rule`, optional, a two-elements tuple contains a `Regex` expression and one of [:integer, :double, :string] atom as a cast type, the regex expression
+      matched part will be cast into the corresponding type and then use it into the current condition comparator.
   """
   @doc row: :row
   defmacro filter(filter_expr) do
@@ -81,7 +94,7 @@ defmodule ExAliyunOts.Filter do
 
     quote do
       %Filter{
-        type: unquote(FilterType.composite_column()),
+        type: FilterType.composite_column(),
         filter: %CompositeColumnValueFilter{
           combinator: unquote(combinator),
           sub_filters: unquote(sub_filters)
@@ -91,30 +104,30 @@ defmodule ExAliyunOts.Filter do
   end
 
   defp single_filter({comparator, _, [column_name, column_value]}) do
-    filter_type = FilterType.single_column()
     comparator = @comparator_mapping[comparator]
 
-    quote location: :keep do
-      case unquote(column_name) do
+    quote location: :keep, bind_quoted: [column_name: column_name, column_value: column_value, comparator: comparator] do
+      case column_name do
         {column_name, column_options} ->
           %Filter{
-            type: unquote(filter_type),
+            type: FilterType.single_column(),
             filter: %SingleColumnValueFilter{
-              comparator: unquote(comparator),
+              comparator: comparator,
               column_name: column_name,
-              column_value: unquote(column_value),
-              filter_if_missing: not Keyword.get(column_options, :ignore_if_missing, false),
-              latest_version_only: Keyword.get(column_options, :latest_version_only, true)
+              column_value: column_value,
+              filter_if_missing: not (column_options[:ignore_if_missing] || false),
+              latest_version_only: column_options[:latest_version_only] || true,
+              value_trans_rule: ExAliyunOts.Filter.value_transfer_rule(column_options[:value_trans_rule])
             }
           }
 
         column_name ->
           %Filter{
-            type: unquote(filter_type),
+            type: FilterType.single_column(),
             filter: %SingleColumnValueFilter{
-              comparator: unquote(comparator),
+              comparator: comparator,
               column_name: column_name,
-              column_value: unquote(column_value),
+              column_value: column_value,
               filter_if_missing: true,
               latest_version_only: true
             }
@@ -149,4 +162,26 @@ defmodule ExAliyunOts.Filter do
        ) do
     %{wrapper | filter: ColumnPaginationFilter.encode!(filter) |> IO.iodata_to_binary()}
   end
+
+  @doc false
+  def value_transfer_rule({%Regex{} = regex, cast_type}) do
+    with {:ok, cast_type} <- map_cast_type!(cast_type) do
+      %ValueTransferRule{
+        regex: Regex.source(regex),
+        cast_type: cast_type
+      }
+    end
+  end
+  def value_transfer_rule(nil), do: nil
+  def value_transfer_rule(invalid_rule) do
+    raise ExAliyunOts.RuntimeError, "Invalid value_trans_rule: #{inspect invalid_rule}, expect it is a two-element tuple as {Regex.t(), :double | :string | :integer}"
+  end
+
+  defp map_cast_type!(:double), do: {:ok, VariantType.double()}
+  defp map_cast_type!(:string), do: {:ok, VariantType.string()}
+  defp map_cast_type!(:integer), do: {:ok, VariantType.integer()}
+  defp map_cast_type!(unexpected) do
+    raise ExAliyunOts.RuntimeError, "Invalid cast type: #{inspect unexpected} to value_trans_rule, please use :double | :string | :integer"
+  end
+
 end

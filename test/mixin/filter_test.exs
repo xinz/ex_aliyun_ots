@@ -82,4 +82,45 @@ defmodule ExAliyunOts.MixinTest.Filter do
     assert filter_result_1 == @result
     assert filter_result_2 == @result
   end
+
+  test "filter value_trans_rule with valid cases" do
+    value_age = 20
+    regex = ~r/^((1[0-5])|[1-9])?\d$/
+    result =
+      filter(
+        {"age", [value_trans_rule: {regex, :integer}]} < value_age
+      )
+    assert result.filter.value_trans_rule.regex == Regex.source regex
+
+    regex = ~R/type#[a-z]/
+    result =
+      filter(
+        {"name", value_trans_rule: {regex, :string}} <= "c"
+      )
+    assert result.filter.value_trans_rule.regex == Regex.source regex
+
+    regex = ~r/[0-9]*\.?[0-9]+/
+    result =
+      filter(
+        {"price", value_trans_rule: {regex, :double}} <= 10.1
+      )
+    assert result.filter.value_trans_rule.regex == Regex.source regex
+  end
+
+  test "filter value_trans_rule with unknown cast type" do
+    assert_raise ExAliyunOts.RuntimeError, ~r/Invalid cast type: :unknown to value_trans_rule/, fn ->
+      filter(
+        {"field", value_trans_rule: {~r/foo/, :unknown}} <= "xyz"
+      )
+    end
+  end
+
+  test "filter value_trans_rule must be with a regex expression" do
+    regex_str = "foo"
+    assert_raise ExAliyunOts.RuntimeError, ~r(Invalid value_trans_rule: {\\\"foo\\\", :double}), fn ->
+      filter(
+        {"price", value_trans_rule: {regex_str, :double}} <= 10.1
+      )
+    end
+  end
 end
