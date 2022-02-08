@@ -32,30 +32,27 @@ defmodule ExAliyunOtsTest.Support.Search do
 
   defp initialize(instance_key, table, index_names) do
     create_table(instance_key, table)
-    Process.sleep(5000)
-    create_index(instance_key, table, index_names)
-
+    Process.sleep(1000)
     insert_test_data(instance_key, table)
+    create_index(instance_key, table, index_names)
   end
 
   defp initialize_group_by(instance_key, table, index_name) do
     create_table_for_group_by(instance_key, table)
-    Process.sleep(5000)
-    create_search_index_for_gourp_by(instance_key, table, index_name)
-
+    Process.sleep(1000)
     insert_group_by_test_data(instance_key, table)
+    create_search_index_for_gourp_by(instance_key, table, index_name)
   end
 
   defp initialize_text_analyzer(instance_key, table, index_name) do
     create_table_for_text_analyzer(instance_key, table)
-    Process.sleep(5000)
-    create_search_index_for_text_analyzer(instance_key, table, index_name)
-
+    Process.sleep(1000)
     insert_text_analyzer_test_data(instance_key, table)
+    create_search_index_for_text_analyzer(instance_key, table, index_name)
   end
 
   defp sleep() do
-    sleep = 30_000
+    sleep = 50_000
     Logger.info("waiting #{sleep} ms for indexing...")
     Process.sleep(sleep)
   end
@@ -102,11 +99,9 @@ defmodule ExAliyunOtsTest.Support.Search do
       primary_keys: [{"partition_key", PKType.string()}]
     }
 
-    Client.create_table(instance_key, var_create_table)
+    :ok = Client.create_table(instance_key, var_create_table)
 
-    sleep = 5_000
-    Logger.info("initialized table, waiting for #{sleep} ms")
-    Process.sleep(sleep)
+    Logger.info("successfully create table: #{table}")
   end
 
   defp create_table_for_group_by(instance_key, table) do
@@ -115,11 +110,9 @@ defmodule ExAliyunOtsTest.Support.Search do
       primary_keys: [{"partition_key", PKType.string()}]
     }
 
-    Client.create_table(instance_key, var_create_table)
+    :ok = Client.create_table(instance_key, var_create_table)
 
-    sleep = 5_000
-    Logger.info("initialized group_by table, waiting for #{sleep} ms")
-    Process.sleep(sleep)
+    Logger.info("successfully create table: #{table}")
   end
 
   defp create_table_for_text_analyzer(instance_key, table) do
@@ -128,17 +121,14 @@ defmodule ExAliyunOtsTest.Support.Search do
       primary_keys: [{"partition_key", PKType.string()}]
     }
 
-    Client.create_table(instance_key, var_create_table)
+    :ok = Client.create_table(instance_key, var_create_table)
 
-    sleep = 5_000
-    Logger.info("initialized text analyzer table, waiting for #{sleep} ms")
-    Process.sleep(sleep)
+    Logger.info("successfully create table: #{table}")
   end
 
   defp create_index(instance_key, table, [index1, index2]) do
     create_search_index(instance_key, table, index1)
     create_search_index2(instance_key, table, index2)
-    Process.sleep(5_000)
   end
 
   defp insert_test_data(instance_key, table) do

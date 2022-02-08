@@ -13,10 +13,8 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
 
   def init(instance_key, table, index_name) do
     create_table(instance_key, table)
-
-    create_index(instance_key, table, index_name)
-
     insert_test_data(instance_key, table)
+    create_index(instance_key, table, index_name)
 
     sleep()
   end
@@ -39,11 +37,9 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
       primary_keys: [{"id", PKType.string()}]
     }
 
-    Client.create_table(instance_key, var_create_table)
+    :ok = Client.create_table(instance_key, var_create_table)
 
-    sleep = 3_000
-    Logger.info("initialized table, waiting for #{sleep} ms")
-    Process.sleep(sleep)
+    Logger.info("successfully create table: #{table}")
   end
 
   defp create_index(instance_key, table, index_name) do
@@ -88,7 +84,7 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
   end
 
   defp sleep() do
-    sleep = 30_000
+    sleep = 50_000
     Logger.info("waiting #{sleep} ms for indexing...")
     Process.sleep(sleep)
   end
