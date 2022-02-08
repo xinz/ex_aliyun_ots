@@ -63,7 +63,7 @@ defmodule ExAliyunOts.Filter do
     * `latest_version_only`, used when attribute column has multiple versions.
       * if set `latest_version_only: true`, there will only check the value of the latest version is matched or not, by default it's set as `latest_version_only: true`;
       * if set `latest_version_only: false`, there will check the value of all versions are matched or not.
-    * `value_trans_rule`, optional, a two-elements tuple contains a `Regex` expression and one of [:integer, :double, :string] atom as a cast type, the regex expression
+    * `value_trans_rule`, optional, a two-element tuple contains a `Regex` expression and one of [:integer, :double, :string] atom as a cast type, the regex expression
       matched part will be cast into the corresponding type and then use it into the current condition comparator.
   """
   @doc row: :row
