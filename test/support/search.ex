@@ -52,9 +52,10 @@ defmodule ExAliyunOtsTest.Support.Search do
   end
 
   defp sleep() do
-    sleep = 50_000
+    sleep = 12_000
     Logger.info("waiting #{sleep} ms for indexing...")
     Process.sleep(sleep)
+    Logger.info("finish waiting, testing now")
   end
 
   def clean(instance_key, table, useless_index_names) do
@@ -273,6 +274,7 @@ defmodule ExAliyunOtsTest.Support.Search do
         text_split_1: "consequat id po88:rta nibh venenatis",
         text_split_2: "velit:digniss11im:sodales:ut:eu",
         text_fuzzy: "mattIs ullamcor22per velit sed ullamcorper",
+        text_fuzzy2: "调音师1024x768P.mp4",
         text_min_word: "梨花茶",
         text_max_word: "梨花茶"
       }
@@ -410,6 +412,11 @@ defmodule ExAliyunOtsTest.Support.Search do
             analyzer: "fuzzy",
             # type could be keyword either
             analyzer_parameter: [min_chars: 2, max_chars: 7]
+          },
+          %Search.FieldSchema{
+            field_name: "text_fuzzy2",
+            field_type: FieldType.text(),
+            analyzer: "fuzzy"
           },
           %Search.FieldSchema{
             field_name: "text_min_word",

@@ -84,8 +84,9 @@ defmodule ExAliyunOtsTest.Support.SearchGeo do
   end
 
   defp sleep() do
-    sleep = 50_000
+    sleep = 12_000
     Logger.info("waiting #{sleep} ms for indexing...")
     Process.sleep(sleep)
+    Logger.info("finish waiting, testing now")
   end
 end

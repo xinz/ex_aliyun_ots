@@ -7,6 +7,8 @@ defmodule ExAliyunOts.MixinTest.Search do
   alias ExAliyunOts.Var.Search
   alias ExAliyunOtsTest.Support.Search, as: TestSupportSearch
 
+  import ExAliyunOts.SearchTestHelper, only: [assert_search: 4]
+
   @table "test_search"
   @indexes ["test_search_index", "test_search_index2"]
   @table_group_by "test_search_group_by"
@@ -71,85 +73,111 @@ defmodule ExAliyunOts.MixinTest.Search do
   end
 
   test "match query", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        columns_to_get: {ColumnReturnType.specified(), ["class", "name"]},
-        # columns_to_get: ColumnReturnType.none,
-        # columns_to_get: ColumnReturnType.all,
-        # columns_to_get: ["class"],
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "age",
-            text: "28"
-          ],
-          limit: 1
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          columns_to_get: {ColumnReturnType.specified(), ["class", "name"]},
+          # columns_to_get: ColumnReturnType.none,
+          # columns_to_get: ColumnReturnType.all,
+          # columns_to_get: ["class"],
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "age",
+              text: "28"
+            ],
+            limit: 1
+          ]
+        ],
+        2
       )
-
-    assert response.total_hits == 2
     [{[{_pk_key, pk_value}], attrs}] = response.rows
     assert pk_value == "a2"
     assert length(attrs) == 2
   end
 
   test "columns_to_get", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        columns_to_get: {:specified, ["class", "name"]},
-        search_query: [
-          query: match_query("age", "28"),
-          limit: 1
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          columns_to_get: {:specified, ["class", "name"]},
+          search_query: [
+            query: match_query("age", "28"),
+            limit: 1
+          ]
+        ],
+        2
       )
-
-    assert response.total_hits == 2
     [{[{_pk_key, pk_value}], attrs}] = response.rows
     assert pk_value == "a2"
     assert length(attrs) == 2
 
-    {:ok, response} =
-      search(@table, index_name,
-        columns_to_get: :none,
-        search_query: [
-          query: match_query("age", "28"),
-          limit: 1
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          columns_to_get: :none,
+          search_query: [
+            query: match_query("age", "28"),
+            limit: 1
+          ]
+        ],
+        2
       )
 
     [{_, attrs}] = response.rows
     assert attrs == nil
 
-    {:ok, response} =
-      search(@table, index_name,
-        columns_to_get: :all,
-        search_query: [
-          query: match_query("age", "28"),
-          limit: 1
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          columns_to_get: :all,
+          search_query: [
+            query: match_query("age", "28"),
+            limit: 1
+          ]
+        ],
+        2
       )
 
     [{_, attrs}] = response.rows
     assert length(attrs) > 2
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: match_query("age", "28"),
-          limit: 1
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: match_query("age", "28"),
+            limit: 1
+          ]
+        ],
+        2
       )
 
     [{_, attrs_2}] = response.rows
     assert attrs == attrs_2
 
-    {:ok, response} =
-      search(@table, index_name,
-        columns_to_get: ["class"],
-        search_query: [
-          query: match_query("age", "28"),
-          limit: 1
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          columns_to_get: ["class"],
+          search_query: [
+            query: match_query("age", "28"),
+            limit: 1
+          ]
+        ],
+        2
       )
 
     [{_, [{column_name, _, _}]}] = response.rows
@@ -157,182 +185,214 @@ defmodule ExAliyunOts.MixinTest.Search do
   end
 
   test "match query with match_query/3 function", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        columns_to_get: ["class", "name"],
-        search_query: [
-          query: match_query("age", "28"),
-          limit: 1
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          columns_to_get: ["class", "name"],
+          search_query: [
+            query: match_query("age", "28"),
+            limit: 1
+          ]
+        ],
+        2
       )
 
-    assert response.total_hits == 2
     [{[{_pk_key, pk_value}], attrs}] = response.rows
     assert pk_value == "a2"
     assert length(attrs) == 2
   end
 
   test "term query", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.term(),
-            field_name: "age",
-            term: 28
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.term(),
+              field_name: "age",
+              term: 28
+            ]
           ]
-        ]
+        ],
+        2
       )
-
-    assert response.total_hits == 2
     assert length(response.rows) == 2
   end
 
   test "term query with term_query/2 function", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("age", 28)
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("age", 28)
+          ]
+        ],
+        2
       )
-
-    assert response.total_hits == 2
     assert length(response.rows) == 2
   end
 
   test "terms query with sort", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.terms(),
-            field_name: "age",
-            terms: [22, 26, 27]
-          ],
-          sort: [
-            field_sort("age", order: :asc),
-            field_sort("name", order: :asc)
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.terms(),
+              field_name: "age",
+              terms: [22, 26, 27]
+            ],
+            sort: [
+              field_sort("age", order: :asc),
+              field_sort("name", order: :asc)
+            ]
           ]
-        ]
+        ],
+        3
       )
-
-    assert response.total_hits == 3
     assert length(response.rows) == 3
   end
 
   test "terms query with terms_query/2", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: terms_query("age", [22, 26, 27]),
-          sort: [
-            field_sort("age", order: :asc),
-            [type: SortType.field(), field_name: "name", order: SortOrder.asc()]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: terms_query("age", [22, 26, 27]),
+            sort: [
+              field_sort("age", order: :asc),
+              [type: SortType.field(), field_name: "name", order: SortOrder.asc()]
+            ]
           ]
-        ]
+        ],
+        3
       )
-
-    assert response.total_hits == 3
     assert length(response.rows) == 3
   end
 
   test "prefix query", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.prefix(),
-            field_name: "name",
-            prefix: "n"
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.prefix(),
+              field_name: "name",
+              prefix: "n"
+            ],
+            sort: [
+              field_sort("age"),
+              field_sort("name")
+            ]
           ],
-          sort: [
-            field_sort("age"),
-            field_sort("name")
-          ]
+          columns_to_get: ["age", "name"]
         ],
-        columns_to_get: ["age", "name"]
+        9
       )
 
-    assert response.total_hits == 9
     assert length(response.rows) == 9
   end
 
   test "prefix query with prefix_query/2", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: prefix_query("name", "n"),
-          sort: [
-            field_sort("age"),
-            field_sort("name")
-          ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: prefix_query("name", "n"),
+            sort: [
+              field_sort("age"),
+              field_sort("name")
+            ]
+          ],
+          columns_to_get: ["age", "name"]
         ],
-        columns_to_get: ["age", "name"]
+        9
       )
-
-    assert response.total_hits == 9
     assert length(response.rows) == 9
   end
 
   test "wildcard query", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.wildcard(),
-            field_name: "name",
-            value: "n*"
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.wildcard(),
+              field_name: "name",
+              value: "n*"
+            ],
+            sort: [
+              field_sort("age"),
+              field_sort("name")
+            ]
           ],
-          sort: [
-            field_sort("age"),
-            field_sort("name")
-          ]
+          columns_to_get: ColumnReturnType.all()
         ],
-        columns_to_get: ColumnReturnType.all()
+        9
       )
-
-    assert response.total_hits == 9
     assert length(response.rows) == 9
   end
 
   test "wildcard query with wildcard_query/2 function", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: wildcard_query("name", "n*"),
-          sort: [
-            field_sort("age"),
-            field_sort("name")
-          ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: wildcard_query("name", "n*"),
+            sort: [
+              field_sort("age"),
+              field_sort("name")
+            ]
+          ],
+          columns_to_get: ColumnReturnType.all()
         ],
-        columns_to_get: ColumnReturnType.all()
+        9
       )
-
-    assert response.total_hits == 9
     assert length(response.rows) == 9
   end
 
   test "range query", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.range(),
-            field_name: "score",
-            from: 60,
-            to: 80,
-            # `include_upper` as true and `include_lower` as true by default
-            include_upper: false,
-            include_lower: false
-          ],
-          sort: [
-            field_sort("age", order: :desc),
-            field_sort("name")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.range(),
+              field_name: "score",
+              from: 60,
+              to: 80,
+              # `include_upper` as true and `include_lower` as true by default
+              include_upper: false,
+              include_lower: false
+            ],
+            sort: [
+              field_sort("age", order: :desc),
+              field_sort("name")
+            ]
           ]
-        ]
+        ],
+        2
       )
-
-    assert response.total_hits == 2
 
     primary_keys =
       Enum.map(response.rows, fn row ->
@@ -352,34 +412,44 @@ defmodule ExAliyunOts.MixinTest.Search do
       include_lower: true
     ]
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: query,
-          collapse: "class"
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: query,
+            collapse: "class"
+          ]
+        ],
+        9
       )
 
     assert length(response.rows) == 5
-    assert response.total_hits == 9
 
     # input invalid `collapse` as list will be ignored,
     # only string as field name is allowed.
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: query,
-          collapse: ["class"]
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: query,
+            collapse: ["class"]
+          ]
+        ],
+        9
       )
 
     assert length(response.rows) == 9
-    assert response.total_hits == 9
   end
 
   test "range query with range_query/2", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
+    assert_search(
+      @table,
+      index_name,
+      [
         search_query: [
           query:
             range_query("score",
@@ -393,33 +463,37 @@ defmodule ExAliyunOts.MixinTest.Search do
             field_sort("name")
           ]
         ]
-      )
-
-    assert response.total_hits == 2
+      ],
+      2
+    )
   end
 
   test "bool query with must/must_not", %{index_name: index_name} do
     # using keyword expression for `query`
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.bool(),
-            must: [
-              [type: QueryType.range(), field_name: "age", from: 20, to: 32]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.bool(),
+              must: [
+                [type: QueryType.range(), field_name: "age", from: 20, to: 32]
+              ],
+              must_not: [
+                [type: QueryType.term(), field_name: "age", term: 28]
+              ]
             ],
-            must_not: [
-              [type: QueryType.term(), field_name: "age", term: 28]
+            sort: [
+              field_sort("age", order: :desc),
+              field_sort("name")
             ]
-          ],
-          sort: [
-            field_sort("age", order: :desc),
-            field_sort("name")
           ]
-        ]
+        ],
+        7
       )
 
-    assert response.total_hits == 7
     assert length(response.rows) == 7
 
     attr_ages =
@@ -434,24 +508,27 @@ defmodule ExAliyunOts.MixinTest.Search do
 
   test "bool query with bool_query/1", %{index_name: index_name} do
     # using `bool_query` function for `query`
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query:
-            bool_query(
-              must: [
-                range_query("age", from: 20, to: 32)
-              ],
-              must_not: term_query("age", 28)
-            ),
-          sort: [
-            field_sort("age", order: :desc),
-            field_sort("name")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query:
+              bool_query(
+                must: [
+                  range_query("age", from: 20, to: 32)
+                ],
+                must_not: term_query("age", 28)
+              ),
+            sort: [
+              field_sort("age", order: :desc),
+              field_sort("name")
+            ]
           ]
-        ]
+        ],
+        7
       )
-
-    assert response.total_hits == 7
     assert length(response.rows) == 7
 
     attr_ages =
@@ -465,50 +542,57 @@ defmodule ExAliyunOts.MixinTest.Search do
   end
 
   test "bool query with should", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.bool(),
-            should: [
-              [type: QueryType.range(), field_name: "age", from: 20, to: 32],
-              [type: QueryType.term(), field_name: "score", term: 66.78]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.bool(),
+              should: [
+                [type: QueryType.range(), field_name: "age", from: 20, to: 32],
+                [type: QueryType.term(), field_name: "score", term: 66.78]
+              ],
+              minimum_should_match: 2
             ],
-            minimum_should_match: 2
-          ],
-          sort: [
-            field_sort("age", order: :desc),
-            field_sort("name")
+            sort: [
+              field_sort("age", order: :desc),
+              field_sort("name")
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
     [{[{_pk_key, pk_value}], _attrs}] = response.rows
     assert pk_value == "a3"
   end
 
   test "bool query - should case with bool_query/1", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query:
-            bool_query(
-              should: [
-                range_query("age", from: 20, to: 32),
-                term_query("score", 66.78)
-              ],
-              minimum_should_match: 2
-            ),
-          sort: [
-            field_sort("age", order: :desc),
-            field_sort("name")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query:
+              bool_query(
+                should: [
+                  range_query("age", from: 20, to: 32),
+                  term_query("score", 66.78)
+                ],
+                minimum_should_match: 2
+              ),
+            sort: [
+              field_sort("age", order: :desc),
+              field_sort("name")
+            ]
           ]
-        ]
+        ],
+        1
       )
-
-    assert response.total_hits == 1
     assert length(response.rows) == 1
     [{[{_pk_key, pk_value}], _attrs}] = response.rows
     assert pk_value == "a3"
@@ -517,22 +601,26 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "nested query" do
     index_name = "test_search_index2"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.nested(),
-            path: "content",
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
             query: [
-              type: QueryType.term(),
-              field_name: "content.header",
-              term: "header1"
+              type: QueryType.nested(),
+              path: "content",
+              query: [
+                type: QueryType.term(),
+                field_name: "content.header",
+                term: "header1"
+              ]
             ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
 
     [{[{"partition_key", id}], [{"content", value, _ts}]}] = response.rows
@@ -544,18 +632,22 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "nested query with nested_query/3" do
     index_name = "test_search_index2"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query:
-            nested_query(
-              "content",
-              term_query("content.header", "header1")
-            )
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query:
+              nested_query(
+                "content",
+                term_query("content.header", "header1")
+              )
+          ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
 
     [{[{"partition_key", id}], [{"content", value, _ts}]}] = response.rows
@@ -566,45 +658,54 @@ defmodule ExAliyunOts.MixinTest.Search do
     # Another way of expression
     index_name = "test_search_index2"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query:
-            nested_query(
-              "content",
-              type: QueryType.term(),
-              field_name: "content.header",
-              term: "header1"
-            )
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query:
+              nested_query(
+                "content",
+                type: QueryType.term(),
+                field_name: "content.header",
+                term: "header1"
+              )
+          ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
   end
 
   test "field_sort with nested_filter" do
     index_name = "test_search_index2"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query:
-            nested_query(
-              "content",
-              exists_query("content.header")
-            ),
-          sort: [
-            field_sort("content.header",
-              order: :desc,
-              nested_filter:
-                nested_filter(
-                  "content",
-                  prefix_query("content.header", "header")
-                )
-            )
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query:
+              nested_query(
+                "content",
+                exists_query("content.header")
+              ),
+            sort: [
+              field_sort("content.header",
+                order: :desc,
+                nested_filter:
+                  nested_filter(
+                    "content",
+                    prefix_query("content.header", "header")
+                  )
+              )
+            ]
           ]
-        ]
+        ],
+        2
       )
 
     [row1, row2] = response.rows
@@ -616,16 +717,21 @@ defmodule ExAliyunOts.MixinTest.Search do
   end
 
   test "field_sort with min/max/avg mode for array", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: exists_query("values"),
-          sort: [
-            field_sort("values",
-              mode: :min
-            )
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: exists_query("values"),
+            sort: [
+              field_sort("values",
+                mode: :min
+              )
+            ]
           ]
-        ]
+        ],
+        4
       )
 
     [row1, row2, row3, row4] = response.rows
@@ -635,17 +741,22 @@ defmodule ExAliyunOts.MixinTest.Search do
     {[{_, id4}], _} = row4
     assert id1 == "a3" and id2 == "a1" and id3 == "a2" and id4 == "a4"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: exists_query("values"),
-          sort: [
-            field_sort("values",
-              mode: :max,
-              order: :desc
-            )
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: exists_query("values"),
+            sort: [
+              field_sort("values",
+                mode: :max,
+                order: :desc
+              )
+            ]
           ]
-        ]
+        ],
+        4
       )
 
     [row1, row2, row3, row4] = response.rows
@@ -655,17 +766,22 @@ defmodule ExAliyunOts.MixinTest.Search do
     {[{_, id4}], _} = row4
     assert id1 == "a2" and id2 == "a4" and id3 == "a3" and id4 == "a1"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: exists_query("values"),
-          sort: [
-            field_sort("values",
-              mode: :avg,
-              order: :asc
-            )
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: exists_query("values"),
+            sort: [
+              field_sort("values",
+                mode: :avg,
+                order: :asc
+              )
+            ]
           ]
-        ]
+        ],
+        4
       )
 
     [row1, row2, row3, row4] = response.rows
@@ -678,30 +794,40 @@ defmodule ExAliyunOts.MixinTest.Search do
 
   test "exists query", %{index_name: index_name} do
     # search exists_query for `comment` field
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.exists(),
-            field_name: "comment"
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.exists(),
+              field_name: "comment"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
     assert length(response.rows) >= 1
 
     # serach exists_query for `comment` field as nil column
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.bool(),
-            must_not: [
-              [type: QueryType.exists(), field_name: "comment"]
-            ]
-          ],
-          limit: 100
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.bool(),
+              must_not: [
+                [type: QueryType.exists(), field_name: "comment"]
+              ]
+            ],
+            limit: 100
+          ]
+        ],
+        10
       )
 
     assert response.next_token == nil
@@ -710,22 +836,32 @@ defmodule ExAliyunOts.MixinTest.Search do
 
   test "exists query with exists_query/1", %{index_name: index_name} do
     # search exists_query for `comment` field
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: exists_query("comment")
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: exists_query("comment")
+          ]
+        ],
+        1
       )
 
     assert length(response.rows) >= 1
 
     # serach exists_query for `comment` field as nil column
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: bool_query(must_not: exists_query("comment")),
-          limit: 100
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: bool_query(must_not: exists_query("comment")),
+            limit: 100
+          ]
+        ],
+        10
       )
 
     assert response.next_token == nil
@@ -742,83 +878,108 @@ defmodule ExAliyunOts.MixinTest.Search do
     #
 
     # contains "1" and "2" both
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query:
-            bool_query(
-              must: [
-                term_query("tags", "1"),
-                term_query("tags", "2")
-              ]
-            )
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query:
+              bool_query(
+                must: [
+                  term_query("tags", "1"),
+                  term_query("tags", "2")
+                ]
+              )
+          ]
+        ],
+        1
       )
 
     # response.rows as "a1"
     assert length(response.rows) == 1
 
     # contains "1" or "2"
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: terms_query("tags", ["1", "2"])
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: terms_query("tags", ["1", "2"])
+          ]
+        ],
+        3
       )
 
     # response.rows as "a1", "a2", "a3"
     assert length(response.rows) == 3
 
     # contains "1"
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("tags", "1")
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("tags", "1")
+          ]
+        ],
+        2
       )
 
     # response.rows as "a1", "a3"
     assert length(response.rows) == 2
 
     # contains ("2" or "4") or "1"
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query:
-            bool_query(
-              should: [
-                terms_query("tags", ["2", "4"]),
-                terms_query("tags", ["1"])
-              ]
-            )
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query:
+              bool_query(
+                should: [
+                  terms_query("tags", ["2", "4"]),
+                  terms_query("tags", ["1"])
+                ]
+              )
+          ]
+        ],
+        4
       )
 
     # response.rows as "a1", "a2", "a3", "a4"
     assert length(response.rows) == 4
 
     # contains ("2" and "3" both) or ("4" and "1" both)
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query:
-            bool_query(
-              should: [
-                bool_query(
-                  must: [
-                    term_query("tags", "2"),
-                    term_query("tags", "3")
-                  ]
-                ),
-                bool_query(
-                  must: [
-                    term_query("tags", "4"),
-                    term_query("tags", "1")
-                  ]
-                )
-              ]
-            )
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query:
+              bool_query(
+                should: [
+                  bool_query(
+                    must: [
+                      term_query("tags", "2"),
+                      term_query("tags", "3")
+                    ]
+                  ),
+                  bool_query(
+                    must: [
+                      term_query("tags", "4"),
+                      term_query("tags", "1")
+                    ]
+                  )
+                ]
+              )
+          ]
+        ],
+        3
       )
 
     # response.rows as "a1", "a2", "a3"
@@ -828,28 +989,38 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "avg aggregation", %{index_name: index_name} do
     agg_name = "test_avg_agg"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_avg(agg_name, "score")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_avg(agg_name, "score")
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     assert Map.get(response.aggs.avg, agg_name) == 74.0275
 
     missing = 1
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_avg(agg_name, "score", missing: missing)
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_avg(agg_name, "score", missing: missing)
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     total_score =
@@ -868,14 +1039,19 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "distinct_count aggregation", %{index_name: index_name} do
     agg_name = "test_distinct_count_agg"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_distinct_count(agg_name, "class")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_distinct_count(agg_name, "class")
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     distinct_count_aggs_map = response.aggs.distinct_count
@@ -891,27 +1067,37 @@ defmodule ExAliyunOts.MixinTest.Search do
 
     assert MapSet.size(class_mapset) == distinct_class_types_size
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_distinct_count(agg_name, "place")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_distinct_count(agg_name, "place")
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     distinct_count_aggs_map = response.aggs.distinct_count
     assert Map.get(distinct_count_aggs_map, agg_name) == 5
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_distinct_count(agg_name, "place", missing: 1)
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_distinct_count(agg_name, "place", missing: 1)
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     distinct_count_aggs_map = response.aggs.distinct_count
@@ -935,44 +1121,59 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "min aggregation", %{index_name: index_name} do
     agg_name = "test_min_agg"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_min(agg_name, "score")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_min(agg_name, "score")
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     assert Map.get(response.aggs.min, agg_name) == 41.01
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: [
-            type: QueryType.term(),
-            field_name: "is_actived",
-            term: true
-          ],
-          aggs: [
-            agg_min(agg_name, "score", missing: 1)
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: [
+              type: QueryType.term(),
+              field_name: "is_actived",
+              term: true
+            ],
+            aggs: [
+              agg_min(agg_name, "score", missing: 1)
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     assert Map.get(response.aggs.min, agg_name) == 1
 
     min_value_when_miss = -100
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_min(agg_name, "place", missing: min_value_when_miss)
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_min(agg_name, "place", missing: min_value_when_miss)
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     assert Map.get(response.aggs.min, agg_name) == min_value_when_miss
@@ -981,29 +1182,39 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "max aggregation", %{index_name: index_name} do
     agg_name = "test_max_agg"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_max(agg_name, "score")
-          ],
-          limit: 0
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_max(agg_name, "score")
+            ],
+            limit: 0
+          ]
+        ],
+        6
       )
 
     assert response.rows == []
     assert Map.get(response.aggs.max, agg_name) == 99.71
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_max(agg_name, "score", missing: 0)
-          ],
-          limit: 0
-        ]
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_max(agg_name, "score", missing: 0)
+            ],
+            limit: 0
+          ]
+        ],
+        6
       )
 
     assert response.rows == []
@@ -1011,14 +1222,19 @@ defmodule ExAliyunOts.MixinTest.Search do
 
     max_value_when_miss = 1000
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_max(agg_name, "place", missing: max_value_when_miss)
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_max(agg_name, "place", missing: max_value_when_miss)
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     assert Map.get(response.aggs.max, agg_name) == max_value_when_miss
@@ -1027,28 +1243,38 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "sum aggregation", %{index_name: index_name} do
     agg_name = "test_sum_agg"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_sum(agg_name, "score")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_sum(agg_name, "score")
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     assert Map.get(response.aggs.sum, agg_name) == 296.11
 
     missing = 1
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_sum(agg_name, "score", missing: missing)
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_sum(agg_name, "score", missing: missing)
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     # Since there are 2 records of `score` fields are integer,
@@ -1072,32 +1298,42 @@ defmodule ExAliyunOts.MixinTest.Search do
     # the long (integer) type of the `score` field will be ignored when aggregate.
     agg_name = "test_count_agg"
 
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_count(agg_name, "score")
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_count(agg_name, "score")
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     assert Map.get(response.aggs.count, agg_name) == 4
   end
 
   test "multi aggregations", %{index_name: index_name} do
-    {:ok, response} =
-      search(@table, index_name,
-        search_query: [
-          query: term_query("is_actived", true),
-          aggs: [
-            agg_count("count_agg_1", "score"),
-            agg_sum("sum_agg_1", "score"),
-            agg_max("max_agg_1", "place"),
-            agg_sum("sum_agg_2", "place"),
-            agg_distinct_count("dc_agg_1", "place", missing: 1)
+    response =
+      assert_search(
+        @table,
+        index_name,
+        [
+          search_query: [
+            query: term_query("is_actived", true),
+            aggs: [
+              agg_count("count_agg_1", "score"),
+              agg_sum("sum_agg_1", "score"),
+              agg_max("max_agg_1", "place"),
+              agg_sum("sum_agg_2", "place"),
+              agg_distinct_count("dc_agg_1", "place", missing: 1)
+            ]
           ]
-        ]
+        ],
+        6
       )
 
     aggs = response.aggs
@@ -1119,25 +1355,30 @@ defmodule ExAliyunOts.MixinTest.Search do
   test "group_by_field" do
     # If you only care about the aggregated data, you can get better performance
     # by setting limit = 0 and not getting the returned rows
-    {:ok, response} =
-      search(@table_group_by, @index_group_by,
-        search_query: [
-          query: match_all_query(),
-          limit: 0,
-          group_bys: [
-            group_by_field("group_name", "type",
-              size: 3,
-              sub_group_bys: [
-                group_by_field("sub_gn1", "is_actived")
-              ],
-              sort: [
-                row_count_sort(:asc),
-                group_key_sort(:desc)
-              ]
-            ),
-            group_by_field("group_name2", "is_actived")
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        [
+          search_query: [
+            query: match_all_query(),
+            limit: 0,
+            group_bys: [
+              group_by_field("group_name", "type",
+                size: 3,
+                sub_group_bys: [
+                  group_by_field("sub_gn1", "is_actived")
+                ],
+                sort: [
+                  row_count_sort(:asc),
+                  group_key_sort(:desc)
+                ]
+              ),
+              group_by_field("group_name2", "is_actived")
+            ]
           ]
-        ]
+        ],
+        9
       )
 
     assert response.rows == []
@@ -1160,34 +1401,39 @@ defmodule ExAliyunOts.MixinTest.Search do
   end
 
   test "group_by_range" do
-    {:ok, response} =
-      search(@table_group_by, @index_group_by,
-        search_query: [
-          query: match_all_query(),
-          limit: 0,
-          group_bys: [
-            group_by_range(
-              "group_name",
-              "price",
-              [
-                # [0, 18)
-                {0, 18},
-                # [18, 50)
-                {18, 50}
-              ],
-              sub_group_bys: [
-                group_by_field("sorted_by_type", "type",
-                  sort: [
-                    group_key_sort(:asc)
-                  ]
-                )
-              ],
-              sub_aggs: [
-                agg_distinct_count("distinct_price", "price")
-              ]
-            )
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        [
+          search_query: [
+            query: match_all_query(),
+            limit: 0,
+            group_bys: [
+              group_by_range(
+                "group_name",
+                "price",
+                [
+                  # [0, 18)
+                  {0, 18},
+                  # [18, 50)
+                  {18, 50}
+                ],
+                sub_group_bys: [
+                  group_by_field("sorted_by_type", "type",
+                    sort: [
+                      group_key_sort(:asc)
+                    ]
+                  )
+                ],
+                sub_aggs: [
+                  agg_distinct_count("distinct_price", "price")
+                ]
+              )
+            ]
           ]
-        ]
+        ],
+        9
       )
 
     [item1, item2] = Map.get(response.group_bys.by_range, "group_name")
@@ -1208,28 +1454,33 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert sub_group2_item2.key == "type2"
     assert sub_group2_item3.key == "type3"
 
-    {:ok, response} =
-      search(@table_group_by, @index_group_by,
-        search_query: [
-          query: [
-            type: QueryType.match_all()
-          ],
-          limit: 0,
-          group_bys: [
-            group_by_range(
-              "group_name",
-              "price",
-              [
-                {0, 20},
-                {20, 50}
-              ],
-              sub_aggs: [
-                agg_sum("agg_sum", "number"),
-                agg_max("agg_max", "price")
-              ]
-            )
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match_all()
+            ],
+            limit: 0,
+            group_bys: [
+              group_by_range(
+                "group_name",
+                "price",
+                [
+                  {0, 20},
+                  {20, 50}
+                ],
+                sub_aggs: [
+                  agg_sum("agg_sum", "number"),
+                  agg_max("agg_max", "price")
+                ]
+              )
+            ]
           ]
-        ]
+        ],
+        9
       )
 
     [item1, item2] = Map.get(response.group_bys.by_range, "group_name")
@@ -1242,64 +1493,79 @@ defmodule ExAliyunOts.MixinTest.Search do
   end
 
   test "group_by_filter" do
-    {:ok, response} =
-      search(@table_group_by, @index_group_by,
-        search_query: [
-          query: match_all_query(),
-          limit: 0,
-          group_bys: [
-            group_by_filter(
-              "group_name",
-              [
-                term_query("is_actived", true),
-                range_query("price", from: 50)
-              ]
-            )
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        [
+          search_query: [
+            query: match_all_query(),
+            limit: 0,
+            group_bys: [
+              group_by_filter(
+                "group_name",
+                [
+                  term_query("is_actived", true),
+                  range_query("price", from: 50)
+                ]
+              )
+            ]
           ]
-        ]
+        ],
+        9
       )
 
     [item1, item2] = Map.get(response.group_bys.by_filter, "group_name")
     assert item1.row_count == 8
     assert item2.row_count == 4
 
-    {:ok, response} =
-      search(@table_group_by, @index_group_by,
-        search_query: [
-          query: match_all_query(),
-          limit: 0,
-          group_bys: [
-            group_by_filter(
-              "group_name",
-              [
-                range_query("price", from: 1000),
-                term_query("type", "unknow-type")
-              ]
-            )
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        [
+          search_query: [
+            query: match_all_query(),
+            limit: 0,
+            group_bys: [
+              group_by_filter(
+                "group_name",
+                [
+                  range_query("price", from: 1000),
+                  term_query("type", "unknow-type")
+                ]
+              )
+            ]
           ]
-        ]
+        ],
+        9
       )
 
     [item1, item2] = Map.get(response.group_bys.by_filter, "group_name")
     assert item1.row_count == 0 and item2.row_count == 0
 
-    {:ok, response} =
-      search(@table_group_by, @index_group_by,
-        search_query: [
-          query: match_all_query(),
-          limit: 0,
-          group_bys: [
-            group_by_filter(
-              "group_name",
-              [
-                range_query("price", from: 20, to: 100)
-              ],
-              sub_aggs: [
-                agg_max("max_price", "price")
-              ]
-            )
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        [
+          search_query: [
+            query: match_all_query(),
+            limit: 0,
+            group_bys: [
+              group_by_filter(
+                "group_name",
+                [
+                  range_query("price", from: 20, to: 100)
+                ],
+                sub_aggs: [
+                  agg_max("max_price", "price")
+                ]
+              )
+            ]
           ]
-        ]
+        ],
+        9
       )
 
     [item] = Map.get(response.group_bys.by_filter, "group_name")
@@ -1398,11 +1664,16 @@ defmodule ExAliyunOts.MixinTest.Search do
           assert field_schema.analyzer_parameter.max_chars == 7
 
         index == 5 ->
+          assert field_schema.field_name == "text_fuzzy2"
+          assert field_schema.field_type == FieldType.text()
+          assert field_schema.analyzer == "fuzzy"
+
+        index == 6 ->
           assert field_schema.field_name == "text_min_word"
           assert field_schema.field_type == FieldType.text()
           assert field_schema.analyzer == "min_word"
 
-        index == 6 ->
+        index == 7 ->
           assert field_schema.field_name == "text_max_word"
           assert field_schema.field_type == FieldType.text()
           assert field_schema.analyzer == "max_word"
@@ -1427,221 +1698,354 @@ defmodule ExAliyunOts.MixinTest.Search do
   end
 
   test "search - match query single word default (not delimit_word)" do
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_single_word_1",
-            text: "loBortis111" |> String.downcase()
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_single_word_1",
+              text: "loBortis111" |> String.downcase()
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
   end
 
   test "search - match query single word case_sensitive" do
     # downcase
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_single_word_2",
-            text: "Pulvinar" |> String.downcase()
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_single_word_2",
+              text: "Pulvinar" |> String.downcase()
+            ]
           ]
-        ]
+        ],
+        0
       )
 
-    assert response.total_hits == 0
     assert length(response.rows) == 0
 
     # origin
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_single_word_2",
-            text: "Pulvinar"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_single_word_2",
+              text: "Pulvinar"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
   end
 
   test "search - match query single word delimit_word" do
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_single_word_2",
-            text: "Gravida"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_single_word_2",
+              text: "Gravida"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
 
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_single_word_2",
-            text: "999"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_single_word_2",
+              text: "999"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
   end
 
   test "search - match query fuzzy" do
     # cannot get result when text length < 2 since min_chars = 2
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_fuzzy",
-            text: "m"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_fuzzy",
+              text: "m"
+            ]
           ]
-        ]
+        ],
+        0
       )
 
-    assert response.total_hits == 0
     assert length(response.rows) == 0
 
     # can get result when text length = 2
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_fuzzy",
-            text: "mc"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_fuzzy",
+              text: "mc"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
 
     # case insensitive
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_fuzzy",
-            text: "mattIs" |> String.downcase()
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_fuzzy",
+              text: "mattIs" |> String.downcase()
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
   end
 
   test "search - match query min_word" do
     # 适用于中文分词
     # 切分出最少的词, 切分后的词不会有重合
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_min_word",
-            text: "梨"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_min_word",
+              text: "梨"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
 
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_min_word",
-            text: "花茶"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_min_word",
+              text: "花茶"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
 
     # 切分出了 "花茶", 就不会再有 "梨花"
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_min_word",
-            text: "梨花"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_min_word",
+              text: "梨花"
+            ]
           ]
-        ]
+        ],
+        0
       )
 
-    assert response.total_hits == 0
     assert length(response.rows) == 0
   end
 
   test "search - match query max_word" do
     # 适用于中文分词
     # 切分出最多的词, 切分后的词有可能会有重合
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_max_word",
-            text: "花茶"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_max_word",
+              text: "花茶"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
 
     # 切分出了 "花茶", 但也还有 "梨花"
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_max_word",
-            text: "梨花"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_max_word",
+              text: "梨花"
+            ]
           ]
-        ]
+        ],
+        1
       )
 
-    assert response.total_hits == 1
     assert length(response.rows) == 1
 
-    {:ok, response} =
-      search(@table_text_analyzer, @index_text_analyzer,
-        search_query: [
-          query: [
-            type: QueryType.match(),
-            field_name: "text_max_word",
-            text: "梨"
+    response =
+      assert_search(
+        @table_text_analyzer,
+        @index_text_analyzer,
+        [
+          search_query: [
+            query: [
+              type: QueryType.match(),
+              field_name: "text_max_word",
+              text: "梨"
+            ]
           ]
-        ]
+        ],
+        0
       )
 
-    assert response.total_hits == 0
     assert length(response.rows) == 0
+  end
+
+  test "search - funzzy match phrase" do
+    assert_search(
+      @table_text_analyzer,
+      @index_text_analyzer,
+      [
+        search_query: [
+          query: [
+            type: QueryType.match_phrase(),
+            field_name: "text_fuzzy2",
+            text: "调音"
+          ]
+        ]
+      ],
+      1
+    )
+
+    assert_search(
+      @table_text_analyzer,
+      @index_text_analyzer,
+      [
+        search_query: [
+          query: [
+            type: QueryType.match_phrase(),
+            field_name: "text_fuzzy2",
+            text: "调 音"
+          ]
+        ]
+      ],
+      0
+    )
+
+    assert_search(
+      @table_text_analyzer,
+      @index_text_analyzer,
+      [
+        search_query: [
+          query: [
+            type: QueryType.match_phrase(),
+            field_name: "text_fuzzy2",
+            text: "调音师1024x"
+          ]
+        ]
+      ],
+      1
+    )
+
+    assert_search(
+      @table_text_analyzer,
+      @index_text_analyzer,
+      [
+        search_query: [
+          query: [
+            type: QueryType.match_phrase(),
+            field_name: "text_fuzzy2",
+            text: "24x768P.mp4"
+          ]
+        ]
+      ],
+      1
+    )
+
+    assert_search(
+      @table_text_analyzer,
+      @index_text_analyzer,
+      [
+        search_query: [
+          query: [
+            type: QueryType.match_phrase(),
+            field_name: "text_fuzzy2",
+            text: "24x7 P.mp4"
+          ]
+        ]
+      ],
+      0
+    )
   end
 end

@@ -8,6 +8,7 @@ defmodule ExAliyunOtsTest.Search do
   require FieldType
   require ColumnReturnType
   require SortOrder
+  import ExAliyunOts.SearchTestHelper, only: [assert_search_request: 3]
 
   @instance_key EDCEXTestInstance
   @table "test_search"
@@ -15,6 +16,8 @@ defmodule ExAliyunOtsTest.Search do
 
   setup_all do
     Application.ensure_all_started(:ex_aliyun_ots)
+    TestSupportSearch.clean(@instance_key, @table, @indexes)
+
     TestSupportSearch.init(@instance_key, @table, @indexes)
 
     on_exit(fn ->
@@ -86,9 +89,7 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
-
-    {:ok, response} = result
+    {:ok, response} = assert_search_request(@instance_key, var_request, 2)
 
     assert response.total_hits == 2
 
@@ -120,8 +121,7 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result2 = ExAliyunOts.Client.search(@instance_key, var_request2)
-    {:ok, response2} = result2
+    {:ok, response2} = assert_search_request(@instance_key, var_request2, 2)
 
     {_pk, attrs2} = List.first(response2.rows)
     assert length(attrs2) > length(attrs)
@@ -171,15 +171,8 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
-
-    case result do
-      {:ok, response} ->
-        assert length(response.rows) == 1
-
-      error ->
-        Logger.error("search occur error: #{inspect(error)}")
-    end
+    {:ok, response} = assert_search_request(@instance_key, var_request, 1)
+    assert length(response.rows) == 1
   end
 
   test "search - terms query" do
@@ -202,43 +195,38 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
+    {:ok, response} = assert_search_request(@instance_key, var_request, 2)
 
-    case result do
-      {:ok, response} ->
-        rows = response.rows
-        assert length(rows) == 2
+    rows = response.rows
+    assert length(rows) == 2
 
-        Enum.map(rows, fn {[{"partition_key", id}], attrs} ->
-          case id do
-            "a2" ->
-              [
-                {"age", age, _},
-                {"class", class, _},
-                {"is_actived", is_actived, _},
-                {"name", name, _}
-              ] = attrs
+    Enum.map(rows, fn {[{"partition_key", id}], attrs} ->
+      case id do
+        "a2" ->
+          [
+            {"age", age, _},
+            {"class", class, _},
+            {"is_actived", is_actived, _},
+            {"name", name, _}
+          ] = attrs
 
-              assert age == 28 and class == "class1" and is_actived == false and name == "name_a2"
+          assert age == 28 and class == "class1" and is_actived == false and name == "name_a2"
 
-            "a7" ->
-              [
-                {"age", age, _},
-                {"class", class, _},
-                {"is_actived", is_actived, _},
-                {"name", name, _}
-              ] = attrs
+        "a7" ->
+          [
+            {"age", age, _},
+            {"class", class, _},
+            {"is_actived", is_actived, _},
+            {"name", name, _}
+          ] = attrs
 
-              assert age == 28 and class == "class1" and is_actived == true and name == "name_a7"
+          assert age == 28 and class == "class1" and is_actived == true and name == "name_a7"
 
-            _ ->
-              :ignore
-          end
-        end)
+        _ ->
+          :ignore
+      end
+    end)
 
-      error ->
-        Logger.error("search occur error: #{inspect(error)}")
-    end
   end
 
   test "search - prefix query" do
@@ -260,15 +248,8 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
-
-    case result do
-      {:ok, response} ->
-        assert length(response.rows) == 9
-
-      error ->
-        Logger.error("search occur error: #{inspect(error)}")
-    end
+    {:ok, response} = assert_search_request(@instance_key, var_request, 9)
+    assert length(response.rows) == 9
   end
 
   test "search - wildcard query" do
@@ -290,15 +271,8 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
-
-    case result do
-      {:ok, response} ->
-        assert length(response.rows) == 9
-
-      error ->
-        Logger.error("search occur error: #{inspect(error)}")
-    end
+    {:ok, response} = assert_search_request(@instance_key, var_request, 9)
+    assert length(response.rows) == 9
   end
 
   test "search - range query" do
@@ -321,16 +295,10 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
+    {:ok, response} = assert_search_request(@instance_key, var_request, 4)
 
-    case result do
-      {:ok, response} ->
-        assert length(response.rows) == 4
-        assert response.total_hits == 4
-
-      error ->
-        Logger.error("range query occur error: #{inspect(error)}")
-    end
+    assert length(response.rows) == 4
+    assert response.total_hits == 4
   end
 
   test "search - range_query/1 & range_query/2" do
@@ -372,15 +340,8 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
-
-    case result do
-      {:ok, response} ->
-        assert length(response.rows) == 3
-
-      error ->
-        Logger.error("bool query with must/must_not occur error: #{inspect(error)}")
-    end
+    {:ok, response} = assert_search_request(@instance_key, var_request, 3)
+    assert length(response.rows) == 3
   end
 
   test "search - bool query with should" do
@@ -412,15 +373,8 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
-
-    case result do
-      {:ok, response} ->
-        assert length(response.rows) == 3
-
-      error ->
-        Logger.error("bool query with should occur error: #{inspect(error)}")
-    end
+    {:ok, response} = assert_search_request(@instance_key, var_request, 3)
+    assert length(response.rows) == 3
   end
 
   test "search - nested query" do
@@ -439,18 +393,12 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    result = ExAliyunOts.Client.search(@instance_key, var_request)
+    {:ok, response} = assert_search_request(@instance_key, var_request, 1)
 
-    case result do
-      {:ok, response} ->
-        assert length(response.rows) == 1
-        {[{"partition_key", id}], [{"content", value, _ts}]} = List.first(response.rows)
-        assert id == "a9"
-        assert value == "[{\"body\":\"body1\",\"header\":\"header1\"}]"
-
-      error ->
-        Logger.error("nested query occur error: #{inspect(error)}")
-    end
+    assert length(response.rows) == 1
+    {[{"partition_key", id}], [{"content", value, _ts}]} = List.first(response.rows)
+    assert id == "a9"
+    assert value == "[{\"body\":\"body1\",\"header\":\"header1\"}]"
   end
 
   test "search - exists query" do
@@ -463,7 +411,7 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    {:ok, response} = ExAliyunOts.Client.search(@instance_key, var_request)
+    {:ok, response} = assert_search_request(@instance_key, var_request, 0)
     assert response.rows == []
     assert response.is_all_succeeded == true
 
@@ -475,7 +423,7 @@ defmodule ExAliyunOtsTest.Search do
     }
 
     var_request = Map.put(var_request, :search_query, search_query)
-    {:ok, response} = ExAliyunOts.Client.search(@instance_key, var_request)
+    {:ok, response} = assert_search_request(@instance_key, var_request, 1)
     assert length(response.rows) >= 1
 
     # seach exists_query for `comment` field as nil column
@@ -492,7 +440,7 @@ defmodule ExAliyunOtsTest.Search do
       }
     }
 
-    {:ok, response} = ExAliyunOts.Client.search(@instance_key, var_request)
+    {:ok, response} = assert_search_request(@instance_key, var_request, 10)
     assert response.next_token == nil
     assert length(response.rows) == 10
   end
