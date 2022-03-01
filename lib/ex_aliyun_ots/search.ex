@@ -1257,6 +1257,8 @@ defmodule ExAliyunOts.Search do
     * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
     * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[1,2]"`.
+    * `:is_virtual_field`, specifies whether the field is a virtual column, by default it is false. This parameter is required only when you use virtual columns.
+    * `:source_field_name`, specifies the name of the source field to which the virtual column is mapped in the data table. This parameter is required when `:is_virtual_field` is set to true.
   """
   @doc field_schema: :field_schema
   @spec field_schema_integer(field_name, options) :: map()
@@ -1280,6 +1282,8 @@ defmodule ExAliyunOts.Search do
     * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
     * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[1.0,2.0]"`.
+    * `:is_virtual_field`, specifies whether the field is a virtual column, by default it is false. This parameter is required only when you use virtual columns.
+    * `:source_field_name`, specifies the name of the source field to which the virtual column is mapped in the data table. This parameter is required when `:is_virtual_field` is set to true.
   """
   @doc field_schema: :field_schema
   @spec field_schema_float(field_name, options) :: map()
@@ -1303,6 +1307,8 @@ defmodule ExAliyunOts.Search do
     * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
     * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[false,true,false]"`.
+    * `:is_virtual_field`, specifies whether the field is a virtual column, by default it is false. This parameter is required only when you use virtual columns.
+    * `:source_field_name`, specifies the name of the source field to which the virtual column is mapped in the data table. This parameter is required when `:is_virtual_field` is set to true.
   """
   @doc field_schema: :field_schema
   @spec field_schema_boolean(field_name, options) :: map()
@@ -1326,6 +1332,8 @@ defmodule ExAliyunOts.Search do
     * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
     * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"a\",\"b\"]"`.
+    * `:is_virtual_field`, specifies whether the field is a virtual column, by default it is false. This parameter is required only when you use virtual columns.
+    * `:source_field_name`, specifies the name of the source field to which the virtual column is mapped in the data table. This parameter is required when `:is_virtual_field` is set to true.
   """
   @doc field_schema: :field_schema
   def field_schema_keyword(field_name, options \\ []) do
@@ -1351,6 +1359,8 @@ defmodule ExAliyunOts.Search do
     [English](https://www.alibabacloud.com/help/doc-detail/120227.html).
     * `:analyzer_parameter`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html) |
     [English](https://www.alibabacloud.com/help/doc-detail/120227.html).
+    * `:is_virtual_field`, specifies whether the field is a virtual column, by default it is false. This parameter is required only when you use virtual columns.
+    * `:source_field_name`, specifies the name of the source field to which the virtual column is mapped in the data table. This parameter is required when `:is_virtual_field` is set to true.
   """
   @doc field_schema: :field_schema
   def field_schema_text(field_name, options \\ []) do
@@ -1400,6 +1410,8 @@ defmodule ExAliyunOts.Search do
     * `:enable_sort_and_agg`, specifies whether to support sort and statistics, by default it is true;
     * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"10.21,10\",\"10.31,9.98\"]"`.
+    * `:is_virtual_field`, specifies whether the field is a virtual column, by default it is false. This parameter is required only when you use virtual columns.
+    * `:source_field_name`, specifies the name of the source field to which the virtual column is mapped in the data table. This parameter is required when `:is_virtual_field` is set to true.
   """
   @doc field_schema: :field_schema
   def field_schema_geo_point(field_name, options \\ []) do
@@ -1419,8 +1431,8 @@ defmodule ExAliyunOts.Search do
   defp map_field_schema(%{field_type: FieldType.text()} = schema, options) when is_map(schema) do
     schema
     |> do_map_field_schema(options)
-    |> Map.put(:analyzer, Keyword.get(options, :analyzer, nil))
-    |> Map.put(:analyzer_parameter, Keyword.get(options, :analyzer_parameter, nil))
+    |> Map.put(:analyzer, expect_string_or_nil(Keyword.get(options, :analyzer)))
+    |> Map.put(:analyzer_parameter, expect_list_or_nil(Keyword.get(options, :analyzer_parameter)))
   end
 
   defp map_field_schema(schema, options) when is_map(schema) do
@@ -1436,6 +1448,8 @@ defmodule ExAliyunOts.Search do
     )
     |> Map.put(:store, expect_boolean(Keyword.get(options, :store, true)))
     |> Map.put(:is_array, expect_boolean_or_nil(Keyword.get(options, :is_array)))
+    |> Map.put(:is_virtual_field, expect_boolean_or_nil(Keyword.get(options, :is_virtual_field)))
+    |> Map.put(:source_field_name, expect_string_or_nil(Keyword.get(options, :source_field_name)))
   end
 
   defp expect_boolean_or_nil(nil), do: nil
@@ -1449,10 +1463,23 @@ defmodule ExAliyunOts.Search do
           "Expect get a boolean value but it is invalid: #{inspect(invalid)}"
   end
 
+  defp expect_list_or_nil(nil), do: nil
+  defp expect_list_or_nil(items), do: expect_list(items)
+
   defp expect_list(items) when is_list(items), do: items
 
   defp expect_list(invalid) do
     raise ExAliyunOts.RuntimeError, "Expect get a list but it is invalid: #{inspect(invalid)}"
+  end
+
+  defp expect_string_or_nil(nil), do: nil
+  defp expect_string_or_nil(value), do: expect_string(value)
+
+  defp expect_string(value) when is_binary(value), do: value
+
+  defp expect_string(invalid) do
+    raise ExAliyunOts.RuntimeError,
+          "Expect get a string value but it is invalid: #{inspect(invalid)}"
   end
 
   @doc false

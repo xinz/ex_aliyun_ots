@@ -374,58 +374,68 @@ defmodule ExAliyunOts.Client.Search do
             "Invalid nested type field schema with : #{size_sub_field_schemas} sub field schemas, the valid range size of sub field schemas is [1, 25]"
     end
 
-    proto_field_schema =
-      %FieldSchema{
-        field_name: var_field_schema.field_name,
-        field_type: var_field_schema.field_type,
-        index: var_field_schema.index,
-        sort_and_agg: var_field_schema.enable_sort_and_agg,
-        store: var_field_schema.store
-      }
-
-    cond do
-      field_type == FieldType.nested() ->
-        prepared_sub_field_schemas =
-          Enum.map(sub_field_schemas, fn sub_field_schema ->
-            if sub_field_schema.field_type == FieldType.nested() do
-              raise ExAliyunOts.RuntimeError,
-                    "Mapping depth in the nested attribute column only supports one level, cannot nest the nested type of field schema as the sub field schemas"
-            else
-              iterate_all_field_schemas(sub_field_schema)
-            end
-          end)
-
-        # nested field schema not supports `:index` | `:store` | `:sort_and_agg` definition
-        proto_field_schema
-        |> Map.put(:field_schemas, prepared_sub_field_schemas)
-        |> Map.put(:index, nil)
-        |> Map.put(:store, nil)
-        |> Map.put(:sort_and_agg, nil)
-
-      field_type == FieldType.text() ->
-        proto_field_schema
-        |> Map.put(:sort_and_agg, nil)
-        |> Map.put(:analyzer, var_field_schema.analyzer)
-        |> Map.put(:analyzer_parameter, prepare_analyzer_parameter(var_field_schema.analyzer, var_field_schema.analyzer_parameter))
-
-      true ->
-        Map.put(proto_field_schema, :is_array, var_field_schema.is_array)
-    end
+    %FieldSchema{
+      field_name: var_field_schema.field_name,
+      field_type: var_field_schema.field_type,
+      index: var_field_schema.index,
+      sort_and_agg: var_field_schema.enable_sort_and_agg,
+      store: var_field_schema.store,
+      is_array: var_field_schema.is_array,
+      is_virtual_field: var_field_schema.is_virtual_field,
+      source_field_names: prepare_source_field_names(var_field_schema.source_field_name)
+    }
+    |> build_extras_by_field_type(var_field_schema)
   end
 
-  def prepare_analyzer_parameter("single_word", parameter) when is_map(parameter) or is_list(parameter), do:
+  # NOTICE:
+  # The type of source_field_names in protobuf schema is string[]
+  # But the actual relationship from virtual field to source field is one-to-one
+  # (confirmed with AlibabaCloud support team)
+  # So we convert type of source_field_name[s]? manually here
+  defp prepare_source_field_names(nil), do: []
+  defp prepare_source_field_names(source_field_name), do: [source_field_name]
+
+  defp build_extras_by_field_type(proto_field_schema, %{field_type: FieldType.nested()} = var_field_schema) do
+    sub_field_schemas = var_field_schema.field_schemas
+    prepared_sub_field_schemas =
+      Enum.map(sub_field_schemas, fn sub_field_schema ->
+        if sub_field_schema.field_type == FieldType.nested() do
+          raise ExAliyunOts.RuntimeError,
+                "Mapping depth in the nested attribute column only supports one level, cannot nest the nested type of field schema as the sub field schemas"
+        else
+          iterate_all_field_schemas(sub_field_schema)
+        end
+      end)
+    # nested field schema not supports `:index` | `:store` | `:sort_and_agg` definition
+    proto_field_schema
+    |> Map.put(:field_schemas, prepared_sub_field_schemas)
+    |> Map.put(:index, nil)
+    |> Map.put(:store, nil)
+    |> Map.put(:sort_and_agg, nil)
+  end
+
+  defp build_extras_by_field_type(proto_field_schema, %{field_type: FieldType.text()} = var_field_schema) do
+    proto_field_schema
+    |> Map.put(:sort_and_agg, nil)
+    |> Map.put(:analyzer, var_field_schema.analyzer)
+    |> Map.put(:analyzer_parameter, prepare_analyzer_parameter(var_field_schema.analyzer, var_field_schema.analyzer_parameter))
+  end
+
+  defp build_extras_by_field_type(proto_field_schema, _var_field_schema), do: proto_field_schema
+
+  defp prepare_analyzer_parameter("single_word", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(SingleWordAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter("split", parameter) when is_map(parameter) or is_list(parameter), do:
+  defp prepare_analyzer_parameter("split", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(SplitAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter("fuzzy", parameter) when is_map(parameter) or is_list(parameter), do:
+  defp prepare_analyzer_parameter("fuzzy", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(FuzzyAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter(analyzer, parameter) when is_atom(analyzer), do:
+  defp prepare_analyzer_parameter(analyzer, parameter) when is_atom(analyzer), do:
     prepare_analyzer_parameter(to_string(analyzer), parameter)
 
-  def prepare_analyzer_parameter(_analyzer, _parameter), do: nil
+  defp prepare_analyzer_parameter(_analyzer, _parameter), do: nil
 
   defp do_prepare_analyzer_parameter(struct_module, parameter)  do
     analyzer_parameter = struct(struct_module, parameter)

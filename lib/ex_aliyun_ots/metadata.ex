@@ -213,12 +213,14 @@ defmodule ExAliyunOts.Var.Search do
               field_type: FieldType.keyword(),
               index_options: nil,
               analyzer: nil,
-              analyzer_parameter: nil,
               index: true,
               enable_sort_and_agg: true,
               store: true,
               field_schemas: [],
-              is_array: nil
+              is_array: nil,
+              analyzer_parameter: nil,
+              is_virtual_field: false,
+              source_field_name: nil
   end
 
   defmodule FieldSort do
