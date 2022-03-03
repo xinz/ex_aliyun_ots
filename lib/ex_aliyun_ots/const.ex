@@ -324,4 +324,5 @@ defmodule ExAliyunOts.Const.Search.GroupByType do
   const(:range, :GROUP_BY_RANGE)
   const(:filter, :GROUP_BY_FILTER)
   const(:geo_distance, :GROUP_BY_GEO_DISTANCE)
+  const(:histogram, :GROUP_BY_HISTOGRAM)
 end

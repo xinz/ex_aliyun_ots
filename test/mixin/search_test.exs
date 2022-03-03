@@ -93,6 +93,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         2
       )
+
     [{[{_pk_key, pk_value}], attrs}] = response.rows
     assert pk_value == "a2"
     assert length(attrs) == 2
@@ -112,6 +113,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         2
       )
+
     [{[{_pk_key, pk_value}], attrs}] = response.rows
     assert pk_value == "a2"
     assert length(attrs) == 2
@@ -220,6 +222,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         2
       )
+
     assert length(response.rows) == 2
   end
 
@@ -235,6 +238,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         2
       )
+
     assert length(response.rows) == 2
   end
 
@@ -258,6 +262,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         3
       )
+
     assert length(response.rows) == 3
   end
 
@@ -277,6 +282,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         3
       )
+
     assert length(response.rows) == 3
   end
 
@@ -322,6 +328,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         9
       )
+
     assert length(response.rows) == 9
   end
 
@@ -346,6 +353,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         9
       )
+
     assert length(response.rows) == 9
   end
 
@@ -366,6 +374,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         9
       )
+
     assert length(response.rows) == 9
   end
 
@@ -529,6 +538,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         7
       )
+
     assert length(response.rows) == 7
 
     attr_ages =
@@ -593,6 +603,7 @@ defmodule ExAliyunOts.MixinTest.Search do
         ],
         1
       )
+
     assert length(response.rows) == 1
     [{[{_pk_key, pk_value}], _attrs}] = response.rows
     assert pk_value == "a3"
@@ -1587,6 +1598,56 @@ defmodule ExAliyunOts.MixinTest.Search do
       )
 
     assert response.code == "OTSParameterInvalid"
+  end
+
+  test "group by histogram: integer/long" do
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        [
+          search_query: [
+            query: match_all_query(),
+            limit: 0,
+            group_bys: [
+              # Notice:
+              # Since the type of `number` column is integer/long,
+              # the type of param `interval` & `field_range` & `missing` must be integer/long as well
+              group_by_histogram("group_name", "number", 5, {0, 100}, missing: 0)
+            ]
+          ]
+        ],
+        9
+      )
+
+    [item1 | _] = Map.get(response.group_bys.by_histogram, "group_name")
+    assert item1.key == 0
+    assert item1.value == 2
+  end
+
+  test "group by histogram: double/float" do
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        [
+          search_query: [
+            query: match_all_query(),
+            limit: 0,
+            group_bys: [
+              # Notice:
+              # Since the type of `price` column is double/float,
+              # the type of param `interval` & `field_range` & `missing` must be double/float as well
+              group_by_histogram("group_name", "price", 10.0, {0.0, 100.0}, missing: 0.0)
+            ]
+          ]
+        ],
+        9
+      )
+
+    [item1 | _] = Map.get(response.group_bys.by_histogram, "group_name")
+    assert item1.key == 0.0
+    assert item1.value == 2
   end
 
   test "delete search index" do

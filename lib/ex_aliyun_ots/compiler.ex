@@ -305,6 +305,8 @@ defmodule ExAliyunOts.Compiler do
 
       defdelegate group_by_geo_distance(group_name, field_name, ranges, opts \\ []), to: Search
 
+      defdelegate group_by_histogram(group_name, field_name, interval, field_range, opts \\ []), to: Search
+
       # Sort
 
       defdelegate group_key_sort(order), to: Search

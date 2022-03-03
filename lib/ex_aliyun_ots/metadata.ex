@@ -416,6 +416,16 @@ defmodule ExAliyunOts.Var.Search do
               ranges: nil
   end
 
+  defmodule GroupByHistogram do
+    @moduledoc false
+    defstruct name: nil,
+              field_name: "",
+              interval: nil,
+              field_range: nil,
+              min_doc_count: nil,
+              missing: nil
+  end
+
   defmodule GroupKeySort do
     @moduledoc false
     require ExAliyunOts.Const.Search.SortOrder, as: SortOrder

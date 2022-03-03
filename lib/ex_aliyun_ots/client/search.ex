@@ -64,6 +64,8 @@ defmodule ExAliyunOts.Client.Search do
     GroupByRange,
     GroupByFilter,
     GroupByGeoDistance,
+    FieldRange,
+    GroupByHistogram,
     GroupBysResult,
     GroupByFilterResult,
     GroupByFilterResultItem,
@@ -73,6 +75,8 @@ defmodule ExAliyunOts.Client.Search do
     GroupByRangeResultItem,
     GroupByFieldResult,
     GroupByFieldResultItem,
+    GroupByHistogramResult,
+    GroupByHistogramItem,
     GroupBySort,
     GroupBySorter,
     GroupKeySort,
@@ -321,29 +325,39 @@ defmodule ExAliyunOts.Client.Search do
     |> Http.post()
   end
 
-  defp term_to_bytes(term) when is_bitstring(term) do
+  def term_to_bytes(term) when is_bitstring(term) do
     <<@variant_type_string, byte_size(term)::little-integer-size(32), term::binary>>
   end
 
-  defp term_to_bytes(term) when is_integer(term) do
+  def term_to_bytes(term) when is_integer(term) do
     <<@variant_type_integer, term::little-integer-size(64)>>
   end
 
-  defp term_to_bytes(term) when is_float(term) do
+  def term_to_bytes(term) when is_float(term) do
     <<@variant_type_double, term::float-little>>
   end
 
-  defp term_to_bytes(true) do
+  def term_to_bytes(true) do
     <<@variant_type_boolean, 1>>
   end
 
-  defp term_to_bytes(false) do
+  def term_to_bytes(false) do
     <<@variant_type_boolean, 0>>
   end
 
-  defp term_to_bytes(term) do
+  def term_to_bytes(term) do
     raise ExAliyunOts.RuntimeError,
           "invalid type of term: #{inspect(term)}, please use string/integer/float/boolean."
+  end
+
+  def bytes_to_term(<<@variant_type_string, _size::little-integer-size(32), term::binary>>), do: term
+  def bytes_to_term(<<@variant_type_integer, term::little-integer-size(64)>>), do: term
+  def bytes_to_term(<<@variant_type_double, term::float-little>>), do: term
+  def bytes_to_term(<<@variant_type_boolean, 1>>), do: true
+  def bytes_to_term(<<@variant_type_boolean, 0>>), do: false
+  def bytes_to_term(bytes) do
+    raise ExAliyunOts.RuntimeError,
+          "invalid type of bytes: #{inspect(bytes)}, please use string/integer/float/boolean."
   end
 
   defp agg_missing_to_bytes(nil) do
@@ -778,6 +792,30 @@ defmodule ExAliyunOts.Client.Search do
     |> to_group_by(name, GroupByType.geo_distance())
   end
 
+  defp map_group_by(%Search.GroupByHistogram{
+      name: name,
+      field_name: field_name,
+      interval: interval,
+      field_range: {min, max},
+      min_doc_count: min_doc_count,
+      missing: missing
+  }) do
+    field_range = map_group_by_field_range(min, max)
+    missing = if is_nil(missing), do: nil, else: term_to_bytes(missing)
+
+    GroupByHistogram
+    |> struct([
+      field_name: field_name,
+      interval: term_to_bytes(interval),
+      field_range: field_range,
+      min_doc_count: min_doc_count,
+      missing: missing
+    ])
+    |> GroupByHistogram.encode!()
+    |> IO.iodata_to_binary()
+    |> to_group_by(name, GroupByType.histogram())
+  end
+
   defp to_group_by(body, name, type) do
     %GroupBy{body: body, name: name, type: type}
   end
@@ -821,6 +859,12 @@ defmodule ExAliyunOts.Client.Search do
   defp map_group_by_ranges([{from, to} | _rest], _result) do
     raise ExAliyunOts.RuntimeError,
       "Invalid from: `#{inspect(from)}` or to: `#{inspect(to)}` for a range, please set them as number."
+  end
+
+  defp map_group_by_field_range(min, max) when is_number(min) and is_number(max), do: %FieldRange{min: term_to_bytes(min), max: term_to_bytes(max)}
+  defp map_group_by_field_range(min, max) do
+    raise ExAliyunOts.RuntimeError,
+          "Invalid from: `#{inspect(min)}` to: `#{inspect(max)}` for a field range, please set them as number."
   end
 
   defp map_group_by_filters(nil, []), do: nil
@@ -1242,6 +1286,15 @@ defmodule ExAliyunOts.Client.Search do
     sort_map_results_by_type(map_results, :by_geo_distance, name, items)
   end
 
+  defp decode_group_by(
+         %{type: GroupByType.histogram(), name: name, group_by_result: group_by_result},
+         map_results
+       ) do
+    result = GroupByHistogramResult.decode!(group_by_result)
+    items = decode_sub_details(result.group_by_histogra_items, [])
+    sort_map_results_by_type(map_results, :by_histogram, name, items)
+  end
+
   defp decode_sub_details([], prepared) do
     Enum.reverse(prepared)
   end
@@ -1336,6 +1389,17 @@ defmodule ExAliyunOts.Client.Search do
       sub_group_bys: sub_group_bys
     }
 
+    decode_sub_details(rest, [prepared_item | prepared])
+  end
+
+  defp decode_sub_details(
+         [%GroupByHistogramItem{} = item | rest],
+         prepared
+       ) do
+    prepared_item = %{
+      key: bytes_to_term(item.key),
+      value: item.value
+    }
     decode_sub_details(rest, [prepared_item | prepared])
   end
 

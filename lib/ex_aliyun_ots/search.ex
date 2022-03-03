@@ -946,6 +946,57 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
+  The aggregation method that can be used to group query results based on specific data intervals.
+  Field values that are within the same range are grouped together.
+  The value range of each group and the number of values in each group are returned.
+
+  We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-kb5-4qw-xt6){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-kb5-4qw-xt6){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          group_bys: [
+            group_by_histogram(
+              "group_name",
+              "price",        # histogram by field `price(double)`
+              10.0,           # every `10.0` is a group
+              {0.0, 100.0},   # from `0.0` to `100.0`
+              missing: 0.0    # if `price` of a row is missing, the value will be treated as `0.0`
+            )
+          ]
+        ]
+
+  ## Options
+
+    * `:missing`, optional, the default value for the field that is used to perform the aggregation operation on a row when the field value is empty.
+    * `:min_doc_count`, optional, the minimum number of rows. If the number of rows in a group is less than the minimum number of rows, the aggregation results for the group are not returned.
+  """
+  @doc group_bys: :group_bys
+  @spec group_by_histogram(
+          group_name,
+          field_name,
+          interval :: number(),
+          field_range :: {number(), number()},
+          options
+        ) :: map()
+  def group_by_histogram(group_name, field_name, interval, field_range, options \\ []) do
+    %Search.GroupByHistogram{
+      name: group_name,
+      field_name: field_name,
+      interval: interval,
+      field_range: field_range,
+      min_doc_count: Keyword.get(options, :min_doc_count),
+      missing: Keyword.get(options, :missing)
+    }
+  end
+
+  @doc """
   Use in `group_by_field/3` scenario, in ascending/descending order of field literal.
 
   Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
