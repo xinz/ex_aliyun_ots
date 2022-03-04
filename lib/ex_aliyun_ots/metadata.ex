@@ -301,6 +301,7 @@ defmodule ExAliyunOts.Var.Search do
     @moduledoc false
     alias ExAliyunOts.Const.Search.ColumnReturnType
     require ColumnReturnType
+
     defstruct table_name: "",
               index_name: "",
               columns_to_get: %ColumnsToGet{
@@ -390,6 +391,16 @@ defmodule ExAliyunOts.Var.Search do
     defstruct field_name: "", type: nil, name: nil, missing: nil
   end
 
+  defmodule AggregationPercentiles do
+    @moduledoc false
+    defstruct field_name: "", name: nil, percentiles: [], missing: nil
+  end
+
+  #  defmodule TopRowsAggregation do
+  #    @moduledoc false
+  #    defstruct name: nil, limit: nil, sort: nil, columns_to_get: nil
+  #  end
+
   defmodule GroupByField do
     @moduledoc false
     defstruct name: nil, field_name: "", size: nil, sub_group_bys: nil, sub_aggs: nil, sort: nil
@@ -443,7 +454,6 @@ defmodule ExAliyunOts.Var.Search do
     require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.desc(), sub_agg_name: nil
   end
-
 end
 
 # Transaction

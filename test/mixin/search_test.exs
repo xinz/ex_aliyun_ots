@@ -1363,6 +1363,31 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert Map.get(aggs.distinct_count, "dc_agg_1") == length(response.rows)
   end
 
+  test "percentiles aggregation", %{index_name: index_name} do
+    agg_name = "percentiles"
+
+    opts = [
+      search_query: [
+        query: term_query("is_actived", true),
+        aggs: [
+          agg_percentiles(agg_name, "score", [0, 30, 50, 100], missing: 0.0)
+        ],
+        limit: 0
+      ]
+    ]
+
+    response =
+      assert_search(
+        @table,
+        index_name,
+        opts,
+        6
+      )
+
+    percentiles = response.aggs.percentiles[agg_name]
+    assert length(percentiles) == 4
+  end
+
   test "group_by_field" do
     # If you only care about the aggregated data, you can get better performance
     # by setting limit = 0 and not getting the returned rows

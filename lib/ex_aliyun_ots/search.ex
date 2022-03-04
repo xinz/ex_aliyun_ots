@@ -739,6 +739,41 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
+  A percentile value indicates the relative position of a value in a dataset.
+  For example, when you collect statistics for the response time of each request during the routine O&M of your system, you must analyze the response time distribution by using percentiles such as p25, p50, p90, and p99.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-hah-ppt-o6c){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html#title-hah-ppt-o6c){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+        search_query: [
+          query: ...,
+          aggs: [
+            agg_percentiles("agg_name", "score", [0, 30, 50, 100], missing: 0.0)
+          ]
+        ]
+
+  ## Options
+
+    * `:missing`, when the field is not existed in a row of data, if `:missing` is not set, the row will be ignored
+    in statistics; if `:missing` is set, the row will use `:missing` value to participate in the statistics of distinct
+    count, by default it's `nil` (not-set).
+  """
+  @doc aggs: :aggs
+  @spec agg_percentiles(aggregation_name, field_name, percentiles :: [number()], options) :: map()
+  def agg_percentiles(aggregation_name, field_name, percentiles, options \\ []) do
+    %Search.AggregationPercentiles{
+      name: aggregation_name,
+      field_name: field_name,
+      percentiles: percentiles,
+      missing: Keyword.get(options, :missing)
+    }
+  end
+
+  @doc """
   The `:group_bys` results are grouped according to the value of a field, the same value will be put into a group, finally, 
   the value of each group and the number corresponding to the value will be returned.
 

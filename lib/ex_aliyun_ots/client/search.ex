@@ -48,6 +48,8 @@ defmodule ExAliyunOts.Client.Search do
     AvgAggregation,
     MaxAggregation,
     MinAggregation,
+    PercentilesAggregation,
+    TopRowsAggregation,
     SumAggregation,
     CountAggregation,
     DistinctCountAggregation,
@@ -58,6 +60,9 @@ defmodule ExAliyunOts.Client.Search do
     MinAggregationResult,
     SumAggregationResult,
     CountAggregationResult,
+    PercentilesAggregationResult,
+    PercentilesAggregationItem,
+    TopRowsAggregationResult,
     GroupBys,
     GroupBy,
     GroupByField,
@@ -678,6 +683,18 @@ defmodule ExAliyunOts.Client.Search do
     |> to_aggregation(agg.name, type)
   end
 
+  defp map_agg(%Search.AggregationPercentiles{} = agg) do
+    PercentilesAggregation
+    |> struct(
+      field_name: agg.field_name,
+      percentiles: agg.percentiles,
+      missing: agg_missing_to_bytes(agg.missing)
+    )
+    |> PercentilesAggregation.encode!()
+    |> IO.iodata_to_binary()
+    |> to_aggregation(agg.name, AggregationType.percentiles())
+  end
+
   defp to_aggregation(body, name, type) do
     %Aggregation{body: body, name: name, type: type}
   end
@@ -801,16 +818,15 @@ defmodule ExAliyunOts.Client.Search do
       missing: missing
   }) do
     field_range = map_group_by_field_range(min, max)
-    missing = if is_nil(missing), do: nil, else: term_to_bytes(missing)
 
     GroupByHistogram
-    |> struct([
+    |> struct(
       field_name: field_name,
       interval: term_to_bytes(interval),
       field_range: field_range,
       min_doc_count: min_doc_count,
-      missing: missing
-    ])
+      missing: agg_missing_to_bytes(missing)
+    )
     |> GroupByHistogram.encode!()
     |> IO.iodata_to_binary()
     |> to_group_by(name, GroupByType.histogram())
@@ -1243,6 +1259,15 @@ defmodule ExAliyunOts.Client.Search do
     sort_map_results_by_type(agg_results, :distinct_count, name, decoded.value)
   end
 
+  defp decode_agg(
+         %{type: AggregationType.percentiles(), name: name, agg_result: agg_result},
+         agg_results
+       ) do
+    decoded = PercentilesAggregationResult.decode!(agg_result)
+    items = decode_sub_details(decoded.percentiles_aggregation_items, [])
+    sort_map_results_by_type(agg_results, :percentiles, name, items)
+  end
+
   defp decode_group_bys(nil), do: nil
 
   defp decode_group_bys(group_bys) do
@@ -1400,6 +1425,19 @@ defmodule ExAliyunOts.Client.Search do
       key: bytes_to_term(item.key),
       value: item.value
     }
+
+    decode_sub_details(rest, [prepared_item | prepared])
+  end
+
+  defp decode_sub_details(
+         [%PercentilesAggregationItem{} = item | rest],
+         prepared
+       ) do
+    prepared_item = %{
+      key: item.key,
+      value: bytes_to_term(item.value)
+    }
+
     decode_sub_details(rest, [prepared_item | prepared])
   end
 

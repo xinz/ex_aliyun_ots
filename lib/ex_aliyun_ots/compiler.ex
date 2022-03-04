@@ -295,6 +295,8 @@ defmodule ExAliyunOts.Compiler do
 
       defdelegate agg_count(agg_name, field_name), to: Search
 
+      defdelegate agg_percentiles(aggregation_name, field_name, percentiles, opts \\ []), to: Search
+
       # GroupBys
 
       defdelegate group_by_field(group_name, field_name, opts \\ []), to: Search

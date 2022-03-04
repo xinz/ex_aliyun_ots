@@ -314,6 +314,8 @@ defmodule ExAliyunOts.Const.Search.AggregationType do
   const(:min, :AGG_MIN)
   const(:sum, :AGG_SUM)
   const(:count, :AGG_COUNT)
+  const(:top_rows, :AGG_TOP_ROWS)
+  const(:percentiles, :AGG_PERCENTILES)
 end
 
 defmodule ExAliyunOts.Const.Search.GroupByType do
