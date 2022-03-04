@@ -1,6 +1,7 @@
 defmodule ExAliyunOts.MixinTest.SearchVirtualFieldTest do
   use ExUnit.Case
   use ExAliyunOts, instance: EDCEXTestInstance
+  import ExAliyunOts.SearchTestHelper, only: [assert_search: 4]
   require Logger
 
   @table "test_search_virtual_field"
@@ -48,7 +49,7 @@ defmodule ExAliyunOts.MixinTest.SearchVirtualFieldTest do
     )
 
     # wait for search index enable
-    Process.sleep(60_000)
+    Process.sleep(12_000)
   end
 
   defp insert_test_data() do
@@ -114,8 +115,7 @@ defmodule ExAliyunOts.MixinTest.SearchVirtualFieldTest do
       ]
     ]
 
-    {:ok, %{rows: rows}} = search(@table, @index, opts)
-    assert length(rows) == 2
+    assert_search(@table, @index, opts, 2)
   end
 
   test "virtual: string 2 integer" do
@@ -127,8 +127,7 @@ defmodule ExAliyunOts.MixinTest.SearchVirtualFieldTest do
       ]
     ]
 
-    {:ok, %{rows: rows}} = search(@table, @index, opts)
-    assert length(rows) == 1
+    assert_search(@table, @index, opts, 1)
   end
 
   test "virtual: integer 2 string" do
@@ -140,8 +139,7 @@ defmodule ExAliyunOts.MixinTest.SearchVirtualFieldTest do
       ]
     ]
 
-    {:ok, %{rows: rows}} = search(@table, @index, opts)
-    assert length(rows) == 1
+    assert_search(@table, @index, opts, 1)
   end
 
   test "virtual: double 2 string" do
@@ -153,8 +151,7 @@ defmodule ExAliyunOts.MixinTest.SearchVirtualFieldTest do
       ]
     ]
 
-    {:ok, %{rows: rows}} = search(@table, @index, opts)
-    assert length(rows) == 2
+    assert_search(@table, @index, opts, 2)
   end
 
   test "virtual: string 2 integer (array)" do
@@ -166,8 +163,7 @@ defmodule ExAliyunOts.MixinTest.SearchVirtualFieldTest do
       ]
     ]
 
-    {:ok, %{rows: rows}} = search(@table, @index, opts)
-    assert length(rows) == 1
+    assert_search(@table, @index, opts, 1)
   end
 
   test "virtual: string 2 text" do
@@ -179,7 +175,6 @@ defmodule ExAliyunOts.MixinTest.SearchVirtualFieldTest do
       ]
     ]
 
-    {:ok, %{rows: rows}} = search(@table, @index, opts)
-    assert length(rows) == 5
+    assert_search(@table, @index, opts, 5)
   end
 end
