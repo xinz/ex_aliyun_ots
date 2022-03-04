@@ -774,6 +774,48 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
+  After you group query results, you can query the rows in each group. This method can be used in a similar manner as ANY_VALUE(field) in MySQL.
+
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-w4s-aeo-28q){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-w4s-aeo-28q){:target="_blank"}
+
+  ## Example
+
+      import MyApp.TableStore
+
+      search "table", "index_name",
+          search_query: [
+            query: match_all_query(),
+            limit: 0,
+            group_bys: [
+              group_by_field(group_name, "type",
+                sub_aggs: [
+                  agg_top_rows(sub_agg_name,
+                    limit: 2,
+                    sort: [
+                      field_sort("price", order: :asc)
+                    ]
+                  )
+                ]
+              )
+            ]
+         ]
+
+  ## Options
+
+    * `:limit`, the maximum number of rows that can be returned for each group. By default, only 1 row of data is returned.
+    * `:sort`, the sorting method that is used to sort data in groups.
+  """
+  @doc aggs: :aggs
+  @spec agg_top_rows(aggregation_name, options) :: map()
+  def agg_top_rows(aggregation_name, options \\ []) do
+    %Search.AggregationTopRows{
+      name: aggregation_name,
+      limit: Keyword.get(options, :limit),
+      sort: Keyword.get(options, :sort)
+    }
+  end
+
+  @doc """
   The `:group_bys` results are grouped according to the value of a field, the same value will be put into a group, finally, 
   the value of each group and the number corresponding to the value will be returned.
 

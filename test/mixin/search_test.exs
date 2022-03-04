@@ -1675,6 +1675,48 @@ defmodule ExAliyunOts.MixinTest.Search do
     assert item1.value == 2
   end
 
+  test "group by field and sub aggregate top rows" do
+    group_name = "group_name"
+    sub_agg_name = "top_rows"
+
+    opts = [
+      search_query: [
+        query: match_all_query(),
+        limit: 0,
+        group_bys: [
+          group_by_field(group_name, "type",
+            size: 3,
+            sort: [
+              row_count_sort(:asc)
+            ],
+            sub_aggs: [
+              agg_top_rows(sub_agg_name,
+                limit: 1,
+                sort: [
+                  field_sort("price", order: :asc)
+                ]
+              )
+            ]
+          )
+        ]
+      ]
+    ]
+
+    response =
+      assert_search(
+        @table_group_by,
+        @index_group_by,
+        opts,
+        9
+      )
+
+    groups = response.group_bys.by_field[group_name]
+    group_type1 = Enum.find(groups, &(&1.key == "type1"))
+    sub_agg = group_type1.sub_aggs.top_rows[sub_agg_name]
+    rows = sub_agg.rows
+    assert length(rows) == 1
+  end
+
   test "delete search index" do
     index_name = "tmp_search_index1"
 

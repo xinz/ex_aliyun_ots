@@ -396,10 +396,10 @@ defmodule ExAliyunOts.Var.Search do
     defstruct field_name: "", name: nil, percentiles: [], missing: nil
   end
 
-  #  defmodule TopRowsAggregation do
-  #    @moduledoc false
-  #    defstruct name: nil, limit: nil, sort: nil, columns_to_get: nil
-  #  end
+    defmodule AggregationTopRows do
+      @moduledoc false
+      defstruct name: nil, limit: nil, sort: nil
+    end
 
   defmodule GroupByField do
     @moduledoc false

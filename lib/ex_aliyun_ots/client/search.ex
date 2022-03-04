@@ -695,6 +695,17 @@ defmodule ExAliyunOts.Client.Search do
     |> to_aggregation(agg.name, AggregationType.percentiles())
   end
 
+  defp map_agg(%Search.AggregationTopRows{} = agg) do
+    TopRowsAggregation
+    |> struct(
+      limit: agg.limit,
+      sort: prepare_sort(agg.sort)
+    )
+    |> TopRowsAggregation.encode!()
+    |> IO.iodata_to_binary()
+    |> to_aggregation(agg.name, AggregationType.top_rows())
+  end
+
   defp to_aggregation(body, name, type) do
     %Aggregation{body: body, name: name, type: type}
   end
@@ -1266,6 +1277,15 @@ defmodule ExAliyunOts.Client.Search do
     decoded = PercentilesAggregationResult.decode!(agg_result)
     items = decode_sub_details(decoded.percentiles_aggregation_items, [])
     sort_map_results_by_type(agg_results, :percentiles, name, items)
+  end
+
+  defp decode_agg(
+         %{type: AggregationType.top_rows(), name: name, agg_result: agg_result},
+         agg_results
+       ) do
+    decoded = TopRowsAggregationResult.decode!(agg_result)
+    rows = Enum.map(decoded.rows, &ExAliyunOts.PlainBuffer.deserialize_row/1)
+    sort_map_results_by_type(agg_results, :top_rows, name, %{rows: rows})
   end
 
   defp decode_group_bys(nil), do: nil
