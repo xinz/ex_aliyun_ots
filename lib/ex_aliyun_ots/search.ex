@@ -2,7 +2,7 @@ defmodule ExAliyunOts.Search do
   @moduledoc """
   Use the multiple efficient index schemas of search index to solve complex query problems.
 
-  Here are links to the search section of Alibaba official document: [Chinese](https://help.aliyun.com/document_detail/91974.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/91974.htm){:target="_blank"}
+  Here are links to the search section of Alibaba official document: [Chinese](https://help.aliyun.com/document_detail/91974.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/91974.htm){:target="_blank"}
 
   To use `ExAliyunOts`, a module that calls `use ExAliyunOts` has to be defined:
 
@@ -91,7 +91,7 @@ defmodule ExAliyunOts.Search do
           query: match_query("age", 28)
         ]
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117485.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117485.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117485.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117485.html){:target="_blank"}
 
   ## Options
 
@@ -122,7 +122,7 @@ defmodule ExAliyunOts.Search do
           query: match_all_query()
         ]
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117484.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117484.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117484.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117484.html){:target="_blank"}
   """
   @doc query: :query
   @spec match_all_query() :: map()
@@ -134,7 +134,7 @@ defmodule ExAliyunOts.Search do
   Similar to `MatchQuery`, however, the location relationship of multiple terms after word segmentation will be considered,
   multiple terms after word segmentation must exist in the same order and location in the row data to be hit this query.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117486.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117486.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117486.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117486.html){:target="_blank"}
 
   ## Example
 
@@ -154,7 +154,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use TermQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117488.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117488.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117488.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117488.html){:target="_blank"}
 
   ## Example
 
@@ -174,7 +174,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use TermsQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117493.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117493.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117493.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117493.html){:target="_blank"}
 
   ## Example
 
@@ -193,7 +193,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use PrefixQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117495.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117495.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117495.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117495.html){:target="_blank"}
 
   ## Example
 
@@ -213,7 +213,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use RangeQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117496.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117496.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117496.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117496.html){:target="_blank"}
 
   ## Example
 
@@ -279,7 +279,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use RangeQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117496.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117496.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117496.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117496.html){:target="_blank"}
 
   ## Example
 
@@ -337,7 +337,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use WildcardQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117497.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117497.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117497.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117497.html){:target="_blank"}
 
   ## Example
 
@@ -357,7 +357,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use BoolQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117498.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117498.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117498.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117498.html){:target="_blank"}
 
   ## Example
 
@@ -392,7 +392,7 @@ defmodule ExAliyunOts.Search do
   Use NestedQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`, the target field
   need to be a nested type, it is used to query sub documents of nested type.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/120221.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/120221.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/120221.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/120221.html){:target="_blank"}
 
   ## Example
 
@@ -421,7 +421,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use GeoDistanceQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117500.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117500.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117500.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117500.html){:target="_blank"}
 
   ## Example
 
@@ -450,7 +450,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use GeoBoundingBoxQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117499.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117499.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117499.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117499.html){:target="_blank"}
 
   ## Example
 
@@ -476,7 +476,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use GeoPolygonQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117501.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/117501.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117501.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117501.html){:target="_blank"}
 
   ## Example
 
@@ -498,7 +498,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use ExistsQuery as the nested `:query` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/124204.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/124204.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/124204.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/124204.html){:target="_blank"}
 
   ## Example
 
@@ -519,7 +519,7 @@ defmodule ExAliyunOts.Search do
   Calculate the minimum value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-415-wbs-zqp){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-415-wbs-zqp){:target="_blank"}
 
   ## Example
 
@@ -557,7 +557,7 @@ defmodule ExAliyunOts.Search do
   Calculate the maximum value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-u78-037-qw8){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-u78-037-qw8){:target="_blank"}
 
   ## Example
 
@@ -595,7 +595,7 @@ defmodule ExAliyunOts.Search do
   Calculate the average value of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-7iv-ckn-sgq){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-7iv-ckn-sgq){:target="_blank"}
 
   ## Example
 
@@ -633,7 +633,7 @@ defmodule ExAliyunOts.Search do
   Calculate the distinct count of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-8ih-i28-959){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-8ih-i28-959){:target="_blank"}
 
   ## Example
 
@@ -671,7 +671,7 @@ defmodule ExAliyunOts.Search do
   Calculate the summation of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-885-937-2fz){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-885-937-2fz){:target="_blank"}
 
   ## Example
 
@@ -709,7 +709,7 @@ defmodule ExAliyunOts.Search do
   Calculate the count of the assigned field by aggregation in the nested `:aggs` option of `:search_query`
   option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-ams-asa-4if){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-ams-asa-4if){:target="_blank"}
 
   ## Example
 
@@ -742,7 +742,7 @@ defmodule ExAliyunOts.Search do
   A percentile value indicates the relative position of a value in a dataset.
   For example, when you collect statistics for the response time of each request during the routine O&M of your system, you must analyze the response time distribution by using percentiles such as p25, p50, p90, and p99.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-hah-ppt-o6c){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132191.html#title-hah-ppt-o6c){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-hah-ppt-o6c){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-hah-ppt-o6c){:target="_blank"}
 
   ## Example
 
@@ -821,7 +821,7 @@ defmodule ExAliyunOts.Search do
 
   We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-w51-5lt-5hd){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-w51-5lt-5hd){:target="_blank"}
 
   ## Example
 
@@ -875,7 +875,7 @@ defmodule ExAliyunOts.Search do
 
   We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-6dl-40u-1j8){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-6dl-40u-1j8){:target="_blank"}
 
   ## Example
 
@@ -933,7 +933,7 @@ defmodule ExAliyunOts.Search do
 
   We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-yj6-4mq-xjf){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-yj6-4mq-xjf){:target="_blank"}
 
   ## Example
 
@@ -976,7 +976,7 @@ defmodule ExAliyunOts.Search do
 
   We can set it in the nested `:group_bys` option of `:search_query` option in `ExAliyunOts.search/4`.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html#title-gk2-iw8-4rj){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html#title-gk2-iw8-4rj){:target="_blank"}
 
   ## Example
 
@@ -1076,7 +1076,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use in `group_by_field/3` scenario, in ascending/descending order of field literal.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html){:target="_blank"}
 
   ## Example
 
@@ -1123,7 +1123,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use in `group_by_field/3` scenario, in ascending/descending order of row(s) count.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html){:target="_blank"}
 
   ## Example
 
@@ -1170,7 +1170,7 @@ defmodule ExAliyunOts.Search do
   @doc """
   Use in `group_by_field/3` scenario, in ascending/descending order of the value from sub statistics.
 
-  Official document in [Chinese](https://help.aliyun.com/document_detail/132210.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/doc-detail/132210.html){:target="_blank"}
+  Official document in [Chinese](https://help.aliyun.com/document_detail/132191.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/132191.html){:target="_blank"}
   """
   @doc sort_in_group_bys: :sort_in_group_bys
   @spec sub_agg_sort(sub_agg_name :: String.t(), order) :: map()
@@ -1373,7 +1373,7 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117453.html){:target="_blank"}
 
   ## Example
 
@@ -1398,7 +1398,7 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117453.html){:target="_blank"}
 
   ## Example
 
@@ -1423,7 +1423,7 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117453.html){:target="_blank"}
 
   ## Example
 
@@ -1448,7 +1448,7 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117453.html){:target="_blank"}
 
   ## Example
 
@@ -1472,7 +1472,7 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117453.html){:target="_blank"}
 
   ## Example
 
@@ -1483,10 +1483,10 @@ defmodule ExAliyunOts.Search do
     * `:index`, specifies whether to set as index, by default it is true;
     * `:store`, specifies whether to store the origin value in search index for a better read performance, by default it is true;
     * `:is_array`, specifies whether the stored data is a JSON encoded list as a string, e.g. `"[\"a\",\"b\"]"`.
-    * `:analyzer`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html) |
-    [English](https://www.alibabacloud.com/help/doc-detail/120227.html).
-    * `:analyzer_parameter`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html) |
-    [English](https://www.alibabacloud.com/help/doc-detail/120227.html).
+    * `:analyzer`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html){:target="_blank"} |
+    [English](https://www.alibabacloud.com/help/en/doc-detail/120227.html){:target="_blank"}.
+    * `:analyzer_parameter`, optional, please see analyzer document in [Chinese](https://help.aliyun.com/document_detail/120227.html){:target="_blank"} |
+    [English](https://www.alibabacloud.com/help/en/doc-detail/120227.html){:target="_blank"}.
     * `:is_virtual_field`, specifies whether the field is a virtual column, by default it is false. This parameter is required only when you use virtual columns.
     * `:source_field_name`, specifies the name of the source field to which the virtual column is mapped in the data table. This parameter is required when `:is_virtual_field` is set to true.
   """
@@ -1499,7 +1499,7 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117453.html){:target="_blank"}
 
   ## Example
 
@@ -1526,7 +1526,7 @@ defmodule ExAliyunOts.Search do
   end
 
   @doc """
-  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html) | [English](https://www.alibabacloud.com/help/doc-detail/117453.html)
+  Official document in [Chinese](https://help.aliyun.com/document_detail/117453.html){:target="_blank"} | [English](https://www.alibabacloud.com/help/en/doc-detail/117453.html){:target="_blank"}
 
   ## Example
 
