@@ -213,12 +213,14 @@ defmodule ExAliyunOts.Var.Search do
               field_type: FieldType.keyword(),
               index_options: nil,
               analyzer: nil,
-              analyzer_parameter: nil,
               index: true,
               enable_sort_and_agg: true,
               store: true,
               field_schemas: [],
-              is_array: nil
+              is_array: nil,
+              analyzer_parameter: nil,
+              is_virtual_field: false,
+              source_field_name: nil
   end
 
   defmodule FieldSort do
@@ -299,6 +301,7 @@ defmodule ExAliyunOts.Var.Search do
     @moduledoc false
     alias ExAliyunOts.Const.Search.ColumnReturnType
     require ColumnReturnType
+
     defstruct table_name: "",
               index_name: "",
               columns_to_get: %ColumnsToGet{
@@ -388,6 +391,16 @@ defmodule ExAliyunOts.Var.Search do
     defstruct field_name: "", type: nil, name: nil, missing: nil
   end
 
+  defmodule AggregationPercentiles do
+    @moduledoc false
+    defstruct field_name: "", name: nil, percentiles: [], missing: nil
+  end
+
+    defmodule AggregationTopRows do
+      @moduledoc false
+      defstruct name: nil, limit: nil, sort: nil
+    end
+
   defmodule GroupByField do
     @moduledoc false
     defstruct name: nil, field_name: "", size: nil, sub_group_bys: nil, sub_aggs: nil, sort: nil
@@ -414,6 +427,16 @@ defmodule ExAliyunOts.Var.Search do
               ranges: nil
   end
 
+  defmodule GroupByHistogram do
+    @moduledoc false
+    defstruct name: nil,
+              field_name: "",
+              interval: nil,
+              field_range: nil,
+              min_doc_count: nil,
+              missing: nil
+  end
+
   defmodule GroupKeySort do
     @moduledoc false
     require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
@@ -431,7 +454,6 @@ defmodule ExAliyunOts.Var.Search do
     require ExAliyunOts.Const.Search.SortOrder, as: SortOrder
     defstruct order: SortOrder.desc(), sub_agg_name: nil
   end
-
 end
 
 # Transaction

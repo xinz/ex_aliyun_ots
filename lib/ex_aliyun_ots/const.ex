@@ -314,6 +314,8 @@ defmodule ExAliyunOts.Const.Search.AggregationType do
   const(:min, :AGG_MIN)
   const(:sum, :AGG_SUM)
   const(:count, :AGG_COUNT)
+  const(:top_rows, :AGG_TOP_ROWS)
+  const(:percentiles, :AGG_PERCENTILES)
 end
 
 defmodule ExAliyunOts.Const.Search.GroupByType do
@@ -324,4 +326,5 @@ defmodule ExAliyunOts.Const.Search.GroupByType do
   const(:range, :GROUP_BY_RANGE)
   const(:filter, :GROUP_BY_FILTER)
   const(:geo_distance, :GROUP_BY_GEO_DISTANCE)
+  const(:histogram, :GROUP_BY_HISTOGRAM)
 end

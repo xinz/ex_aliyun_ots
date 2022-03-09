@@ -1,3 +1,47 @@
+defmodule ExAliyunOts.Client.Search.Utils do
+  @moduledoc false
+
+  @variant_type_integer 0x0
+  @variant_type_double 0x1
+  @variant_type_boolean 0x2
+  @variant_type_string 0x3
+
+  def term_to_bytes(term) when is_bitstring(term) do
+    <<@variant_type_string, byte_size(term)::little-integer-size(32), term::binary>>
+  end
+
+  def term_to_bytes(term) when is_integer(term) do
+    <<@variant_type_integer, term::little-integer-size(64)>>
+  end
+
+  def term_to_bytes(term) when is_float(term) do
+    <<@variant_type_double, term::float-little>>
+  end
+
+  def term_to_bytes(true) do
+    <<@variant_type_boolean, 1>>
+  end
+
+  def term_to_bytes(false) do
+    <<@variant_type_boolean, 0>>
+  end
+
+  def term_to_bytes(term) do
+    raise ExAliyunOts.RuntimeError,
+          "invalid type of term: #{inspect(term)}, please use string/integer/float/boolean."
+  end
+
+  def bytes_to_term(<<@variant_type_string, _size::little-integer-size(32), term::binary>>), do: term
+  def bytes_to_term(<<@variant_type_integer, term::little-integer-size(64)>>), do: term
+  def bytes_to_term(<<@variant_type_double, term::float-little>>), do: term
+  def bytes_to_term(<<@variant_type_boolean, 1>>), do: true
+  def bytes_to_term(<<@variant_type_boolean, 0>>), do: false
+  def bytes_to_term(bytes) do
+    raise ExAliyunOts.RuntimeError,
+          "invalid type of bytes: #{inspect(bytes)}, please use string/integer/float/boolean."
+  end
+end
+
 defmodule ExAliyunOts.Client.Search do
   @moduledoc false
 
@@ -48,6 +92,8 @@ defmodule ExAliyunOts.Client.Search do
     AvgAggregation,
     MaxAggregation,
     MinAggregation,
+    PercentilesAggregation,
+    TopRowsAggregation,
     SumAggregation,
     CountAggregation,
     DistinctCountAggregation,
@@ -58,12 +104,17 @@ defmodule ExAliyunOts.Client.Search do
     MinAggregationResult,
     SumAggregationResult,
     CountAggregationResult,
+    PercentilesAggregationResult,
+    PercentilesAggregationItem,
+    TopRowsAggregationResult,
     GroupBys,
     GroupBy,
     GroupByField,
     GroupByRange,
     GroupByFilter,
     GroupByGeoDistance,
+    FieldRange,
+    GroupByHistogram,
     GroupBysResult,
     GroupByFilterResult,
     GroupByFilterResultItem,
@@ -73,6 +124,8 @@ defmodule ExAliyunOts.Client.Search do
     GroupByRangeResultItem,
     GroupByFieldResult,
     GroupByFieldResultItem,
+    GroupByHistogramResult,
+    GroupByHistogramItem,
     GroupBySort,
     GroupBySorter,
     GroupKeySort,
@@ -106,6 +159,7 @@ defmodule ExAliyunOts.Client.Search do
   }
 
   import ExAliyunOts.Logger, only: [error: 1]
+  import ExAliyunOts.Client.Search.Utils
   require FieldType
   require SortOrder
   require QueryType
@@ -113,11 +167,6 @@ defmodule ExAliyunOts.Client.Search do
   require AggregationType
   require GroupByType
   require SortMode
-
-  @variant_type_integer 0x0
-  @variant_type_double 0x1
-  @variant_type_boolean 0x2
-  @variant_type_string 0x3
 
   defp request_to_create_search_index(%Search.CreateSearchIndexRequest{
          table_name: table_name,
@@ -321,30 +370,6 @@ defmodule ExAliyunOts.Client.Search do
     |> Http.post()
   end
 
-  defp term_to_bytes(term) when is_bitstring(term) do
-    <<@variant_type_string, byte_size(term)::little-integer-size(32), term::binary>>
-  end
-
-  defp term_to_bytes(term) when is_integer(term) do
-    <<@variant_type_integer, term::little-integer-size(64)>>
-  end
-
-  defp term_to_bytes(term) when is_float(term) do
-    <<@variant_type_double, term::float-little>>
-  end
-
-  defp term_to_bytes(true) do
-    <<@variant_type_boolean, 1>>
-  end
-
-  defp term_to_bytes(false) do
-    <<@variant_type_boolean, 0>>
-  end
-
-  defp term_to_bytes(term) do
-    raise ExAliyunOts.RuntimeError,
-          "invalid type of term: #{inspect(term)}, please use string/integer/float/boolean."
-  end
 
   defp agg_missing_to_bytes(nil) do
     nil
@@ -374,58 +399,68 @@ defmodule ExAliyunOts.Client.Search do
             "Invalid nested type field schema with : #{size_sub_field_schemas} sub field schemas, the valid range size of sub field schemas is [1, 25]"
     end
 
-    proto_field_schema =
-      %FieldSchema{
-        field_name: var_field_schema.field_name,
-        field_type: var_field_schema.field_type,
-        index: var_field_schema.index,
-        sort_and_agg: var_field_schema.enable_sort_and_agg,
-        store: var_field_schema.store
-      }
-
-    cond do
-      field_type == FieldType.nested() ->
-        prepared_sub_field_schemas =
-          Enum.map(sub_field_schemas, fn sub_field_schema ->
-            if sub_field_schema.field_type == FieldType.nested() do
-              raise ExAliyunOts.RuntimeError,
-                    "Mapping depth in the nested attribute column only supports one level, cannot nest the nested type of field schema as the sub field schemas"
-            else
-              iterate_all_field_schemas(sub_field_schema)
-            end
-          end)
-
-        # nested field schema not supports `:index` | `:store` | `:sort_and_agg` definition
-        proto_field_schema
-        |> Map.put(:field_schemas, prepared_sub_field_schemas)
-        |> Map.put(:index, nil)
-        |> Map.put(:store, nil)
-        |> Map.put(:sort_and_agg, nil)
-
-      field_type == FieldType.text() ->
-        proto_field_schema
-        |> Map.put(:sort_and_agg, nil)
-        |> Map.put(:analyzer, var_field_schema.analyzer)
-        |> Map.put(:analyzer_parameter, prepare_analyzer_parameter(var_field_schema.analyzer, var_field_schema.analyzer_parameter))
-
-      true ->
-        Map.put(proto_field_schema, :is_array, var_field_schema.is_array)
-    end
+    %FieldSchema{
+      field_name: var_field_schema.field_name,
+      field_type: var_field_schema.field_type,
+      index: var_field_schema.index,
+      sort_and_agg: var_field_schema.enable_sort_and_agg,
+      store: var_field_schema.store,
+      is_array: var_field_schema.is_array,
+      is_virtual_field: var_field_schema.is_virtual_field,
+      source_field_names: prepare_source_field_names(var_field_schema.source_field_name)
+    }
+    |> build_extras_by_field_type(var_field_schema)
   end
 
-  def prepare_analyzer_parameter("single_word", parameter) when is_map(parameter) or is_list(parameter), do:
+  # NOTICE:
+  # The type of source_field_names in protobuf schema is string[]
+  # But the actual relationship from virtual field to source field is one-to-one
+  # (confirmed with AlibabaCloud support team)
+  # So we convert type of source_field_name[s]? manually here
+  defp prepare_source_field_names(nil), do: []
+  defp prepare_source_field_names(source_field_name), do: [source_field_name]
+
+  defp build_extras_by_field_type(proto_field_schema, %{field_type: FieldType.nested()} = var_field_schema) do
+    sub_field_schemas = var_field_schema.field_schemas
+    prepared_sub_field_schemas =
+      Enum.map(sub_field_schemas, fn sub_field_schema ->
+        if sub_field_schema.field_type == FieldType.nested() do
+          raise ExAliyunOts.RuntimeError,
+                "Mapping depth in the nested attribute column only supports one level, cannot nest the nested type of field schema as the sub field schemas"
+        else
+          iterate_all_field_schemas(sub_field_schema)
+        end
+      end)
+    # nested field schema not supports `:index` | `:store` | `:sort_and_agg` definition
+    proto_field_schema
+    |> Map.put(:field_schemas, prepared_sub_field_schemas)
+    |> Map.put(:index, nil)
+    |> Map.put(:store, nil)
+    |> Map.put(:sort_and_agg, nil)
+  end
+
+  defp build_extras_by_field_type(proto_field_schema, %{field_type: FieldType.text()} = var_field_schema) do
+    proto_field_schema
+    |> Map.put(:sort_and_agg, nil)
+    |> Map.put(:analyzer, var_field_schema.analyzer)
+    |> Map.put(:analyzer_parameter, prepare_analyzer_parameter(var_field_schema.analyzer, var_field_schema.analyzer_parameter))
+  end
+
+  defp build_extras_by_field_type(proto_field_schema, _var_field_schema), do: proto_field_schema
+
+  defp prepare_analyzer_parameter("single_word", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(SingleWordAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter("split", parameter) when is_map(parameter) or is_list(parameter), do:
+  defp prepare_analyzer_parameter("split", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(SplitAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter("fuzzy", parameter) when is_map(parameter) or is_list(parameter), do:
+  defp prepare_analyzer_parameter("fuzzy", parameter) when is_map(parameter) or is_list(parameter), do:
     do_prepare_analyzer_parameter(FuzzyAnalyzerParameter, parameter)
 
-  def prepare_analyzer_parameter(analyzer, parameter) when is_atom(analyzer), do:
+  defp prepare_analyzer_parameter(analyzer, parameter) when is_atom(analyzer), do:
     prepare_analyzer_parameter(to_string(analyzer), parameter)
 
-  def prepare_analyzer_parameter(_analyzer, _parameter), do: nil
+  defp prepare_analyzer_parameter(_analyzer, _parameter), do: nil
 
   defp do_prepare_analyzer_parameter(struct_module, parameter)  do
     analyzer_parameter = struct(struct_module, parameter)
@@ -654,6 +689,29 @@ defmodule ExAliyunOts.Client.Search do
     |> to_aggregation(agg.name, type)
   end
 
+  defp map_agg(%Search.AggregationPercentiles{} = agg) do
+    PercentilesAggregation
+    |> struct(
+      field_name: agg.field_name,
+      percentiles: agg.percentiles,
+      missing: agg_missing_to_bytes(agg.missing)
+    )
+    |> PercentilesAggregation.encode!()
+    |> IO.iodata_to_binary()
+    |> to_aggregation(agg.name, AggregationType.percentiles())
+  end
+
+  defp map_agg(%Search.AggregationTopRows{} = agg) do
+    TopRowsAggregation
+    |> struct(
+      limit: agg.limit,
+      sort: prepare_sort(agg.sort)
+    )
+    |> TopRowsAggregation.encode!()
+    |> IO.iodata_to_binary()
+    |> to_aggregation(agg.name, AggregationType.top_rows())
+  end
+
   defp to_aggregation(body, name, type) do
     %Aggregation{body: body, name: name, type: type}
   end
@@ -768,6 +826,29 @@ defmodule ExAliyunOts.Client.Search do
     |> to_group_by(name, GroupByType.geo_distance())
   end
 
+  defp map_group_by(%Search.GroupByHistogram{
+      name: name,
+      field_name: field_name,
+      interval: interval,
+      field_range: {min, max},
+      min_doc_count: min_doc_count,
+      missing: missing
+  }) do
+    field_range = map_group_by_field_range(min, max)
+
+    GroupByHistogram
+    |> struct(
+      field_name: field_name,
+      interval: term_to_bytes(interval),
+      field_range: field_range,
+      min_doc_count: min_doc_count,
+      missing: agg_missing_to_bytes(missing)
+    )
+    |> GroupByHistogram.encode!()
+    |> IO.iodata_to_binary()
+    |> to_group_by(name, GroupByType.histogram())
+  end
+
   defp to_group_by(body, name, type) do
     %GroupBy{body: body, name: name, type: type}
   end
@@ -811,6 +892,12 @@ defmodule ExAliyunOts.Client.Search do
   defp map_group_by_ranges([{from, to} | _rest], _result) do
     raise ExAliyunOts.RuntimeError,
       "Invalid from: `#{inspect(from)}` or to: `#{inspect(to)}` for a range, please set them as number."
+  end
+
+  defp map_group_by_field_range(min, max) when is_number(min) and is_number(max), do: %FieldRange{min: term_to_bytes(min), max: term_to_bytes(max)}
+  defp map_group_by_field_range(min, max) do
+    raise ExAliyunOts.RuntimeError,
+          "Invalid from: `#{inspect(min)}` to: `#{inspect(max)}` for a field range, please set them as number."
   end
 
   defp map_group_by_filters(nil, []), do: nil
@@ -1189,6 +1276,24 @@ defmodule ExAliyunOts.Client.Search do
     sort_map_results_by_type(agg_results, :distinct_count, name, decoded.value)
   end
 
+  defp decode_agg(
+         %{type: AggregationType.percentiles(), name: name, agg_result: agg_result},
+         agg_results
+       ) do
+    decoded = PercentilesAggregationResult.decode!(agg_result)
+    items = decode_sub_details(decoded.percentiles_aggregation_items, [])
+    sort_map_results_by_type(agg_results, :percentiles, name, items)
+  end
+
+  defp decode_agg(
+         %{type: AggregationType.top_rows(), name: name, agg_result: agg_result},
+         agg_results
+       ) do
+    decoded = TopRowsAggregationResult.decode!(agg_result)
+    rows = Enum.map(decoded.rows, &ExAliyunOts.PlainBuffer.deserialize_row/1)
+    sort_map_results_by_type(agg_results, :top_rows, name, %{rows: rows})
+  end
+
   defp decode_group_bys(nil), do: nil
 
   defp decode_group_bys(group_bys) do
@@ -1230,6 +1335,15 @@ defmodule ExAliyunOts.Client.Search do
     result = GroupByGeoDistanceResult.decode!(group_by_result)
     items = decode_sub_details(result.group_by_geo_distance_result_items, [])
     sort_map_results_by_type(map_results, :by_geo_distance, name, items)
+  end
+
+  defp decode_group_by(
+         %{type: GroupByType.histogram(), name: name, group_by_result: group_by_result},
+         map_results
+       ) do
+    result = GroupByHistogramResult.decode!(group_by_result)
+    items = decode_sub_details(result.group_by_histogra_items, [])
+    sort_map_results_by_type(map_results, :by_histogram, name, items)
   end
 
   defp decode_sub_details([], prepared) do
@@ -1324,6 +1438,30 @@ defmodule ExAliyunOts.Client.Search do
       row_count: item.row_count,
       sub_aggs: sub_aggs,
       sub_group_bys: sub_group_bys
+    }
+
+    decode_sub_details(rest, [prepared_item | prepared])
+  end
+
+  defp decode_sub_details(
+         [%GroupByHistogramItem{} = item | rest],
+         prepared
+       ) do
+    prepared_item = %{
+      key: bytes_to_term(item.key),
+      value: item.value
+    }
+
+    decode_sub_details(rest, [prepared_item | prepared])
+  end
+
+  defp decode_sub_details(
+         [%PercentilesAggregationItem{} = item | rest],
+         prepared
+       ) do
+    prepared_item = %{
+      key: item.key,
+      value: bytes_to_term(item.value)
     }
 
     decode_sub_details(rest, [prepared_item | prepared])

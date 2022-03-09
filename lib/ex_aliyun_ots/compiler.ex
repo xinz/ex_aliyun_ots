@@ -295,6 +295,11 @@ defmodule ExAliyunOts.Compiler do
 
       defdelegate agg_count(agg_name, field_name), to: Search
 
+      defdelegate agg_percentiles(aggregation_name, field_name, percentiles, opts \\ []),
+        to: Search
+
+      defdelegate agg_top_rows(aggregation_name, opts \\ []), to: Search
+
       # GroupBys
 
       defdelegate group_by_field(group_name, field_name, opts \\ []), to: Search
@@ -304,6 +309,9 @@ defmodule ExAliyunOts.Compiler do
       defdelegate group_by_filter(group_name, filters, opts \\ []), to: Search
 
       defdelegate group_by_geo_distance(group_name, field_name, ranges, opts \\ []), to: Search
+
+      defdelegate group_by_histogram(group_name, field_name, interval, field_range, opts \\ []),
+        to: Search
 
       # Sort
 
