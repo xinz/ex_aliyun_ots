@@ -1,6 +1,6 @@
 defmodule ExAliyunOtsTest.SearchMisc do
   use ExUnit.Case
-  alias ExAliyunOts.Client.Search
+  alias ExAliyunOts.Client.Search.Utils
 
   test "term to bytes & bytes to term" do
     cases = [
@@ -24,8 +24,8 @@ defmodule ExAliyunOtsTest.SearchMisc do
     ]
 
     for {term, bytes} <- cases do
-      assert Search.term_to_bytes(term) == bytes
-      assert Search.bytes_to_term(bytes) == term
+      assert Utils.term_to_bytes(term) == bytes
+      assert Utils.bytes_to_term(bytes) == term
     end
   end
 end

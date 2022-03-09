@@ -1,3 +1,47 @@
+defmodule ExAliyunOts.Client.Search.Utils do
+  @moduledoc false
+
+  @variant_type_integer 0x0
+  @variant_type_double 0x1
+  @variant_type_boolean 0x2
+  @variant_type_string 0x3
+
+  def term_to_bytes(term) when is_bitstring(term) do
+    <<@variant_type_string, byte_size(term)::little-integer-size(32), term::binary>>
+  end
+
+  def term_to_bytes(term) when is_integer(term) do
+    <<@variant_type_integer, term::little-integer-size(64)>>
+  end
+
+  def term_to_bytes(term) when is_float(term) do
+    <<@variant_type_double, term::float-little>>
+  end
+
+  def term_to_bytes(true) do
+    <<@variant_type_boolean, 1>>
+  end
+
+  def term_to_bytes(false) do
+    <<@variant_type_boolean, 0>>
+  end
+
+  def term_to_bytes(term) do
+    raise ExAliyunOts.RuntimeError,
+          "invalid type of term: #{inspect(term)}, please use string/integer/float/boolean."
+  end
+
+  def bytes_to_term(<<@variant_type_string, _size::little-integer-size(32), term::binary>>), do: term
+  def bytes_to_term(<<@variant_type_integer, term::little-integer-size(64)>>), do: term
+  def bytes_to_term(<<@variant_type_double, term::float-little>>), do: term
+  def bytes_to_term(<<@variant_type_boolean, 1>>), do: true
+  def bytes_to_term(<<@variant_type_boolean, 0>>), do: false
+  def bytes_to_term(bytes) do
+    raise ExAliyunOts.RuntimeError,
+          "invalid type of bytes: #{inspect(bytes)}, please use string/integer/float/boolean."
+  end
+end
+
 defmodule ExAliyunOts.Client.Search do
   @moduledoc false
 
@@ -115,6 +159,7 @@ defmodule ExAliyunOts.Client.Search do
   }
 
   import ExAliyunOts.Logger, only: [error: 1]
+  import ExAliyunOts.Client.Search.Utils
   require FieldType
   require SortOrder
   require QueryType
@@ -122,11 +167,6 @@ defmodule ExAliyunOts.Client.Search do
   require AggregationType
   require GroupByType
   require SortMode
-
-  @variant_type_integer 0x0
-  @variant_type_double 0x1
-  @variant_type_boolean 0x2
-  @variant_type_string 0x3
 
   defp request_to_create_search_index(%Search.CreateSearchIndexRequest{
          table_name: table_name,
@@ -330,40 +370,6 @@ defmodule ExAliyunOts.Client.Search do
     |> Http.post()
   end
 
-  def term_to_bytes(term) when is_bitstring(term) do
-    <<@variant_type_string, byte_size(term)::little-integer-size(32), term::binary>>
-  end
-
-  def term_to_bytes(term) when is_integer(term) do
-    <<@variant_type_integer, term::little-integer-size(64)>>
-  end
-
-  def term_to_bytes(term) when is_float(term) do
-    <<@variant_type_double, term::float-little>>
-  end
-
-  def term_to_bytes(true) do
-    <<@variant_type_boolean, 1>>
-  end
-
-  def term_to_bytes(false) do
-    <<@variant_type_boolean, 0>>
-  end
-
-  def term_to_bytes(term) do
-    raise ExAliyunOts.RuntimeError,
-          "invalid type of term: #{inspect(term)}, please use string/integer/float/boolean."
-  end
-
-  def bytes_to_term(<<@variant_type_string, _size::little-integer-size(32), term::binary>>), do: term
-  def bytes_to_term(<<@variant_type_integer, term::little-integer-size(64)>>), do: term
-  def bytes_to_term(<<@variant_type_double, term::float-little>>), do: term
-  def bytes_to_term(<<@variant_type_boolean, 1>>), do: true
-  def bytes_to_term(<<@variant_type_boolean, 0>>), do: false
-  def bytes_to_term(bytes) do
-    raise ExAliyunOts.RuntimeError,
-          "invalid type of bytes: #{inspect(bytes)}, please use string/integer/float/boolean."
-  end
 
   defp agg_missing_to_bytes(nil) do
     nil
