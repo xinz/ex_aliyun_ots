@@ -1958,6 +1958,10 @@ defmodule ExAliyunOts.Search do
     sorter
   end
 
+  defp map_search_query_sorter(%Search.ScoreSort{} = sorter) do
+    sorter
+  end
+
   defp map_search_query_sort_options(var, nil) do
     var
   end

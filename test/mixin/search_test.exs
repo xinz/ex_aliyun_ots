@@ -1817,7 +1817,8 @@ defmodule ExAliyunOts.MixinTest.Search do
             type: QueryType.match(),
             field_name: "text_single_word_1",
             text: "tincDdunt" |> String.downcase()
-          ]
+          ],
+          sort: [score_sort(:desc)]
         ]
       )
 
@@ -1836,7 +1837,8 @@ defmodule ExAliyunOts.MixinTest.Search do
               type: QueryType.match(),
               field_name: "text_single_word_1",
               text: "loBortis111" |> String.downcase()
-            ]
+            ],
+            sort: [score_sort(:desc)]
           ]
         ],
         1
@@ -1857,7 +1859,8 @@ defmodule ExAliyunOts.MixinTest.Search do
               type: QueryType.match(),
               field_name: "text_single_word_2",
               text: "Pulvinar" |> String.downcase()
-            ]
+            ],
+            sort: [score_sort(:desc)]
           ]
         ],
         0
