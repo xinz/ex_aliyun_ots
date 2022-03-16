@@ -8,7 +8,7 @@ defmodule ExAliyunOts.SearchTestHelper do
 
   def assert_search(table, index, opts, expected_total_hits, loop \\ 0)
   def assert_search(_table, _index, opts, _expected_total_hits, loop) when loop > 51 do
-    Logger.error "timeout to query: #{inspect opts[:query]}, since always not found any matched data"
+    Logger.error "timeout to query: #{inspect opts[:search_query]}, since always not found any matched data"
   end
   def assert_search(table, index, opts, expected_total_hits, loop) do
     {:ok, response} = search(table, index, opts)
@@ -18,10 +18,11 @@ defmodule ExAliyunOts.SearchTestHelper do
       response
     else
       if total_hits == 0 do
-        Process.sleep(3_000)
+        Process.sleep(5_000)
         assert_search(table, index, opts, expected_total_hits, loop + 1)
       else
         assert total_hits == expected_total_hits
+        response
       end
     end
   end
@@ -39,10 +40,11 @@ defmodule ExAliyunOts.SearchTestHelper do
           {:ok, response}
         else
           if total_hits == 0 do
-            Process.sleep(3_000)
+            Process.sleep(5_000)
             assert_search_request(instance, request, expected_total_hits, loop + 1)
           else
             assert total_hits == expected_total_hits
+            {:ok, response}
           end
         end
       error ->
