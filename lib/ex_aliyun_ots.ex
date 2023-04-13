@@ -76,6 +76,7 @@ defmodule ExAliyunOts do
   @type inclusive_start_primary_keys :: list
   @type exclusive_end_primary_keys :: list
   @type index_name :: String.t()
+  @type query :: String.t()
   @type options :: Keyword.t()
   @type result :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
 
@@ -1242,6 +1243,18 @@ defmodule ExAliyunOts do
   """
   @doc local_transaction: :local_transaction
   defdelegate abort_transaction(instance, transaction_id), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/295884.html) | [English](https://www.alibabacloud.com/help/doc-detail/295884.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      sql_query("SELECT * FROM table LIMIT 20")
+  """
+  @spec sql_query(instance, query) :: result
+  defdelegate sql_query(instance, query), to: Client
 
   defp map_options(var, nil), do: var
 
