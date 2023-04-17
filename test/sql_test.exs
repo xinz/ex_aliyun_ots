@@ -90,4 +90,58 @@ defmodule ExAliyunOtsTest.SQL do
               message: "Unknown mapping table 'edc-ex-test.test_parallelscan'"
             }} = Client.sql_query(@instance_key, "DROP MAPPING TABLE test_parallelscan")
   end
+
+  test "wrap apis" do
+    assert :ok = ExAliyunOts.drop_mapping_table(@instance_key, "test_parallelscan")
+
+    create_sql = """
+    CREATE TABLE test_parallelscan (
+      id VARCHAR(1024) PRIMARY KEY,
+      is_actived BOOL,
+      name MEDIUMTEXT,
+      score DOUBLE,
+      tags MEDIUMTEXT
+    )
+    """
+
+    assert :ok = ExAliyunOts.create_mapping_table(@instance_key, create_sql)
+
+    assert {:error,
+            %ExAliyunOts.Error{
+              code: "OTSParameterInvalid",
+              message: "Table 'edc-ex-test.test_parallelscan' already exists"
+            }} = ExAliyunOts.create_mapping_table(@instance_key, create_sql)
+
+    fields = %{
+      "id" => %{"Extra" => "", "Key" => "PRI", "Null" => "NO", "Type" => "varchar(1024)"},
+      "is_actived" => %{"Extra" => "", "Key" => "", "Null" => "YES", "Type" => "tinyint(1)"},
+      "name" => %{"Extra" => "", "Key" => "", "Null" => "YES", "Type" => "mediumtext"},
+      "score" => %{"Extra" => "", "Key" => "", "Null" => "YES", "Type" => "double"},
+      "tags" => %{"Extra" => "", "Key" => "", "Null" => "YES", "Type" => "mediumtext"}
+    }
+
+    assert {:ok, ^fields} = ExAliyunOts.describe_mapping_table(@instance_key, "test_parallelscan")
+
+    assert :ok = ExAliyunOts.alter_table_drop_column(@instance_key, "test_parallelscan", "score")
+    dropped_fields = Map.delete(fields, "score")
+
+    assert {:ok, ^dropped_fields} =
+             ExAliyunOts.describe_mapping_table(@instance_key, "test_parallelscan")
+
+    assert :ok =
+             ExAliyunOts.alter_table_add_column(
+               @instance_key,
+               "test_parallelscan",
+               "score",
+               "DOUBLE"
+             )
+
+    assert {:ok, ^fields} = ExAliyunOts.describe_mapping_table(@instance_key, "test_parallelscan")
+
+    assert {:ok, rows} =
+             ExAliyunOts.query(@instance_key, "SELECT * FROM test_parallelscan LIMIT 20")
+
+    assert 20 = length(rows)
+    assert [%{"id" => _, "is_actived" => _, "name" => _, "score" => _, "tags" => _} | _] = rows
+  end
 end
