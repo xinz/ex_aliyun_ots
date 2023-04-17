@@ -208,13 +208,31 @@ defmodule ExAliyunOts.Client do
   end
 
   def sql_query(instance_key, query) do
-    case SQL.remote_sql_query(Config.get(instance_key), query) do
-      {:ok, response} ->
-        {:ok, %{response | rows: decode_rows(response.rows)}}
+    SQL.remote_sql_query(Config.get(instance_key), query)
+  end
 
-      error ->
-        error
-    end
+  def create_mapping_table(instance_key, query) do
+    SQL.create_mapping_table(Config.get(instance_key), query)
+  end
+
+  def drop_mapping_table(instance_key, table) do
+    SQL.drop_mapping_table(Config.get(instance_key), table)
+  end
+
+  def describe_mapping_table(instance_key, table) do
+    SQL.describe_mapping_table(Config.get(instance_key), table)
+  end
+
+  def alter_table_drop_column(instance_key, table, column) do
+    SQL.alter_table_drop_column(Config.get(instance_key), table, column)
+  end
+
+  def alter_table_add_column(instance_key, table, column, type) do
+    SQL.alter_table_add_column(Config.get(instance_key), table, column, type)
+  end
+
+  def query(instance_key, query) do
+    SQL.query(Config.get(instance_key), query)
   end
 
   defp remote_get_range(instance, var_get_range, next_start_primary_key) do
