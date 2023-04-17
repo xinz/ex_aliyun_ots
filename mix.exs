@@ -28,8 +28,7 @@ defmodule ExAliyunOts.Mixfile do
 
   defp deps do
     [
-      #{:tablestore_protos, "~> 0.1.4"},
-      {:tablestore_protos, github: "feng19/tablestore_protos"},
+      {:tablestore_protos, "~> 0.1.5"},
       {:finch, "~> 0.5"},
       {:gen_state_machine, "~> 2.0"},
       {:tesla, "~> 1.4"},
