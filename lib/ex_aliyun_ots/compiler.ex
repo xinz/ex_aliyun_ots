@@ -66,6 +66,10 @@ defmodule ExAliyunOts.Compiler do
       def compute_split_points_by_size(table, split_size) do
         ExAliyunOts.compute_split_points_by_size(@instance, table, split_size)
       end
+
+      def sql_query(query) do
+        ExAliyunOts.sql_query(@instance, query)
+      end
     end
   end
 

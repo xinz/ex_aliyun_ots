@@ -76,6 +76,8 @@ defmodule ExAliyunOts do
   @type inclusive_start_primary_keys :: list
   @type exclusive_end_primary_keys :: list
   @type index_name :: String.t()
+  @type query :: String.t()
+  @type column_name :: String.t()
   @type options :: Keyword.t()
   @type result :: {:ok, map()} | {:error, ExAliyunOts.Error.t()}
 
@@ -1242,6 +1244,100 @@ defmodule ExAliyunOts do
   """
   @doc local_transaction: :local_transaction
   defdelegate abort_transaction(instance, transaction_id), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/295884.html) | [English](https://www.alibabacloud.com/help/doc-detail/295884.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      sql_query("SELECT * FROM table LIMIT 20")
+  """
+  @spec sql_query(instance, query) :: result
+  defdelegate sql_query(instance, query), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/295892.html) | [English](https://www.alibabacloud.com/help/doc-detail/295892.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      create_mapping_table(\"""
+      CREATE TABLE table (
+        id VARCHAR(1024) PRIMARY KEY,
+        is_actived BOOL,
+        name MEDIUMTEXT,
+        score DOUBLE,
+        tags MEDIUMTEXT
+      )
+      \""")
+  """
+  @spec create_mapping_table(instance, query) :: :ok | {:error, ExAliyunOts.Error.t()}
+  defdelegate create_mapping_table(instance, query), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/295893.html) | [English](https://www.alibabacloud.com/help/doc-detail/295893.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      drop_mapping_table("table")
+  """
+  @spec drop_mapping_table(instance, table_name) :: :ok | {:error, ExAliyunOts.Error.t()}
+  defdelegate drop_mapping_table(instance, table), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/295896.html) | [English](https://www.alibabacloud.com/help/doc-detail/295896.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      describe_mapping_table("table")
+  """
+  @spec describe_mapping_table(instance, table_name) :: result
+  defdelegate describe_mapping_table(instance, table), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/437170.html) | [English](https://www.alibabacloud.com/help/doc-detail/437170.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      alter_table_drop_column("table", "column")
+  """
+  @spec alter_table_drop_column(instance, table_name, column_name) ::
+          :ok | {:error, ExAliyunOts.Error.t()}
+  defdelegate alter_table_drop_column(instance, table, column), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/437170.html) | [English](https://www.alibabacloud.com/help/doc-detail/437170.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      alter_table_add_column("table", "column", "BOOL")
+  """
+  @spec alter_table_add_column(instance, table_name, column_name, type :: String.t()) ::
+          :ok | {:error, ExAliyunOts.Error.t()}
+  defdelegate alter_table_add_column(instance, table, column, type), to: Client
+
+  @doc """
+  Official document in [Chinese](https://help.aliyun.com/document_detail/295884.html) | [English](https://www.alibabacloud.com/help/doc-detail/295884.html)
+
+  ## Example
+
+      import MyApp.TableStore
+
+      query("SELECT * FROM table LIMIT 20")
+  """
+  @spec query(instance, query) :: result
+  defdelegate query(instance, query), to: Client
 
   defp map_options(var, nil), do: var
 
