@@ -1,8 +1,6 @@
 defmodule ExAliyunOts.MixinTest.AtomicIncrement do
   use ExUnit.Case
-
-  use ExAliyunOts,
-    instance: EDCEXTestInstance
+  use ExAliyunOts, instance: EDCEXTestInstance
 
   require Logger
 
@@ -20,7 +18,7 @@ defmodule ExAliyunOts.MixinTest.AtomicIncrement do
         increment: [{"count", 1}],
         return_type: ReturnType.after_modify(),
         return_columns: ["count"],
-        condition: condition(:ignore)
+        condition: :ignore
       )
 
     {nil, [{"count", value1, _timestamp}]} = response.row
@@ -52,7 +50,7 @@ defmodule ExAliyunOts.MixinTest.AtomicIncrement do
              [{"key1", 2}],
              [{"count", 0}, {"attr1", "new_attr1"}],
              return_type: ReturnType.pk(),
-             condition: condition(:expect_not_exist)
+             condition: :expect_not_exist
            )
          ]}
       ])
