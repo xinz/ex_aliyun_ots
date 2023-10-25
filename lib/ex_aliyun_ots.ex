@@ -40,7 +40,7 @@ defmodule ExAliyunOts do
       put_row "table",
         [{"pk1", "id1"}],
         [{"attr1", 10}, {"attr2", "attr2_value"}],
-        condition: condition(:expect_not_exist),
+        condition: :expect_not_exist,
         return_type: :pk
 
       # Search index
@@ -67,7 +67,7 @@ defmodule ExAliyunOts do
   """
   require ExAliyunOts.Const.OperationType, as: OperationType
   alias ExAliyunOts.{Var, Client, Utils}
-  alias ExAliyunOts.TableStore.{ReturnType, Direction}
+  alias ExAliyunOts.TableStore.{ReturnType, Direction, RowExistenceExpectation}
 
   @before_compile ExAliyunOts.MergeCompiler
   @type instance :: atom
@@ -338,10 +338,10 @@ defmodule ExAliyunOts do
         {"table2", [
           write_update([{"key1", "new_tab3_id2"}],
             put: [{"new_put1", "u1"}, {"new_put2", 2.5}],
-            condition: condition(:expect_not_exist)),
+            condition: :expect_not_exist),
           write_put([{"key1", "new_tab3_id3"}],
             [{"new_put1", "put1"}, {"new_put2", 10}],
-            condition: condition(:expect_not_exist))
+            condition: :expect_not_exist)
         ]}
       ]
 
@@ -431,14 +431,14 @@ defmodule ExAliyunOts do
       put_row "table1",
         [{"key1", "id1"}],
         [{"name", "name1"}, {"age", 20}],
-        condition: condition(:expect_not_exist),
+        condition: :expect_not_exist,
         return_type: :pk
 
       put_row "table2",
         [{"key1", "id1"}],
         [{"name", "name1"}, {"age", 20}],
-        condition: condition(:expect_not_exist),
-        transaction_id: "transaction_id"
+        condition: :expect_not_exist,
+        transaction_id: "transaction_id",
         return_type: :pk
 
   ## Options
@@ -484,13 +484,13 @@ defmodule ExAliyunOts do
         increment: [{"count", 1}],
         return_type: :after_modify,
         return_columns: ["count"],
-        condition: condition(:ignore)
+        condition: :ignore
 
       update_row "table3",
         [partition_key],
         put: [{"new_attr1", "a1"}],
         delete_all: ["level", "size"],
-        condition: condition(:ignore),
+        condition: :ignore,
         transaction_id: "transaction_id"
 
   ## Options
@@ -1343,30 +1343,25 @@ defmodule ExAliyunOts do
 
   defp map_options(var, options) do
     options
-    |> Keyword.keys()
-    |> Enum.reduce(var, fn key, acc ->
-      value = Keyword.get(options, key)
+    |> Stream.filter(fn {key, value} -> not is_nil(value) and Map.has_key?(var, key) end)
+    |> Enum.reduce(var, fn
+      {:return_type, value}, acc ->
+        Map.put(acc, :return_type, map_return_type(value))
 
-      if value != nil and Map.has_key?(var, key) do
-        case key do
-          :return_type ->
-            Map.put(acc, key, map_return_type(value))
+      {:direction, value}, acc ->
+        Map.put(acc, :direction, map_direction(value))
 
-          :direction ->
-            Map.put(acc, key, map_direction(value))
+      {:stream_spec, value}, acc ->
+        Map.put(acc, :stream_spec, struct(Var.StreamSpec, value))
 
-          :stream_spec ->
-            Map.put(acc, key, struct(Var.StreamSpec, value))
+      {:time_range, value}, acc ->
+        Map.put(acc, :time_range, map_time_range(value))
 
-          :time_range ->
-            Map.put(acc, key, map_time_range(value))
+      {:condition, value}, acc when is_atom(value) ->
+        Map.put(acc, :condition, map_condition(value))
 
-          _ ->
-            Map.put(acc, key, value)
-        end
-      else
-        acc
-      end
+      {key, value}, acc ->
+        Map.put(acc, key, value)
     end)
   end
 
@@ -1401,6 +1396,21 @@ defmodule ExAliyunOts do
   defp map_time_range({start_time, end_time})
        when is_integer(start_time) and is_integer(end_time) do
     %Var.TimeRange{start_time: start_time, end_time: end_time}
+  end
+
+  RowExistenceExpectation.constants()
+  |> Enum.map(fn {_value, row_existence} ->
+    downcase_row_existence =
+      row_existence |> Atom.to_string() |> String.downcase() |> String.to_atom()
+
+    defp map_condition(unquote(downcase_row_existence)) do
+      %ExAliyunOts.TableStore.Condition{row_existence: unquote(row_existence)}
+    end
+  end)
+
+  defp map_condition(row_existence) do
+    raise ExAliyunOts.RuntimeError,
+          "Invalid existence: #{inspect(row_existence)} in condition, please use one of :ignore | :expect_exist | :expect_not_exist option."
   end
 
   @operation_type_mapping OperationType.updates_supported()
