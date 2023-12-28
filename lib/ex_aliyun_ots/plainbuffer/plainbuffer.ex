@@ -25,7 +25,7 @@ defmodule ExAliyunOts.PlainBuffer do
   @vt_double 0x1
   @vt_boolean 0x2
   @vt_string 0x3
-  # @vt_null 0x6
+  @vt_null 0x6
   @vt_blob 0x7
   @vt_inf_min 0x9
   @vt_inf_max 0xA
@@ -664,9 +664,13 @@ defmodule ExAliyunOts.PlainBuffer do
          acc
        ) do
     # attribute columns decoding
-    {attr_value, timestamp, rest} = calculate_attr_value(rest)
-    acc = [{attr_field, attr_value, timestamp} | acc]
-    decode_attr(rest, acc)
+    case calculate_attr_value(rest) do
+      {nil, _, rest} ->
+        decode_attr(rest, acc)
+      {attr_value, timestamp, rest} ->
+        acc = [{attr_field, attr_value, timestamp} | acc]
+        decode_attr(rest, acc)
+    end
   end
 
   defp decode_attr(<<@tag_row_checksum::integer, _::integer>>, acc) do
@@ -774,4 +778,16 @@ defmodule ExAliyunOts.PlainBuffer do
             inspect(input)
           }`"
   end
+
+  #
+  # Currently known, the attribute column's value as null would happend when use Tunnel Service to fetch an :UPDATE_ROW record,
+  # meanwhile in this record's UPDATE operation, there are both with `update` attribute column(s) and `delete/delete_all`
+  # attribute column(s), we need to adapt this case to make the decoded data as `nil`, and ignore the deleted attribute column(s)
+  # in the final result.
+  defp calculate_attr_value(<<@vt_null::integer, op_type::integer, rest::bitstring>>)
+    when op_type == @op_delete_one_version or op_type == @op_delete_all_version do
+    {timestamp, rest} = decode_attr_timestamp(rest)
+    {nil, timestamp, rest}
+  end
+
 end
