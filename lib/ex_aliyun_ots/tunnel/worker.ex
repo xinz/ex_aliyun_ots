@@ -108,8 +108,8 @@ defmodule ExAliyunOts.Tunnel.Worker do
   """
   @spec start_connect(instance :: atom(), opts :: Keyword.t()) :: {:ok, pid()}
   def start_connect(instance, opts) do
-    {:ok, pid} = DynamicSupervisor.start_tunnel_worker(instance)
     opts = validate(opts)
+    {:ok, pid} = DynamicSupervisor.start_tunnel_worker(instance)
     subscriber_pid = self()
     GenServer.cast(pid, {:start_connect, opts, subscriber_pid})
     {:ok, pid}
@@ -122,7 +122,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
   def stop(tunnel_id) do
     case Registry.worker(tunnel_id) do
       [_tunnel_id, _client_id, worker_pid, _meta, _subscriber] ->
-        GenServer.stop(worker_pid, :shutdown)
+        DynamicSupervisor.terminate_child(worker_pid)
 
       nil ->
         Logger.info(
@@ -204,7 +204,7 @@ defmodule ExAliyunOts.Tunnel.Worker do
 
     Logger.info(fn ->
       [
-        "Tunnel worker terminated with reason:",
+        "Tunnel worker #{inspect(self())} terminated with reason:",
         inspect(reason)
       ]
     end)

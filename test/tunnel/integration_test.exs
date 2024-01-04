@@ -91,6 +91,9 @@ defmodule ExAliyunOtsTest.Tunnel.Integration do
       Worker.stop(tunnel_id2)
       Worker.stop(tunnel_id3)
 
+      children_stat = DynamicSupervisor.count_children(ExAliyunOts.Tunnel.DynamicSupervisor)
+      assert children_stat.workers == 0 and children_stat.active == 0
+
       {del_result, _response} =
         Client.delete_tunnel(@instance_key, table_name: @table_name, tunnel_name: @tunnel_name1)
 
