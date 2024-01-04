@@ -18,4 +18,8 @@ defmodule ExAliyunOts.Tunnel.DynamicSupervisor do
     spec = {Worker, instance}
     DynamicSupervisor.start_child(__MODULE__, spec)
   end
+
+  def terminate_child(pid) do
+    DynamicSupervisor.terminate_child(__MODULE__, pid)
+  end
 end
