@@ -153,4 +153,35 @@ defmodule ExAliyunOtsTest.CreateTableAndBasicRowOperation do
     result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
     assert result == :ok
   end
+
+  test "create table with local transaction enabled and then delete it" do
+    cur_timestamp = System.os_time(:second)
+    table_name = "test_table_tmp_#{cur_timestamp}"
+
+    var_create_table = %Var.CreateTable{
+      table_name: table_name,
+      primary_keys: [
+        {"partition_key", PKType.string()},
+        {"order_id", PKType.string()}
+      ],
+      time_to_live: 86_400,
+      # Notice: This configuration will not active when using automatic primary key.
+      enable_local_txn: true
+    }
+
+    result = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
+    assert result == :ok
+
+    # Notice:
+    # Describe table API will NOT contain `enable_local_txn` field on 2024/1/11.
+    # But it will do work actually.
+    {:ok, _table_description} = ExAliyunOts.Client.describe_table(@instance_key, table_name)
+
+    {:error, error} = ExAliyunOts.Client.create_table(@instance_key, var_create_table)
+
+    assert error.message == "Requested table already exists."
+
+    result = ExAliyunOts.Client.delete_table(@instance_key, table_name)
+    assert result == :ok
+  end
 end
