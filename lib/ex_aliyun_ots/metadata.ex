@@ -113,7 +113,8 @@ defmodule ExAliyunOts.Var.CreateTable do
             max_versions: 1,
             deviation_cell_version_in_sec: 86_400,
             stream_spec: %ExAliyunOts.Var.StreamSpec{},
-            index_metas: []
+            index_metas: [],
+            enable_local_txn: false
 end
 
 defmodule ExAliyunOts.Var.UpdateTable do
@@ -396,10 +397,10 @@ defmodule ExAliyunOts.Var.Search do
     defstruct field_name: "", name: nil, percentiles: [], missing: nil
   end
 
-    defmodule AggregationTopRows do
-      @moduledoc false
-      defstruct name: nil, limit: nil, sort: nil
-    end
+  defmodule AggregationTopRows do
+    @moduledoc false
+    defstruct name: nil, limit: nil, sort: nil
+  end
 
   defmodule GroupByField do
     @moduledoc false

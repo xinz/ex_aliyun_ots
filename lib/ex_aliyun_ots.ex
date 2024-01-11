@@ -141,6 +141,7 @@ defmodule ExAliyunOts do
     * `:index_metas`, optional, the index meta of table, each item of `:index_metas` is in {String.t(), list(), list()} format, by default it is [].
     * `:defined_columns`, optional, the indexed attribute column, which is a combination of predefined columns of the base table, each item of `:defined_columns`
     is in {String.t(), :integer | :double | :boolean | :string | :binary} format, by default it is [].
+    * `enable_local_txn`, optional, specifies whether to enable the local transaction feature. The value of this parameter is of the `:boolean` type. Default value: false. If you want to enable the local transaction feature when you create a data table, set this parameter to true.
   """
   @doc table: :table
   @spec create_table(instance, table_name, primary_keys, options) ::

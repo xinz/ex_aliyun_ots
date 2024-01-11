@@ -13,42 +13,28 @@ defmodule ExAliyunOtsTest.Transaction do
   @table_range "test_txn_range"
 
   setup_all do
+    var_create_table = %Var.CreateTable{
+      table_name: @table,
+      primary_keys: [
+        {"key", PKType.string()},
+      ],
+      enable_local_txn: true
+    }
+    :ok = Client.create_table(@instance_key, var_create_table)
+
+    var_create_table = %Var.CreateTable{
+      table_name: @table_range,
+      primary_keys: [
+        {"key", PKType.string()},
+        {"key2", PKType.integer()}
+      ],
+      enable_local_txn: true
+    }
+    :ok = Client.create_table(@instance_key, var_create_table)
+
     on_exit(fn ->
-      condition = condition(:ignore)
-
-      var_delete_row1 = %Var.DeleteRow{
-        table_name: @table,
-        primary_keys: [{"key", "key1"}],
-        condition: condition
-      }
-
-      Client.delete_row(@instance_key, var_delete_row1)
-
-      var_delete_row2 = %Var.DeleteRow{
-        table_name: @table,
-        primary_keys: [{"key", "key2"}],
-        condition: condition
-      }
-
-      Client.delete_row(@instance_key, var_delete_row2)
-
-      for index <- 1..3 do
-        var_delete_range = %Var.DeleteRow{
-          table_name: @table_range,
-          primary_keys: [{"key", "key1"}, {"key2", index}],
-          condition: condition
-        }
-
-        Client.delete_row(@instance_key, var_delete_range)
-      end
-
-      var_delete_range = %Var.DeleteRow{
-        table_name: @table_range,
-        primary_keys: [{"key", "key2"}, {"key2", 1}],
-        condition: condition
-      }
-
-      Client.delete_row(@instance_key, var_delete_range)
+      Client.delete_table(@instance_key, @table)
+      Client.delete_table(@instance_key, @table_range)
     end)
 
     :ok

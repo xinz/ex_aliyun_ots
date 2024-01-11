@@ -67,7 +67,8 @@ defmodule ExAliyunOts.Client.Table do
       table_meta: table_meta,
       reserved_throughput: reserved_throughput,
       table_options: table_options,
-      index_metas: index_metas
+      index_metas: index_metas,
+      enable_local_txn: var_create_table.enable_local_txn
     }
     |> put_stream_spec(var_create_table.stream_spec)
     |> CreateTableRequest.encode!()
