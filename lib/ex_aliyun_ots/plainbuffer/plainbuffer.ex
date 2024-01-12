@@ -664,13 +664,9 @@ defmodule ExAliyunOts.PlainBuffer do
          acc
        ) do
     # attribute columns decoding
-    case calculate_attr_value(rest) do
-      {nil, _, rest} ->
-        decode_attr(rest, acc)
-      {attr_value, timestamp, rest} ->
-        acc = [{attr_field, attr_value, timestamp} | acc]
-        decode_attr(rest, acc)
-    end
+    {attr_value, timestamp, rest} = calculate_attr_value(rest)
+    acc = [{attr_field, attr_value, timestamp} | acc]
+    decode_attr(rest, acc)
   end
 
   defp decode_attr(<<@tag_row_checksum::integer, _::integer>>, acc) do
