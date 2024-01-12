@@ -457,7 +457,8 @@ defmodule ExAliyunOtsTest.PlainBuffer do
       3, 7, 143, 203, 128, 170, 140, 1, 0, 0, 10, 79, 11, 24, 0, 0, 0, 12, 19, 0, 0,
       0, 13, 0, 0, 0, 0, 14, 141, 111, 204, 11, 122, 13, 6, 0, 15, 1, 0, 0, 0, 9,
       127>>
-    assert {[{"id", "1"}], [{"a1", "1114", 1703667695383}]} == PlainBuffer.deserialize_row(value)
+    # find `a2` attribute col is `DELETE` with one version(1703667616655) in the UPDATE_ROW tunnel record.
+    assert {[{"id", "1"}], [{"a1", "1114", 1703667695383}, {"a2", nil, 1703667616655}]} == PlainBuffer.deserialize_row(value)
   end
 
   test "deserialize tunnel UPDATE_ROW record with delete all versions in a row" do
@@ -468,6 +469,7 @@ defmodule ExAliyunOtsTest.PlainBuffer do
       49, 7, 157, 34, 142, 174, 140, 1, 0, 0, 10, 171, 11, 24, 0, 0, 0, 12, 19, 0,
       0, 0, 13, 0, 0, 0, 0, 14, 80, 50, 55, 219, 137, 13, 6, 0, 15, 1, 0, 0, 0, 9,
       72>>
-    assert {[{"id", "1"}], [{"a1", "210", 1703735599773}, {"b1", "1001", 1703735599773}]} == PlainBuffer.deserialize_row(value)
+    # find `c1` attribute col is `DELETE_ALL` in the UPDATE_ROW tunnel record.
+    assert {[{"id", "1"}], [{"a1", "210", 1703735599773}, {"c1", nil, nil}, {"b1", "1001", 1703735599773}]} == PlainBuffer.deserialize_row(value)
   end
 end
