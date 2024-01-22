@@ -42,8 +42,8 @@ config :ex_aliyun_ots,
 
 * `debug`, optional, specifies whether to enable debug logger, by default it is false, and please DO NOT use debug mode in production.
 * `enable_tunnel`, optional, specifies whether to enable tunnel functions, there will startup tunnel related supervisor and registry when enable it, by default it is false.
-* `pool_size`, optional, number of connections to maintain in each pool, involved when use `Finch` as Tesla http adapter, see `Finch.request/6` for details, defaults to 100.
-* `pool_count`, optional, number of pools to start, involved when use `Finch` as Tesla http adapter, see `Finch.request/6` for details, defaults to 1.
+* `pool_size`, optional, number of connections to maintain in each pool, involved when use `Finch` as Tesla http adapter, see `Finch` [module usage](https://hexdocs.pm/finch/Finch.html#module-usage) for details, defaults to 100.
+* `pool_count`, optional, number of pools to start, involved when use `Finch` as Tesla http adapter, see `Finch` [module usage](https://hexdocs.pm/finch/Finch.html#module-usage) for details, defaults to 1.
 
 
 ## Using ExAliyunOts
