@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.15.0 (2024-01-22)
+
+* Add ValueTransferRule of SingleColumnValueFilter implemention ([#38](https://github.com/xinz/ex_aliyun_ots/pull/38)).
+* Enhance SearchIndex implementions about virtual field, group by histogram, aggregation with percentiles/top rows ([#39](https://github.com/xinz/ex_aliyun_ots/pull/39)).
+* Fix score sort of SearchIndex in runtime error ([#40](https://github.com/xinz/ex_aliyun_ots/pull/40)).
+* Add SQL query implemention ([#41](https://github.com/xinz/ex_aliyun_ots/pull/41)).
+* Enhance to simplify `condition` use ([#43](https://github.com/xinz/ex_aliyun_ots/pull/43)).
+* Fix to decode tunnel record `UPDATE_ROW` action with delete/delete_all attribute cols ([#44](https://github.com/xinz/ex_aliyun_ots/pull/44), [#47](https://github.com/xinz/ex_aliyun_ots/pull/47)).
+* Fix to properly stop tunnel worker ([#45](https://github.com/xinz/ex_aliyun_ots/pull/45)).
+* Add local transaction setting when create table. ([#46](https://github.com/xinz/ex_aliyun_ots/pull/46)).
+
 ## v0.14.4 (2021-12-14)
 
 * Fix compile error with Elixir 1.13.0
