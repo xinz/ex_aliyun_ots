@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.15.1 (2024-01-24)
+
+* Fix compile error when use `filter` ([#49](https://github.com/xinz/ex_aliyun_ots/pull/49)).
+
 ## v0.15.0 (2024-01-22)
 
 * Add ValueTransferRule of SingleColumnValueFilter implemention ([#38](https://github.com/xinz/ex_aliyun_ots/pull/38)).
