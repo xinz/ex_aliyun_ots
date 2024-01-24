@@ -123,4 +123,15 @@ defmodule ExAliyunOts.MixinTest.Filter do
       )
     end
   end
+
+  test "build filter to ensure successfully quoted" do
+    {%ExAliyunOts.TableStoreFilter.Filter{filter: filter, type: type}, _} = ExAliyunOts.Filter.build_filter({:==, "some", [:a, 1]}) |> Code.eval_quoted()
+    assert filter.column_name == :a and filter.column_value == 1 and type == :FT_SINGLE_COLUMN_VALUE
+
+    {%ExAliyunOts.TableStoreFilter.Filter{filter: filter, type: type}, _} = ExAliyunOts.Filter.build_filter({:and, "some", [{:==, "some", [:b, 2]}, {:>=, "some", [:c, 10]}]}) |> Code.eval_quoted()
+    assert type == :FT_COMPOSITE_COLUMN_VALUE
+    [%{filter: sub1}, %{filter: sub2}] = filter.sub_filters
+    assert sub1.comparator == :CT_EQUAL and sub1.column_name == :b and sub1.column_value == 2
+    assert sub2.comparator == :CT_GREATER_EQUAL and sub2.column_name == :c and sub2.column_value == 10
+  end
 end

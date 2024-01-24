@@ -94,7 +94,7 @@ defmodule ExAliyunOts.Filter do
 
     quote do
       %Filter{
-        type: FilterType.composite_column(),
+        type: unquote(FilterType.composite_column()),
         filter: %CompositeColumnValueFilter{
           combinator: unquote(combinator),
           sub_filters: unquote(sub_filters)
@@ -105,12 +105,13 @@ defmodule ExAliyunOts.Filter do
 
   defp single_filter({comparator, _, [column_name, column_value]}) do
     comparator = @comparator_mapping[comparator]
+    filter_type = FilterType.single_column()
 
-    quote location: :keep, bind_quoted: [column_name: column_name, column_value: column_value, comparator: comparator] do
+    quote location: :keep, bind_quoted: [column_name: column_name, column_value: column_value, comparator: comparator, filter_type: filter_type] do
       case column_name do
         {column_name, column_options} ->
           %Filter{
-            type: FilterType.single_column(),
+            type: filter_type,
             filter: %SingleColumnValueFilter{
               comparator: comparator,
               column_name: column_name,
@@ -123,7 +124,7 @@ defmodule ExAliyunOts.Filter do
 
         column_name ->
           %Filter{
-            type: FilterType.single_column(),
+            type: filter_type,
             filter: %SingleColumnValueFilter{
               comparator: comparator,
               column_name: column_name,
