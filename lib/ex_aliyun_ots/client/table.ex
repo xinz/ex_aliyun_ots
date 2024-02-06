@@ -60,6 +60,8 @@ defmodule ExAliyunOts.Client.Table do
         var_create_table.index_metas,
         fn({index_name, primary_keys, defined_columns}) ->
           map_index_meta(index_name, primary_keys, defined_columns)
+          ({index_name, primary_keys, defined_columns, options}) ->
+          map_index_meta(index_name, primary_keys, defined_columns, options)
         end
       )
 
@@ -92,7 +94,7 @@ defmodule ExAliyunOts.Client.Table do
 
     create_index_request = %CreateIndexRequest{
       main_table_name: table_name,
-      index_meta: map_index_meta(index_name, primary_keys, defined_columns),
+      index_meta: map_index_meta(index_name, primary_keys, defined_columns, options),
       include_base_data: Keyword.get(options, :include_base_data, true)
     }
 
@@ -323,6 +325,24 @@ defmodule ExAliyunOts.Client.Table do
       defined_column: defined_columns,
       index_update_mode: :IUM_ASYNC_INDEX,
       index_type: :IT_GLOBAL_INDEX
+    }
+  end
+
+  defp map_index_meta(index_name, primary_keys, defined_columns, options) do
+    index_type = Keyword.get(options, :index_type, :global)
+
+    {index_type, index_update_mode} =
+      case index_type do
+        :global -> {:IT_GLOBAL_INDEX, :IUM_ASYNC_INDEX}
+        :local -> {:IT_LOCAL_INDEX, :IUM_SYNC_INDEX}
+      end
+
+    %IndexMeta{
+      name: index_name,
+      primary_key: primary_keys,
+      defined_column: defined_columns,
+      index_update_mode: index_update_mode,
+      index_type: index_type
     }
   end
 end
