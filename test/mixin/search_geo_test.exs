@@ -109,16 +109,22 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
             query: geo_polygon_query("location", ["11,11", "0,0", "1,5"])
           ]
         ],
-        2
+        3
       )
 
-    # Geolocation point falls on the edge of the specified polygon won't be in 
+    # Notice
+    #
+    # Before 2024/02/06:
+    # Geolocation point falls on the edge of the specified polygon won't be in
     # the matched case, e.g. "0,0" is not included in the following result.
-    assert response.total_hits == 2
-    [row1, row2] = response.rows
+    #
+    # 2024/02/06: It seems that "point on edge" can be included in the result now.
+    assert response.total_hits == 3
+    [row1, row2, row3] = response.rows
     {[{"id", id1}], _} = row1
     {[{"id", id2}], _} = row2
-    assert id1 == "a2" and id2 == "a4"
+    {[{"id", id3}], _} = row3
+    assert id1 == "a1" and id2 == "a2" and id3 == "a4"
 
     response2 =
       assert_search(
@@ -133,7 +139,7 @@ defmodule ExAliyunOts.MixinTest.SearchGeo do
             ]
           ]
         ],
-        2
+        3
       )
 
     assert response2.rows == response.rows

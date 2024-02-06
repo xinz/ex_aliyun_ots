@@ -122,10 +122,17 @@ defmodule ExAliyunOts do
         ]
 
       create_table "table_name",
-        [{"key1", :string}],
+        [{"key1", :string}, {"key2", :string}],
+        defined_columns: [
+          {"attr1", :string},
+          {"attr2", :integer},
+          {"attr3", :boolean},
+          {"attr4", :double}
+        ]
         index_metas: [
-          {"indexname1", ["key1"], ["attr1", "attr2"]},
-          {"indexname2", ["key1"], ["attr4"]}
+          {"index_global1", ["attr2", "key2"], ["attr1", "attr3"]},
+          {"index_global2", ["attr3", "key1"], ["attr1", "attr2"], index_type: :global},
+          {"index_local", ["key1", "attr1"], ["attr4"], index_type: :local}
         ]
 
   ## Options
@@ -138,7 +145,7 @@ defmodule ExAliyunOts do
     * `:stream_spec`, specifies whether enable stream, by default it is not enable stream feature.
       - `:is_enabled`, enable or not enable stream, use `true` or `false`;
       - `:expiration_time`, the expiration time of stream.
-    * `:index_metas`, optional, the index meta of table, each item of `:index_metas` is in {String.t(), list(), list()} format, by default it is [].
+    * `:index_metas`, optional, the index meta of table, each item of `:index_metas` is in {String.t(), list(), list()} | {String.t(), list(), list(), Keyword.t()} format, by default it is [].
     * `:defined_columns`, optional, the indexed attribute column, which is a combination of predefined columns of the base table, each item of `:defined_columns`
     is in {String.t(), :integer | :double | :boolean | :string | :binary} format, by default it is [].
     * `enable_local_txn`, optional, specifies whether to enable the local transaction feature. The value of this parameter is of the `:boolean` type. Default value: false. If you want to enable the local transaction feature when you create a data table, set this parameter to true.
@@ -157,27 +164,39 @@ defmodule ExAliyunOts do
   end
 
   @doc """
-  Create global secondary indexes. Official document in [Chinese](https://help.aliyun.com/document_detail/91947.html) | [English](https://www.alibabacloud.com/help/doc-detail/91947.html)
+  Create secondary indexes. Official document in [Chinese](https://help.aliyun.com/document_detail/91947.html) | [English](https://www.alibabacloud.com/help/doc-detail/91947.html)
 
   ## Example
 
+      # global secondary index
       create_index "table_name",
-        "table_index_name1"
-        ["pk1", "pk2", "col0"],
+        "table_index_global",
+        ["col0", "pk2"],
         ["col1", "col2"]
 
+      # local secondary index
       create_index "table_name",
-        "table_index_name2"
+        "table_index_local",
+        ["pk0", "col1"],
+        ["col2", "col3"],
+        index_type: :local
+
+      # do NOT include existing data in base table
+      create_index "table_name",
+        "table_index_global_without_existing_data",
         ["col0", "pk1"],
         ["col1", "col2", "col3"],
         include_base_data: false
 
   ## Options
+    * `:index_type`, the type of the index, optional. Valid values: `:global` and `:local`. By default it is `:global`.
+      - If `:index_type` is not specified or is set to `:global`, the global secondary index feature is used.
+      If you use the global secondary index feature, Tablestore automatically synchronizes the columns to be indexed and data in primary key columns from a data table to an index table in asynchronous mode.
+      The synchronization latency is within a few milliseconds.
+      - If `:index_type` is set to `:local`, the local secondary index feature is used.
+      If you use the local secondary index feature, Tablestore automatically synchronizes data from the indexed columns and the primary key columns of a data table to the columns of an index table in synchronous mode.
+      After the data is written to the data table, you can query the data from the index table.
 
-    * `:index_update_mode`, the update mode of the index table, optional, currently only support `:IUM_ASYNC_INDEX`,
-    by default it is `:IUM_ASYNC_INDEX`;
-    * `:index_type`, the type of the index table, optional, currently only support `:IT_GLOBAL_INDEX`,
-    by default it is `:IT_GLOBAL_INDEX`;
     * `:include_base_data`, specifies whether the index table includes the existing data in the base table, if set it to
     `true` means the index includes the existing data, if set it to `false` means the index excludes the existing data,
     optional, by default it is `true`.

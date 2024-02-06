@@ -40,7 +40,8 @@ defmodule ExAliyunOtsTest.TableIndexTest do
           "double_col",
           "boolean_col",
           "binary_col"
-        ]
+        ],
+        index_type: :global
       }
 
     index3 =
@@ -52,7 +53,8 @@ defmodule ExAliyunOtsTest.TableIndexTest do
           "double_col",
           "boolean_col",
           "binary_col"
-        ]
+        ],
+        index_type: :local
       }
 
     index_metas = [index1, index2, index3]
@@ -68,11 +70,22 @@ defmodule ExAliyunOtsTest.TableIndexTest do
     {:ok, describe_table_result} = describe_table(table_name)
     assert describe_table_result.table_meta.table_name == table_name
     assert length(describe_table_result.table_meta.defined_column) == 5
-    [index_meta1_from_describe_table, index_meta2_from_describe_table, index_meta3_from_describe_table] = describe_table_result.index_metas
+
+    [
+      index_meta1_from_describe_table,
+      index_meta2_from_describe_table,
+      index_meta3_from_describe_table
+    ] = describe_table_result.index_metas
 
     assert index_meta1_from_describe_table.name == index1_name
+    assert index_meta1_from_describe_table.index_type == :IT_GLOBAL_INDEX
+    assert index_meta1_from_describe_table.index_update_mode == :IUM_ASYNC_INDEX
     assert index_meta2_from_describe_table.name == index2_name
+    assert index_meta2_from_describe_table.index_type == :IT_GLOBAL_INDEX
+    assert index_meta2_from_describe_table.index_update_mode == :IUM_ASYNC_INDEX
     assert index_meta3_from_describe_table.name == index3_name
+    assert index_meta3_from_describe_table.index_type == :IT_LOCAL_INDEX
+    assert index_meta3_from_describe_table.index_update_mode == :IUM_SYNC_INDEX
 
     assert delete_table(table_name) == :ok
   end
@@ -118,7 +131,8 @@ defmodule ExAliyunOtsTest.TableIndexTest do
           "double_col",
           "boolean_col",
           "binary_col"
-        ]
+        ],
+        index_type: :global
       }
 
     index3 =
@@ -130,22 +144,53 @@ defmodule ExAliyunOtsTest.TableIndexTest do
           "double_col",
           "boolean_col",
           "binary_col"
-        ]
+        ],
+        index_type: :local
       }
 
     assert create_table(table_name, [{"key1", :string}], defined_columns: defined_columns) == :ok
     assert create_index(table_name, elem(index1, 0), elem(index1, 1), elem(index1, 2)) == :ok
-    assert create_index(table_name, elem(index2, 0), elem(index2, 1), elem(index2, 2)) == :ok
-    assert create_index(table_name, elem(index3, 0), elem(index3, 1), elem(index3, 2)) == :ok
+
+    assert create_index(
+             table_name,
+             elem(index2, 0),
+             elem(index2, 1),
+             elem(index2, 2),
+             elem(index2, 3)
+           ) == :ok
+
+    assert create_index(
+             table_name,
+             elem(index3, 0),
+             elem(index3, 1),
+             elem(index3, 2),
+             elem(index3, 3)
+           ) == :ok
 
     {:ok, describe_table_result} = describe_table(table_name)
     assert length(describe_table_result.table_meta.defined_column) == 5
     assert length(describe_table_result.index_metas) == 3
-    [index_meta1_from_describe_table, index_meta2_from_describe_table, index_meta3_from_describe_table] = describe_table_result.index_metas
 
+    [
+      index_meta1_from_describe_table,
+      index_meta2_from_describe_table,
+      index_meta3_from_describe_table
+    ] = describe_table_result.index_metas
+
+    assert index_meta1_from_describe_table.name == index1_name
     assert index_meta1_from_describe_table.primary_key == index1_pks
+    assert index_meta1_from_describe_table.index_type == :IT_GLOBAL_INDEX
+    assert index_meta1_from_describe_table.index_update_mode == :IUM_ASYNC_INDEX
+
+    assert index_meta2_from_describe_table.name == index2_name
     assert index_meta2_from_describe_table.primary_key == index2_pks
+    assert index_meta2_from_describe_table.index_type == :IT_GLOBAL_INDEX
+    assert index_meta2_from_describe_table.index_update_mode == :IUM_ASYNC_INDEX
+
+    assert index_meta3_from_describe_table.name == index3_name
     assert index_meta3_from_describe_table.primary_key == index3_pks
+    assert index_meta3_from_describe_table.index_type == :IT_LOCAL_INDEX
+    assert index_meta3_from_describe_table.index_update_mode == :IUM_SYNC_INDEX
 
     assert delete_index(table_name, index1_name) == :ok
     assert delete_index(table_name, index2_name) == :ok
