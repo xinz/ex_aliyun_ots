@@ -123,24 +123,6 @@ defmodule ExAliyunOts.TimelineTest do
     assert drop_result2 == :ok
   end
 
-  test "attrs_to_row" do
-    message = [name: "name1", age: 20]
-    row = Utils.attrs_to_row(message)
-    assert row == [{"name", "name1"}, {"age", 20}]
-
-    message = [{"name", "name1"}, {"age", 20}]
-    row = Utils.attrs_to_row(message)
-    assert row == message
-
-    message = %{"name" => "name1", "age" => 20}
-    row = Utils.attrs_to_row(message)
-    assert row == [{"age", 20}, {"name", "name1"}]
-
-    message = %{name: "name1", age: 20}
-    row = Utils.attrs_to_row(message)
-    assert row == [{"age", 20}, {"name", "name1"}]
-  end
-
   test "store" do
     index_schema = %Search.IndexSchema{
       field_schemas: [

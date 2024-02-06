@@ -14,10 +14,10 @@ defmodule ExAliyunOtsTest.UtilsTest do
 
     attrs = %{name: "name", age: 100, class: nil}
     result = Utils.attrs_to_row(attrs)
-    assert result == [{"age", 100}, {"name", "name"}]
+    assert Enum.sort_by(result, &elem(&1, 0), :asc) == [{"age", 100}, {"name", "name"}]
     attrs = %{c: 100, a: "name", b: true, class: nil}
     result = Utils.attrs_to_row(attrs)
-    assert result == [{"a", "name"}, {"b", true}, {"c", 100}]
+    assert Enum.sort_by(result, &elem(&1, 0), :asc) == [{"a", "name"}, {"b", true}, {"c", 100}]
   end
 
   test "valid geo_point" do

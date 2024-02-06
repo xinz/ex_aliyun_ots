@@ -6,13 +6,18 @@ defmodule ExAliyunOts.MixinTest.Transaction do
 
   require Logger
 
-  @table "test_txn"
-  @table_range "test_txn_range"
+  @table "test_txn_mixin"
+  @table_range "test_txn_range_mixin"
 
   setup_all do
+    :ok = create_table(@table, [{"key", :string}], enable_local_txn: true)
+
+    :ok =
+      create_table(@table_range, [{"key", :string}, {"key2", :integer}], enable_local_txn: true)
+
     on_exit(fn ->
-      delete_row(@table, [{"key", "key1"}], condition: condition(:ignore))
-      delete_row(@table, [{"key", "key2"}], condition: condition(:ignore))
+      delete_table(@table)
+      delete_table(@table_range)
     end)
 
     :ok
@@ -151,7 +156,7 @@ defmodule ExAliyunOts.MixinTest.Transaction do
     end)
   end
 
-  test "batch write with transaction_id and is_atomic" do
+  test "batch write with transaction_id and is_atomic to same partition key will be failed" do
     partition_key = {"key", "atomic_key"}
     {:ok, response} = start_local_transaction(@table_range, partition_key)
     transaction_id = response.transaction_id
@@ -183,23 +188,16 @@ defmodule ExAliyunOts.MixinTest.Transaction do
 
     [table] = response.tables
 
-    Enum.map(table.rows, fn(row) ->
-      assert row.is_ok == true
+    # Notice:
+    # Batch write with `is_atomic` and `transaction_id` at the same time will be failed.
+    # But batch write without `is_atomic` (only with `transaction_id`) will be succeed.
+    # BTW, `is_atomic` has been removed from Alibaba cloud offical document. Then I guess `is_atomic` will be replace by local transaction in the future.
+    Enum.map(table.rows, fn row ->
+      assert row.is_ok == false
+      assert row.error.code == "OTSRowOperationConflict"
     end)
 
-    commit_transaction(transaction_id)
-
-    {:ok, response} = get_row(@table_range, [partition_key, {"key2", 1}])
-    {_pks, attrs} = response.row
-
-    Enum.map(attrs, fn {key, value, _ts} ->
-      case key do
-        "field1" -> assert value == 1
-        "field2" -> assert value == 2
-        true -> :ok
-      end
-    end)
-
+    abort_transaction(transaction_id)
   end
 
   test "get row with transaction_id" do
