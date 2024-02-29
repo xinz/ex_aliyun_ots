@@ -61,6 +61,7 @@ defmodule ExAliyunOts.Mixfile do
     [
       main: "readme",
       source_url: @source_url,
+      source_ref: "master",
       formatter_opts: [gfm: true],
       extras: [
         "README.md",
