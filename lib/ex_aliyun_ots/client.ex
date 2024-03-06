@@ -57,6 +57,14 @@ defmodule ExAliyunOts.Client do
     end
   end
 
+  def add_defined_columns(instance_key, table_name, defined_columns) do
+    Table.remote_add_defined_columns(Config.get(instance_key), table_name, defined_columns)
+  end
+
+  def delete_defined_columns(instance_key, table_name, defined_columns) do
+    Table.remote_delete_defined_columns(Config.get(instance_key), table_name, defined_columns)
+  end
+
   def put_row(instance_key, var_put_row) do
     Row.remote_put_row(Config.get(instance_key), var_put_row)
   end
