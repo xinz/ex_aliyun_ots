@@ -316,6 +316,38 @@ defmodule ExAliyunOts do
   defdelegate compute_split_points_by_size(instance, table_name, splits_size), to: Client
 
   @doc """
+  ## Example
+
+      import MyApp.TableStore
+
+      columns = [
+          {"attr1", :string},
+          {"attr2", :integer},
+          {"attr3", :boolean},
+          {"attr4", :double},
+          {"attr5", :binary}
+        ]
+
+      add_defined_columns("table", columns)
+  """
+  @doc table: :table
+  @spec add_defined_columns(instance, table_name, defined_columns :: [{String.t(), atom()}]) ::
+          result
+  defdelegate add_defined_columns(instance, table_name, defined_columns), to: Client
+
+  @doc """
+  ## Example
+
+      import MyApp.TableStore
+
+      delete_defined_columns("table", ["attr1", "attr2"])
+  """
+  @doc table: :table
+  @spec delete_defined_columns(instance, table_name, defined_columns :: [String.t()]) ::
+          result
+  defdelegate delete_defined_columns(instance, table_name, defined_columns), to: Client
+
+  @doc """
   Official document in [Chinese](https://help.aliyun.com/document_detail/27310.html) | [English](https://www.alibabacloud.com/help/doc-detail/27310.html)
 
   ## Example

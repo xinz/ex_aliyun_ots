@@ -2,6 +2,8 @@ defmodule ExAliyunOts.Client.Table do
   @moduledoc false
 
   alias ExAliyunOts.TableStore.{
+    AddDefinedColumnRequest,
+    DeleteDefinedColumnRequest,
     CreateTableRequest,
     PrimaryKeySchema,
     PrimaryKeyType,
@@ -224,6 +226,46 @@ defmodule ExAliyunOts.Client.Table do
       "compute_split_points_by_size result: ",
       inspect(result)
     ])
+
+    result
+  end
+
+  def remote_add_defined_columns(instance, table_name, columns) do
+    columns = Enum.map(columns, &map_defined_column_schema/1)
+
+    request_body =
+      %AddDefinedColumnRequest{
+        table_name: table_name,
+        columns: columns
+      }
+      |> AddDefinedColumnRequest.encode!()
+      |> IO.iodata_to_binary()
+
+    result =
+      instance
+      |> Http.client("/AddDefinedColumn", request_body, nil)
+      |> Http.post()
+
+    debug(["add_defined_columns result: ", inspect(result)])
+
+    result
+  end
+
+  def remote_delete_defined_columns(instance, table_name, columns) do
+    request_body =
+      %DeleteDefinedColumnRequest{
+        table_name: table_name,
+        columns: columns
+      }
+      |> DeleteDefinedColumnRequest.encode!()
+      |> IO.iodata_to_binary()
+
+    result =
+      instance
+      |> Http.client("/DeleteDefinedColumn", request_body, nil)
+      |> Http.post()
+
+    debug(["delete_defined_columns result: ", inspect(result)])
 
     result
   end
