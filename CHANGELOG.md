@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.15.2 (2024-03-07)
+
+* Add create and delete operations to the predefined columns ([#52](https://github.com/xinz/ex_aliyun_ots/issues/52)).
+
 ## v0.15.1 (2024-01-24)
 
 * Fix compile error when use `filter` ([#49](https://github.com/xinz/ex_aliyun_ots/pull/49)).
