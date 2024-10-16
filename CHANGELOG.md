@@ -4,6 +4,7 @@
 
 * Add support `&&` and `||` combination operation in filter ([#54](https://github.com/xinz/ex_aliyun_ots/pull/54)).
 * Fix compile warning negative steps are not supported in String.slice/2 in Elixir 1.16.3 ([#55](https://github.com/xinz/ex_aliyun_ots/pull/55)).
+* Fix document warning `:groups_for_functions` is deprecated, please use `:groups_for_docs` instead.
 
 ## v0.15.2 (2024-03-07)
 
