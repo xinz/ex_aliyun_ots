@@ -67,7 +67,7 @@ defmodule ExAliyunOts.Mixfile do
         "README.md",
         "CHANGELOG.md"
       ],
-      groups_for_functions: [
+      groups_for_docs: [
         Query: &(&1[:query] == :query),
         Sort: &(&1[:sort] == :sort),
         Aggregation: &(&1[:aggs] == :aggs),
