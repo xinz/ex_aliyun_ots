@@ -6,7 +6,7 @@ defmodule ExAliyunOts.Mixfile do
   def project do
     [
       app: :ex_aliyun_ots,
-      version: "0.15.2",
+      version: "0.15.3",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,

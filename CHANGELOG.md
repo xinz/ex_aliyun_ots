@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.15.3 (2024-10-16)
+
+* Add support `&&` and `||` combination operation in filter ([#54](https://github.com/xinz/ex_aliyun_ots/pull/54)).
+* Fix compile warning negative steps are not supported in String.slice/2 in Elixir 1.16.3 ([#55](https://github.com/xinz/ex_aliyun_ots/pull/55)).
+
 ## v0.15.2 (2024-03-07)
 
 * Add create and delete operations to the predefined columns ([#52](https://github.com/xinz/ex_aliyun_ots/issues/52)).
