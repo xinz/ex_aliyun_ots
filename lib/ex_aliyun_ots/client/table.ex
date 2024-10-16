@@ -325,7 +325,7 @@ defmodule ExAliyunOts.Client.Table do
   DefinedColumnType.constants()
   |> Enum.map(fn {_value, type} ->
     downcase_type =
-      type |> to_string() |> String.slice(4..-1) |> Utils.downcase_atom()
+      type |> to_string() |> String.slice(4..-1//1) |> Utils.downcase_atom()
 
     defp map_defined_column_schema({key_name, unquote(downcase_type)}),
       do: %DefinedColumnSchema{name: key_name, type: unquote(type)}

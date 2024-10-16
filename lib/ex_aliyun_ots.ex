@@ -1421,7 +1421,7 @@ defmodule ExAliyunOts do
 
   ReturnType.constants()
   |> Enum.map(fn {_value, type} ->
-    downcase_type = type |> to_string() |> String.slice(3..-1) |> Utils.downcase_atom()
+    downcase_type = type |> to_string() |> String.slice(3..-1//1) |> Utils.downcase_atom()
 
     defp map_return_type(unquote(downcase_type)), do: unquote(type)
     defp map_return_type(unquote(type)), do: unquote(type)
