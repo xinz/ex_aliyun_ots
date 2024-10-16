@@ -163,7 +163,7 @@ defmodule ExAliyunOts.Const.LogicOperator do
   const(:not, :LO_NOT)
   const(:and, :LO_AND)
   const(:or, :LO_OR)
-  def mapping, do: %{not: :LO_NOT, and: :LO_AND, or: :LO_OR}
+  def mapping, do: %{not: :LO_NOT, and: :LO_AND, &&: :LO_AND, ||: :LO_OR, or: :LO_OR}
 end
 
 defmodule ExAliyunOts.Const.ComparatorType do

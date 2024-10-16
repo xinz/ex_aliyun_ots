@@ -72,7 +72,7 @@ defmodule ExAliyunOts.Filter do
   end
 
   @doc false
-  def build_filter({combinator, _, _} = ast) when combinator in [:and, :not, :or] do
+  def build_filter({combinator, _, _} = ast) when combinator in [:and, :&&, :not, :or, :||] do
     composite_filter(ast)
   end
 

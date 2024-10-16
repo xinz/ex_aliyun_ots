@@ -78,6 +78,8 @@ defmodule ExAliyunOts.MixinTest.Filter do
 
     filter_result_2 = filter(name_with_age_expr or class_field == "1")
 
+    assert filter("class" == "1" and "age" >= 1) == filter("class" == "1" && "age" >= 1)
+    assert filter("class" == "1" or "age" >= 1) == filter("class" == "1" || "age" >= 1)
     assert filter_result == @result
     assert filter_result_1 == @result
     assert filter_result_2 == @result
